@@ -38,8 +38,8 @@ func (s *FullSync) Commit() chan any {
 func NewFullSync() common.ISyncConstructor {
 	ctx, cancel := context.WithCancel(context.Background())
 	return &FullSync{
-		recvCommitDataCh: make(chan []common.CommitData, 100),
-		commitCh:         make(chan any, 100),
+		recvCommitDataCh: make(chan []common.CommitData, 1),
+		commitCh:         make(chan any, 1),
 		ctx:              ctx,
 		cancel:           cancel,
 	}

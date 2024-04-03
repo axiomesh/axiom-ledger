@@ -40,8 +40,6 @@ type Node struct {
 	recvCh                  chan consensusEvent                                                  // receive message from consensus engine
 	blockCh                 chan *txpool.RequestHashBatch[types.Transaction, *types.Transaction] // receive batch from txpool
 	batchMgr                *batchTimerManager
-	noTxBatchTimeout        time.Duration   // generate no-tx block period
-	batchTimeout            time.Duration   // generate block period
 	lastExec                uint64          // the index of the last-applied block
 	network                 network.Network // network manager
 	txPreCheck              precheck.PreCheck
@@ -78,8 +76,6 @@ func NewNode(config *common.Config) (*Node, error) {
 	soloNode := &Node{
 		config:                  config,
 		proposerAccount:         proposerAccount,
-		noTxBatchTimeout:        config.Config.TimedGenBlock.NoTxBatchTimeout.ToDuration(),
-		batchTimeout:            config.Config.Solo.BatchTimeout.ToDuration(),
 		blockCh:                 make(chan *txpool.RequestHashBatch[types.Transaction, *types.Transaction], maxChanSize),
 		commitC:                 make(chan *common.CommitEvent, maxChanSize),
 		batchDigestM:            make(map[uint64]string),
@@ -165,8 +161,8 @@ func (n *Node) Prepare(tx *types.Transaction) error {
 	}
 	txWithResp := &common.TxWithResp{
 		Tx:      tx,
-		CheckCh: make(chan *common.TxResp),
-		PoolCh:  make(chan *common.TxResp),
+		CheckCh: make(chan *common.TxResp, 1),
+		PoolCh:  make(chan *common.TxResp, 1),
 	}
 	n.postMsg(txWithResp)
 	resp := <-txWithResp.CheckCh

@@ -7,6 +7,10 @@ import (
 	commonpool "github.com/axiomesh/axiom-kit/txpool"
 )
 
+func (p *txPoolImpl[T, Constraint]) IsStarted() bool {
+	return p.started.Load()
+}
+
 func (p *txPoolImpl[T, Constraint]) GetChainInfo() *commonpool.ChainInfo {
 	req := &reqChainInfoMsg{
 		ch: make(chan *commonpool.ChainInfo),

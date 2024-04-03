@@ -25,7 +25,8 @@ func mockAdaptor(ctrl *gomock.Controller, t *testing.T) *RBFTAdaptor {
 	err := storagemgr.Initialize(repo.KVStorageTypeLeveldb, repo.KVStorageCacheSize, repo.KVStorageSync, false)
 	assert.Nil(t, err)
 	logger := log.NewWithModule("consensus")
-	stack, err := NewRBFTAdaptor(testutil.MockConsensusConfig(logger, ctrl, t))
+	cfg, _ := testutil.MockConsensusConfig(logger, ctrl, t)
+	stack, err := NewRBFTAdaptor(cfg)
 	assert.Nil(t, err)
 
 	consensusMsgPipes := make(map[int32]network.Pipe, len(consensus.Type_name))
@@ -46,7 +47,7 @@ func mockAdaptorWithStorageType(ctrl *gomock.Controller, t *testing.T, typ strin
 	err := storagemgr.Initialize(repo.KVStorageTypeLeveldb, repo.KVStorageCacheSize, repo.KVStorageSync, false)
 	assert.Nil(t, err)
 	logger := log.NewWithModule("consensus")
-	cfg := testutil.MockConsensusConfig(logger, ctrl, t)
+	cfg, _ := testutil.MockConsensusConfig(logger, ctrl, t)
 	cfg.ConsensusStorageType = typ
 	stack, err := NewRBFTAdaptor(cfg)
 	assert.Nil(t, err)

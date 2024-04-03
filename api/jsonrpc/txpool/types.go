@@ -1,7 +1,13 @@
 package txpool
 
 import (
+	"errors"
+
 	rpctypes "github.com/axiomesh/axiom-ledger/api/jsonrpc/types"
+)
+
+var (
+	ErrNotStarted = errors.New("txpool is not started")
 )
 
 type ContentResponse struct {

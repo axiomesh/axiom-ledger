@@ -9,7 +9,6 @@ import (
 	"time"
 
 	"github.com/axiomesh/axiom-ledger/internal/components"
-	"github.com/ethereum/go-ethereum/core"
 	"github.com/ethereum/go-ethereum/params"
 	"github.com/gammazero/workerpool"
 	"github.com/pkg/errors"
@@ -26,12 +25,8 @@ var _ PreCheck = (*TxPreCheckMgr)(nil)
 
 const (
 	defaultTxPreCheckSize = 10000
-	PrecheckError         = "verify tx err"
-	ErrTxSign             = "tx signature verify failed"
-	ErrTo                 = "tx from and to address is same"
 	ErrTxEventType        = "invalid tx event type"
 	ErrParseTxEventType   = "parse tx event type error"
-	ErrGasPriceTooLow     = "gas price too low"
 )
 
 var (
@@ -79,10 +74,6 @@ func (tp *TxPreCheckMgr) pushValidTxs(ev *ValidTxs) {
 	tp.validTxsCh <- ev
 }
 
-func (tp *TxPreCheckMgr) CommitValidTxs() chan *ValidTxs {
-	return tp.validTxsCh
-}
-
 func NewTxPreCheckMgr(ctx context.Context, conf *common.Config) *TxPreCheckMgr {
 	tp := &TxPreCheckMgr{
 		basicCheckCh:   make(chan *common.UncheckedTxEvent, defaultTxPreCheckSize),
@@ -120,11 +111,12 @@ func (tp *TxPreCheckMgr) postValidTxs() {
 		case <-tp.ctx.Done():
 			return
 		case txs := <-tp.validTxsCh:
+			validTxCounter.Add(float64(len(txs.Txs)))
 			if txs.Local {
 				// notify consensus that it had prechecked, can broadcast to other nodes
-				respLocalTx(txs.LocalCheckRespCh, nil)
+				respLocalTx(responseType_precheck, txs.LocalCheckRespCh, nil)
 				err := tp.txpool.AddLocalTx(txs.Txs[0])
-				respLocalTx(txs.LocalPoolRespCh, err)
+				respLocalTx(responseType_txPool, txs.LocalPoolRespCh, err)
 			} else {
 				tp.txpool.AddRemoteTxs(txs.Txs)
 			}
@@ -151,7 +143,7 @@ func (tp *TxPreCheckMgr) dispatchTxEvent() {
 						return
 					}
 					if err := tp.basicCheckTx(txWithResp.Tx); err != nil {
-						respLocalTx(txWithResp.CheckCh, fmt.Errorf("%s:%w", PrecheckError, err))
+						respLocalTx(responseType_precheck, txWithResp.CheckCh, wrapError(err))
 						tp.logger.Warningf("basic check local tx err:%s", err)
 						return
 					}
@@ -203,7 +195,7 @@ func (tp *TxPreCheckMgr) dispatchVerifySignEvent() {
 						return
 					}
 					if err := tp.verifySignature(txWithResp.Tx); err != nil {
-						respLocalTx(txWithResp.CheckCh, fmt.Errorf("%s:%w", PrecheckError, err))
+						respLocalTx(responseType_precheck, txWithResp.CheckCh, wrapError(err))
 						tp.logger.Warningf("verify signature of local tx [txHash:%s] err: %s", txWithResp.Tx.GetHash().String(), err)
 						return
 					}
@@ -261,11 +253,11 @@ func (tp *TxPreCheckMgr) dispatchVerifyDataEvent() {
 					localPoolRespCh = txWithResp.PoolCh
 					// check balance
 					if err := components.VerifyInsufficientBalance[types.Transaction, *types.Transaction](txWithResp.Tx, tp.getChainMetaFn().GasPrice, tp.getBalanceFn); err != nil {
-						respLocalTx(txWithResp.CheckCh, fmt.Errorf("%s:%w", PrecheckError, err))
+						respLocalTx(responseType_precheck, txWithResp.CheckCh, wrapError(err))
 						return
 					}
 					validDataTxs = append(validDataTxs, txWithResp.Tx)
-					verifyBlanceDuration.WithLabelValues("local").Observe(time.Since(now).Seconds())
+					verifyBalanceDuration.WithLabelValues("local").Observe(time.Since(now).Seconds())
 
 				case common.RemoteTxEvent:
 					txSet, ok := ev.Event.([]*types.Transaction)
@@ -281,7 +273,7 @@ func (tp *TxPreCheckMgr) dispatchVerifyDataEvent() {
 
 						validDataTxs = append(validDataTxs, tx)
 					}
-					verifyBlanceDuration.WithLabelValues("remote").Observe(time.Since(now).Seconds())
+					verifyBalanceDuration.WithLabelValues("remote").Observe(time.Since(now).Seconds())
 				}
 
 				validTxs := &ValidTxs{
@@ -301,13 +293,13 @@ func (tp *TxPreCheckMgr) dispatchVerifyDataEvent() {
 
 func (tp *TxPreCheckMgr) verifySignature(tx *types.Transaction) error {
 	if err := tx.VerifySignature(); err != nil {
-		return errors.New(ErrTxSign)
+		return errTxSign
 	}
 
 	// check to address
 	if tx.GetTo() != nil {
 		if tx.GetFrom().String() == tx.GetTo().String() {
-			err := errors.New(ErrTo)
+			err := errTo
 			tp.logger.Errorf(err.Error())
 			return err
 		}
@@ -325,8 +317,8 @@ func (tp *TxPreCheckMgr) basicCheckTx(tx *types.Transaction) error {
 	// ignore gas price if it's 0 or nil
 	if tx.GetGasPrice() != nil {
 		if tx.GetGasPrice().Uint64() != 0 && tx.GetGasPrice().Cmp(gasPrice) < 0 {
-			return fmt.Errorf("%s:[hash:%s, nonce:%d] expect min gasPrice: %v, get price %v",
-				ErrGasPriceTooLow, tx.GetHash().String(), tx.GetNonce(), gasPrice, tx.GetGasPrice())
+			return fmt.Errorf("%w:[hash:%s, nonce:%d] expect min gasPrice: %v, get price %v",
+				errGasPriceTooLow, tx.GetHash().String(), tx.GetNonce(), gasPrice, tx.GetGasPrice())
 		}
 	}
 
@@ -334,16 +326,16 @@ func (tp *TxPreCheckMgr) basicCheckTx(tx *types.Transaction) error {
 	if tx.GetType() == types.DynamicFeeTxType {
 		if tx.GetGasFeeCap().BitLen() > 0 || tx.GetGasTipCap().BitLen() > 0 {
 			if l := tx.GetGasFeeCap().BitLen(); l > 256 {
-				return fmt.Errorf("%w: [hash:%s, nonce:%d], maxFeePerGas bit length: %d", core.ErrFeeCapVeryHigh,
+				return fmt.Errorf("%w: [hash:%s, nonce:%d], maxFeePerGas bit length: %d", errFeeCapVeryHigh,
 					tx.GetHash().String(), tx.GetNonce(), l)
 			}
 			if l := tx.GetGasTipCap().BitLen(); l > 256 {
-				return fmt.Errorf("%w: [hash:%s, nonce:%d], maxPriorityFeePerGas bit length: %d", core.ErrTipVeryHigh,
+				return fmt.Errorf("%w: [hash:%s, nonce:%d], maxPriorityFeePerGas bit length: %d", errTipVeryHigh,
 					tx.GetHash().String(), tx.GetNonce(), l)
 			}
 
 			if tx.GetGasFeeCap().Cmp(tx.GetGasTipCap()) < 0 {
-				return fmt.Errorf("%w: [hash:%s, nonce:%d], maxPriorityFeePerGas: %s, maxFeePerGas: %s", core.ErrTipAboveFeeCap,
+				return fmt.Errorf("%w: [hash:%s, nonce:%d], maxPriorityFeePerGas: %s, maxFeePerGas: %s", errTipAboveFeeCap,
 					tx.GetHash().String(), tx.GetNonce(), tx.GetGasTipCap(), tx.GetGasFeeCap())
 			}
 
@@ -351,7 +343,7 @@ func (tp *TxPreCheckMgr) basicCheckTx(tx *types.Transaction) error {
 			// as part of header validation.
 			// TODO: modify tp.BaseFee synchronously if baseFee changed
 			if tx.GetGasFeeCap().Cmp(tp.BaseFee) < 0 {
-				return fmt.Errorf("%w: [hash:%s, nonce:%d], maxFeePerGas: %s baseFee: %s", core.ErrFeeCapTooLow,
+				return fmt.Errorf("%w: [hash:%s, nonce:%d], maxFeePerGas: %s baseFee: %s", errFeeCapTooLow,
 					tx.GetHash().String(), tx.GetNonce(), tx.GetGasFeeCap(), tp.BaseFee)
 			}
 		}
@@ -363,14 +355,24 @@ func (tp *TxPreCheckMgr) basicCheckTx(tx *types.Transaction) error {
 	}
 	// 5. if deployed a contract, Check whether the init code size has been exceeded.
 	if isContractCreation && len(tx.GetPayload()) > params.MaxInitCodeSize {
-		return fmt.Errorf("%w: [hash:%s, nonce:%d], code size %v limit %v", core.ErrMaxInitCodeSizeExceeded,
+		return fmt.Errorf("%w: [hash:%s, nonce:%d], code size %v limit %v", errMaxInitCodeSizeExceeded,
 			tx.GetHash().String(), tx.GetNonce(), len(tx.GetPayload()), params.MaxInitCodeSize)
 	}
 
 	return nil
 }
 
-func respLocalTx(ch chan *common.TxResp, err error) {
+func respLocalTx(typ int, ch chan *common.TxResp, err error) {
+	defer func() {
+		if typ == responseType_precheck {
+			reason, valid := convertErrorType(err)
+			if valid {
+				validTxCounter.Inc()
+			} else {
+				rejectTxCounter.WithLabelValues(reason).Inc()
+			}
+		}
+	}()
 	resp := &common.TxResp{
 		Status: true,
 	}

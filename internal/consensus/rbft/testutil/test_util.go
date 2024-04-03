@@ -7,6 +7,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/axiomesh/axiom-kit/txpool"
 	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -118,7 +119,7 @@ func MockMiniBlockSync(ctrl *gomock.Controller) *mock_sync.MockSync {
 	return mock
 }
 
-func MockConsensusConfig(logger logrus.FieldLogger, ctrl *gomock.Controller, t *testing.T) *common.Config {
+func MockConsensusConfig(logger logrus.FieldLogger, ctrl *gomock.Controller, t *testing.T) (*common.Config, txpool.TxPool[types.Transaction, *types.Transaction]) {
 	s, err := types.GenerateSigner()
 	assert.Nil(t, err)
 
@@ -167,12 +168,10 @@ func MockConsensusConfig(logger logrus.FieldLogger, ctrl *gomock.Controller, t *
 	mockBlockSync := MockMiniBlockSync(ctrl)
 	conf.BlockSync = mockBlockSync
 
-	mockTxpool := mock_txpool.NewMockTxPool[types.Transaction, *types.Transaction](ctrl)
-	mockTxpool.EXPECT().Start().Return(nil).AnyTimes()
-	mockTxpool.EXPECT().GetLocalTxs().Return(nil).AnyTimes()
+	mockTxpool := mock_txpool.NewMockMinimalTxPool[types.Transaction, *types.Transaction](500, ctrl)
 	conf.TxPool = mockTxpool
 
-	return conf
+	return conf, mockTxpool
 }
 
 func GetChainMetaFunc() *types.ChainMeta {

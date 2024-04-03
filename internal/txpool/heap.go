@@ -38,6 +38,10 @@ func (q *accountQueue[T, Constraint]) replaceTx(tx *internalTransaction[T, Const
 	return old, true
 }
 
+func (q *accountQueue[T, Constraint]) updateLastNonce(nonce uint64) {
+	q.lastNonce = nonce
+}
+
 func (q *accountQueue[T, Constraint]) isValidPush(nonce uint64) bool {
 	if nonce < q.minNonceQueue.peek() {
 		return true
@@ -74,7 +78,9 @@ func (q *accountQueue[T, Constraint]) push(tx *internalTransaction[T, Constraint
 	}
 	q.items[tx.getNonce()] = tx
 	q.minNonceQueue.push(tx.getNonce())
-	q.lastNonce = tx.getNonce()
+	if q.lastNonce < tx.getNonce() {
+		q.lastNonce = tx.getNonce()
+	}
 	return false
 }
 

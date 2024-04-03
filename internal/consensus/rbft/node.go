@@ -160,7 +160,6 @@ func (n *Node) Start() error {
 	go n.txPreCheck.Start()
 	go n.txCache.ListenEvent()
 
-	// go n.listenValidTxs()
 	go n.listenNewTxToSubmit()
 	go n.listenExecutedBlockToReport()
 	go n.listenBatchMemTxsToBroadcast()
@@ -355,8 +354,8 @@ func (n *Node) Prepare(tx *types.Transaction) error {
 
 	txWithResp := &common.TxWithResp{
 		Tx:      tx,
-		CheckCh: make(chan *common.TxResp),
-		PoolCh:  make(chan *common.TxResp),
+		CheckCh: make(chan *common.TxResp, 1),
+		PoolCh:  make(chan *common.TxResp, 1),
 	}
 	n.txCache.TxRespC <- txWithResp
 	precheckResp := <-txWithResp.CheckCh

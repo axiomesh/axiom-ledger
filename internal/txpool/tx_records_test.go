@@ -2,6 +2,7 @@ package txpool
 
 import (
 	"bytes"
+	"context"
 	"os"
 	"testing"
 
@@ -141,6 +142,11 @@ func TestTxRecords_LoadMoreThanOneBatch(t *testing.T) {
 		err = records.insert(tx)
 		assert.Nil(t, err)
 	}
+
+	// restart pool
+	pool.Stop()
+	pool.ctx, pool.cancel = context.WithCancel(context.Background())
+
 	err = pool.Start() // used for test txrecord load
 	assert.Nil(t, err)
 

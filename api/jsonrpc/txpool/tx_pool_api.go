@@ -33,12 +33,18 @@ func NewTxPoolAPI(rep *repo.Repo, api api.CoreAPI, logger logrus.FieldLogger) *T
 	return &TxPoolAPI{ctx: ctx, cancel: cancel, rep: rep, api: api, logger: logger}
 }
 
-func (api *TxPoolAPI) TotalPendingTxCount() uint64 {
-	return api.api.TxPool().GetTotalPendingTxCount()
+func (api *TxPoolAPI) TotalPendingTxCount() (any, error) {
+	if !api.api.TxPool().IsStarted() {
+		return nil, ErrNotStarted
+	}
+	return api.api.TxPool().GetTotalPendingTxCount(), nil
 }
 
-func (api *TxPoolAPI) PendingTxCountFrom(addr common.Address) uint64 {
-	return api.api.TxPool().GetPendingTxCountByAccount(addr.String())
+func (api *TxPoolAPI) PendingTxCountFrom(addr common.Address) (any, error) {
+	if !api.api.TxPool().IsStarted() {
+		return nil, ErrNotStarted
+	}
+	return api.api.TxPool().GetPendingTxCountByAccount(addr.String()), nil
 }
 
 // convert account's txMeta to <nonce:RPCTransaction>
@@ -71,12 +77,18 @@ func (api *TxPoolAPI) formatTxMeta(meta *txpool.AccountMeta[types.Transaction, *
 //   - account: The address of the account.
 //   - nonce: The nonce of the transaction.
 //   - tx: The transaction content.
-func (api *TxPoolAPI) Content() any {
-	return api.getContent()
+func (api *TxPoolAPI) Content() (any, error) {
+	if !api.api.TxPool().IsStarted() {
+		return nil, ErrNotStarted
+	}
+	return api.getContent(), nil
 }
 
-func (api *TxPoolAPI) SimpleContent() any {
-	return api.getSimpleContent()
+func (api *TxPoolAPI) SimpleContent() (any, error) {
+	if !api.api.TxPool().IsStarted() {
+		return nil, ErrNotStarted
+	}
+	return api.getSimpleContent(), nil
 }
 
 func (api *TxPoolAPI) getContent() ContentResponse {
@@ -150,12 +162,16 @@ func (api *TxPoolAPI) getSimpleContent() SimpleContentResponse {
 	return resp
 }
 
-func (api *TxPoolAPI) ContentFrom(addr common.Address) any {
+func (api *TxPoolAPI) ContentFrom(addr common.Address) (any, error) {
+	if !api.api.TxPool().IsStarted() {
+		return nil, ErrNotStarted
+	}
 	data := api.api.TxPool().GetAccountMeta(addr.String(), true)
 	accountMeta, ok := data.(*txpool.AccountMeta[types.Transaction, *types.Transaction])
 	if !ok {
-		api.logger.Errorf("failed to get account meta: %s", addr.String())
-		return AccountContentResponse{}
+		err := fmt.Errorf("failed to get account meta")
+		api.logger.Error(err)
+		return nil, err
 	}
 
 	pending, queue := api.formatTxMeta(accountMeta)
@@ -166,11 +182,14 @@ func (api *TxPoolAPI) ContentFrom(addr common.Address) any {
 		CommitNonce:  accountMeta.CommitNonce,
 		PendingNonce: accountMeta.PendingNonce,
 		TxCount:      accountMeta.TxCount,
-	}
+	}, nil
 }
 
 // Inspect retrieves the content of the transaction pool and flattens it into an easily inspectable list.
-func (api *TxPoolAPI) Inspect() any {
+func (api *TxPoolAPI) Inspect() (any, error) {
+	if !api.api.TxPool().IsStarted() {
+		return nil, ErrNotStarted
+	}
 	rawContent := api.getContent()
 
 	// Define a formatter to flatten a transaction into a string
@@ -200,23 +219,30 @@ func (api *TxPoolAPI) Inspect() any {
 	return InspectResponse{
 		Pending: pendingContent,
 		Queued:  queuedContent,
-	}
+	}, nil
 }
 
-func (api *TxPoolAPI) Status() any {
+func (api *TxPoolAPI) Status() (any, error) {
+	if !api.api.TxPool().IsStarted() {
+		return nil, ErrNotStarted
+	}
 	data := api.api.TxPool().GetMeta(false)
 	meta, ok := data.(*txpool.Meta[types.Transaction, *types.Transaction])
 	if !ok {
-		api.logger.Errorf("failed to get txpool meta")
-		return nil
+		err := fmt.Errorf("failed to get txpool meta")
+		api.logger.Error(err)
+		return nil, err
 	}
 	return StatusResponse{
 		Pending: meta.ReadyTxCount,
 		Queued:  meta.NotReadyTxCount,
 		Total:   meta.TxCount,
-	}
+	}, nil
 }
 
-func (api *TxPoolAPI) GetChainInfo() any {
-	return api.api.TxPool().GetChainInfo()
+func (api *TxPoolAPI) GetChainInfo() (any, error) {
+	if !api.api.TxPool().IsStarted() {
+		return nil, ErrNotStarted
+	}
+	return api.api.TxPool().GetChainInfo(), nil
 }

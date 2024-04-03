@@ -21,7 +21,7 @@ var (
 		},
 		[]string{"type"},
 	)
-	verifyBlanceDuration = prometheus.NewSummaryVec(
+	verifyBalanceDuration = prometheus.NewSummaryVec(
 		prometheus.SummaryOpts{
 			Namespace: "axiom_ledger",
 			Subsystem: "pre_check",
@@ -30,10 +30,29 @@ var (
 		},
 		[]string{"type"},
 	)
+	rejectTxCounter = prometheus.NewCounterVec(
+		prometheus.CounterOpts{
+			Namespace: "axiom_ledger",
+			Subsystem: "pre_check",
+			Name:      "reject_tx_counter",
+			Help:      "The number of rejected tx",
+		},
+		[]string{"reason"},
+	)
+	validTxCounter = prometheus.NewCounter(
+		prometheus.CounterOpts{
+			Namespace: "axiom_ledger",
+			Subsystem: "pre_check",
+			Name:      "valid_tx_counter",
+			Help:      "The number of valid tx",
+		},
+	)
 )
 
 func init() {
 	prometheus.MustRegister(basicCheckDuration)
 	prometheus.MustRegister(verifySignatureDuration)
-	prometheus.MustRegister(verifyBlanceDuration)
+	prometheus.MustRegister(verifyBalanceDuration)
+	prometheus.MustRegister(rejectTxCounter)
+	prometheus.MustRegister(validTxCounter)
 }

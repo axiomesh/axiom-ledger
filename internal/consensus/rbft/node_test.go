@@ -2,13 +2,16 @@ package rbft
 
 import (
 	"context"
+	"fmt"
 	"math/big"
-	"sync"
+	"strings"
 	"testing"
 	"time"
 
+	"github.com/axiomesh/axiom-kit/txpool/mock_txpool"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/event"
+	"github.com/samber/lo"
 	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/mock/gomock"
@@ -24,7 +27,6 @@ import (
 	"github.com/axiomesh/axiom-ledger/internal/consensus/rbft/testutil"
 	"github.com/axiomesh/axiom-ledger/internal/consensus/txcache"
 	"github.com/axiomesh/axiom-ledger/internal/storagemgr"
-	"github.com/axiomesh/axiom-ledger/pkg/loggers"
 	"github.com/axiomesh/axiom-ledger/pkg/repo"
 )
 
@@ -41,7 +43,7 @@ func MockMinNode(ctrl *gomock.Controller, t *testing.T) *Node {
 	}).AnyTimes()
 	logger := log.NewWithModule("consensus")
 	logger.Logger.SetLevel(logrus.DebugLevel)
-	consensusConf := testutil.MockConsensusConfig(logger, ctrl, t)
+	consensusConf, pool := testutil.MockConsensusConfig(logger, ctrl, t)
 
 	ctx, cancel := context.WithCancel(context.Background())
 	rbftAdaptor, err := adaptor.NewRBFTAdaptor(consensusConf)
@@ -49,7 +51,7 @@ func MockMinNode(ctrl *gomock.Controller, t *testing.T) *Node {
 	err = rbftAdaptor.UpdateEpoch()
 	assert.Nil(t, err)
 
-	mockPrecheckMgr := mock_precheck.NewMockMinPreCheck(ctrl, validTxsCh)
+	mockPrecheckMgr := mock_precheck.NewMockMinPreCheck(ctrl, pool)
 
 	_, err = generateRbftConfig(consensusConf)
 	assert.Nil(t, err)
@@ -69,6 +71,70 @@ func MockMinNode(ctrl *gomock.Controller, t *testing.T) *Node {
 	return node
 }
 
+func TestStart(t *testing.T) {
+	testCase := []struct {
+		name           string
+		setupMocks     func(n *Node, ctrl *gomock.Controller)
+		expectedErrMsg string
+	}{
+		{
+			name: "start rbft failed",
+			setupMocks: func(n *Node, ctrl *gomock.Controller) {
+				r := rbft.NewMockNode[types.Transaction, *types.Transaction](ctrl)
+				r.EXPECT().Start().Return(fmt.Errorf("start rbft error")).AnyTimes()
+				r.EXPECT().ReportExecuted(gomock.Any()).AnyTimes()
+				n.n = r
+			},
+			expectedErrMsg: "start rbft error",
+		},
+		{
+			name: "start pool failed",
+			setupMocks: func(n *Node, ctrl *gomock.Controller) {
+				pool := mock_txpool.NewMockTxPool[types.Transaction, *types.Transaction](ctrl)
+				pool.EXPECT().Start().Return(fmt.Errorf("start txpool error")).AnyTimes()
+				n.txpool = pool
+
+			},
+			expectedErrMsg: "start txpool error",
+		},
+
+		{
+			name: "get pool tx success",
+			setupMocks: func(n *Node, ctrl *gomock.Controller) {
+				n.txCache.TxSetSize = 4
+				s, err := types.GenerateSigner()
+				assert.Nil(t, err)
+				txs := testutil.ConstructTxs(s, 10)
+				data := make([][]byte, 0)
+				lo.ForEach(txs, func(tx *types.Transaction, _ int) {
+					d, err := tx.RbftMarshal()
+					assert.Nil(t, err)
+					data = append(data, d)
+				})
+				pool := mock_txpool.NewMockTxPool[types.Transaction, *types.Transaction](ctrl)
+				pool.EXPECT().Start().Return(nil).AnyTimes()
+				pool.EXPECT().GetLocalTxs().Return(data).AnyTimes()
+				n.txpool = pool
+
+			},
+			expectedErrMsg: "",
+		},
+	}
+
+	for _, tc := range testCase {
+		ctrl := gomock.NewController(t)
+		n := MockMinNode(ctrl, t)
+		tc.setupMocks(n, ctrl)
+		err := n.Start()
+		if tc.expectedErrMsg == "" {
+			assert.Nil(t, err)
+		} else {
+			assert.NotNil(t, err)
+			assert.Equal(t, tc.expectedErrMsg, err.Error())
+		}
+	}
+}
+
 func TestInit(t *testing.T) {
 	ast := assert.New(t)
 	ctrl := gomock.NewController(t)
@@ -84,67 +150,81 @@ func TestInit(t *testing.T) {
 }
 
 func TestNewNode(t *testing.T) {
-	ctrl := gomock.NewController(t)
+	testCase := []struct {
+		name           string
+		setupMocks     func(consensusConf *common.Config, ctrl *gomock.Controller)
+		expectedErrMsg string
+	}{
+		{
+			name: "new node success",
+			setupMocks: func(consensusConf *common.Config, ctrl *gomock.Controller) {
+				// 设置mock和所需的条件
+				// 例如，storagemgr初始化，logger等
+			},
+			expectedErrMsg: "",
+		},
+		{
+			name: "invalid config",
+			setupMocks: func(consensusConf *common.Config, ctrl *gomock.Controller) {
+				// illegal config
+				consensusConf.GetCurrentEpochInfoFromEpochMgrContractFunc = func() (*rbft.EpochInfo, error) {
+					return nil, fmt.Errorf("get epoch info error")
+				}
+			},
+			expectedErrMsg: "get epoch info error",
+		},
+		{
+			name: "new adaptor err",
+			setupMocks: func(consensusConf *common.Config, ctrl *gomock.Controller) {
+				// illegal storage type
+				consensusConf.ConsensusStorageType = "invalidType"
+			},
+			expectedErrMsg: "unsupported consensus storage type",
+		},
+		{
+			name: "new rbft err",
+			setupMocks: func(consensusConf *common.Config, ctrl *gomock.Controller) {
+				// illegal genesis epoch
+				consensusConf.GenesisEpochInfo.Epoch = 100
+			},
+			expectedErrMsg: "genesis epoch and start_block must be 1",
+		},
 
-	err := storagemgr.Initialize(repo.KVStorageTypeLeveldb, repo.KVStorageCacheSize, repo.KVStorageSync, false)
-	assert.Nil(t, err)
-
-	r, err := repo.Load(repo.DefaultKeyJsonPassword, t.TempDir(), true)
-	assert.Nil(t, err)
-	s, err := types.GenerateSigner()
-	assert.Nil(t, err)
-	cnf := &common.Config{
-		RepoRoot:             r.RepoRoot,
-		Config:               r.ConsensusConfig,
-		Logger:               loggers.Logger(loggers.Consensus),
-		ConsensusType:        repo.ConsensusTypeRbft,
-		ConsensusStorageType: repo.ConsensusStorageTypeMinifile,
-		PrivKey:              s.Sk,
-		GenesisEpochInfo:     r.GenesisConfig.EpochInfo,
-		Applied:              100,
-		Digest:               "0xbc6345850f22122cd8ece82f29b88cb2dee49af1ae854891e30d121e788524b7",
-		GenesisDigest:        "0xf06a8e2fa138335436c66b7d332338b8d402fc5708604aec6959324ef6c5c1ac",
-		GetCurrentEpochInfoFromEpochMgrContractFunc: func() (*rbft.EpochInfo, error) {
-			return r.EpochInfo, nil
+		{
+			name: "enable p2p limit",
+			setupMocks: func(consensusConf *common.Config, ctrl *gomock.Controller) {
+				// illegal genesis epoch
+				consensusConf.Config.Limit.Enable = true
+				consensusConf.Config.Limit.Limit = 100
+				consensusConf.Config.Limit.Burst = 100
+			},
+			expectedErrMsg: "",
 		},
-		GetEpochInfoFromEpochMgrContractFunc: func(epoch uint64) (*rbft.EpochInfo, error) {
-			return r.EpochInfo, nil
-		},
-		GetChainMetaFunc: func() *types.ChainMeta {
-			return &types.ChainMeta{
-				Height:    100,
-				GasPrice:  big.NewInt(1),
-				BlockHash: types.NewHashByStr("0xbc6345850f22122cd8ece82f29b88cb2dee49af1ae854891e30d121e788524b7"),
-			}
-		},
-		GetBlockHeaderFunc: func(height uint64) (*types.BlockHeader, error) {
-			return &types.BlockHeader{
-				Number:         0,
-				StateRoot:      &types.Hash{},
-				TxRoot:         &types.Hash{},
-				ReceiptRoot:    &types.Hash{},
-				ParentHash:     &types.Hash{},
-				Timestamp:      0,
-				Epoch:          0,
-				Bloom:          &types.Bloom{},
-				GasPrice:       0,
-				GasUsed:        0,
-				ProposerNodeID: 0,
-				Extra:          nil,
-			}, nil
-		},
-		GetAccountBalance: nil,
-		GetAccountNonce:   nil,
 	}
-	p2pID, err := repo.KeyToNodeID(s.Sk)
-	assert.Nil(t, err)
-	mockNetwork := testutil.MockMiniNetwork(ctrl, p2pID)
-	cnf.Network = mockNetwork
-	_, err = NewNode(cnf)
 
-	assert.Nil(t, err)
+	for _, tc := range testCase {
+		ctrl := gomock.NewController(t)
+		defer ctrl.Finish()
+
+		ast := assert.New(t)
+		err := storagemgr.Initialize(repo.KVStorageTypeLeveldb, repo.KVStorageCacheSize, repo.KVStorageSync, false)
+		ast.Nil(err)
+
+		logger := log.NewWithModule("consensus")
+		consensusConf, _ := testutil.MockConsensusConfig(logger, ctrl, t)
+		tc.setupMocks(consensusConf, ctrl)
+		node, err := NewNode(consensusConf)
+
+		if tc.expectedErrMsg != "" {
+			ast.NotNil(err)
+			ast.True(strings.Contains(err.Error(), tc.expectedErrMsg))
+		} else {
+			ast.Nil(err)
+			ast.NotNil(node)
+			node.Stop()
+		}
+	}
 }
-
 func TestPrepare(t *testing.T) {
 	ast := assert.New(t)
 	ctrl := gomock.NewController(t)
@@ -155,10 +235,6 @@ func TestPrepare(t *testing.T) {
 	txSubscribeCh := make(chan []*types.Transaction, 1)
 	sub := node.SubscribeTxEvent(txSubscribeCh)
 	defer sub.Unsubscribe()
-	ctx, cancel := context.WithCancel(context.Background())
-	wg := &sync.WaitGroup{}
-	wg.Add(1)
-	mockAddTx(node, ctx, wg)
 
 	sk, err := crypto.GenerateKey()
 	ast.Nil(err)
@@ -210,8 +286,6 @@ func TestPrepare(t *testing.T) {
 	err = node.Prepare(tx2)
 	ast.Nil(err)
 	<-txSubscribeCh
-	cancel()
-	wg.Wait() // make sure mockAddTx is done
 
 	t.Run("GetLowWatermark", func(t *testing.T) {
 		node.n.(*rbft.MockNode[types.Transaction, *types.Transaction]).EXPECT().GetLowWatermark().DoAndReturn(func() uint64 {
@@ -287,7 +361,8 @@ func TestReadConfig(t *testing.T) {
 	ast := assert.New(t)
 	ctrl := gomock.NewController(t)
 	logger := log.NewWithModule("consensus")
-	rbftConf, err := generateRbftConfig(testutil.MockConsensusConfig(logger, ctrl, t))
+	cnf, _ := testutil.MockConsensusConfig(logger, ctrl, t)
+	rbftConf, err := generateRbftConfig(cnf)
 	assert.Nil(t, err)
 
 	rbftConf.Logger.Notice()
@@ -388,23 +463,4 @@ func TestStatus2String(t *testing.T) {
 		statusStr := status2String(status)
 		ast.Equal(assertStatusStr, statusStr)
 	}
-}
-
-func mockAddTx(node *Node, ctx context.Context, wg *sync.WaitGroup) {
-	go func() {
-		for {
-			select {
-			case <-ctx.Done():
-				wg.Done()
-				return
-			case txs := <-node.txPreCheck.CommitValidTxs():
-				txs.LocalCheckRespCh <- &common.TxResp{
-					Status: true,
-				}
-				txs.LocalPoolRespCh <- &common.TxResp{
-					Status: true,
-				}
-			}
-		}
-	}()
 }

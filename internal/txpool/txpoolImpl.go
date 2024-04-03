@@ -27,14 +27,12 @@ import (
 var _ commonpool.TxPool[types.Transaction, *types.Transaction] = (*txPoolImpl[types.Transaction, *types.Transaction])(nil)
 
 var (
-	ErrTxPoolFull          = errors.New("tx pool full")
-	ErrNonceTooLow         = errors.New("nonce too low")
-	ErrNonceTooHigh        = errors.New("nonce too high")
-	ErrDuplicateTx         = errors.New("duplicate tx")
-	ErrGasPriceTooLow      = errors.New("gas price too low")
-	ErrReplaceQueueOldTx   = errors.New("replaced old tx which belong to queue")
-	ErrReplacePendingOldTx = errors.New("replaced old tx which belong to pending")
-	ErrBelowPriceBump      = errors.New("replace old tx err, gas price is below price bump")
+	ErrTxPoolFull     = errors.New("tx pool full")
+	ErrNonceTooLow    = errors.New("nonce too low")
+	ErrNonceTooHigh   = errors.New("nonce too high")
+	ErrDuplicateTx    = errors.New("duplicate tx")
+	ErrGasPriceTooLow = errors.New("gas price too low")
+	ErrBelowPriceBump = errors.New("replace old tx err, gas price is below price bump")
 )
 
 // txPoolImpl contains all currently known transactions.
@@ -63,6 +61,7 @@ type txPoolImpl[T any, Constraint types.TXConstraint[T]] struct {
 
 	timerMgr  timer.Timer
 	statusMgr *PoolStatusMgr
+	started   atomic.Bool
 	txRecords *txRecords[T, Constraint]
 
 	revCh  chan txPoolEvent
@@ -76,6 +75,9 @@ func NewTxPool[T any, Constraint types.TXConstraint[T]](config Config) (commonpo
 }
 
 func (p *txPoolImpl[T, Constraint]) Start() error {
+	if p.started.Load() {
+		return fmt.Errorf("txpool already started")
+	}
 	go p.listenEvent()
 
 	if p.enableLocalsPersist {
@@ -102,6 +104,7 @@ func (p *txPoolImpl[T, Constraint]) Start() error {
 		}
 	}
 
+	p.started.Store(true)
 	p.logger.Info("txpool started")
 	return nil
 }
@@ -215,7 +218,9 @@ func (p *txPoolImpl[T, Constraint]) updateValidTxs(validTxs *[]*T, tx *T, replac
 }
 
 func (p *txPoolImpl[T, Constraint]) dispatchAddTxsEvent(event *addTxsEvent) []txPoolEvent {
-	p.logger.Debugf("start dispatch add txs event:%s", addTxsEventToStr[event.EventType])
+	if event.EventType != localTxEvent && event.EventType != remoteTxsEvent {
+		p.logger.Debugf("start dispatch add txs event:%s", addTxsEventToStr[event.EventType])
+	}
 	var nextEvents []txPoolEvent
 
 	start := time.Now()
@@ -289,7 +294,6 @@ func (p *txPoolImpl[T, Constraint]) dispatchAddTxsEvent(event *addTxsEvent) []tx
 			}
 		}
 
-		//errs := p.addTxs(txs, false)
 		lo.ForEach(txs, func(tx *T, i int) {
 			replaced, err := p.addTx(tx, false)
 
@@ -303,7 +307,6 @@ func (p *txPoolImpl[T, Constraint]) dispatchAddTxsEvent(event *addTxsEvent) []tx
 				traceRejectTx(err.Error())
 			} else {
 				p.updateValidTxs(&validTxs, tx, replaced)
-				p.logger.Infof("update valid txs: %d", len(validTxs))
 			}
 		})
 
@@ -315,7 +318,6 @@ func (p *txPoolImpl[T, Constraint]) dispatchAddTxsEvent(event *addTxsEvent) []tx
 		validTxs, err := p.validateReceiveMissingRequests(req.batchHash, req.txs)
 		if err == nil {
 			lo.ForEach(validTxs, func(tx *T, _ int) {
-
 				p.replaceTx(tx, false)
 			})
 			delete(p.txStore.missingBatch, req.batchHash)
@@ -430,7 +432,7 @@ func (p *txPoolImpl[T, Constraint]) genHighNonceEvent(tx *T) *removeTxsEvent {
 }
 
 func (p *txPoolImpl[T, Constraint]) dispatchRemoveTxsEvent(event *removeTxsEvent) {
-	// p.logger.Debugf("start dispatch remove txs event:%s", removeTxsEventToStr[event.EventType])
+	p.logger.Debugf("start dispatch remove txs event:%s", removeTxsEventToStr[event.EventType])
 	metricsPrefix := "removeTxs_"
 	start := time.Now()
 	defer func() {
@@ -531,6 +533,7 @@ func (p *txPoolImpl[T, Constraint]) handleRemoveInvalidTxs(removeTxsM map[string
 			removePriorityCount += len(removePriorityTxs)
 		}
 
+		p.decreasePriorityNonBatchSize(uint64(removePriorityCount))
 		// 3. because we remove GasTooLow txs from priority minNonceQueue, we need to revert the pending nonce
 		p.revertPendingNonce(&txPointer{account: account, nonce: revertNonce}, updateAccounts)
 	}
@@ -558,6 +561,10 @@ func (p *txPoolImpl[T, Constraint]) dispatchBatchEvent(event *batchEvent) []txPo
 		// p.logger.WithFields(logrus.Fields{"cost": time.Since(start)}).Debugf("end dispatch batch event:%d", event.EventType)
 	}()
 	switch event.EventType {
+	case commonpool.ReplyBatchSignalEvent:
+		if p.notifyGenerateBatch {
+			p.notifyGenerateBatch = false
+		}
 	case commonpool.GenBatchTimeoutEvent, commonpool.GenBatchFirstEvent, commonpool.GenBatchSizeEvent, commonpool.GenBatchNoTxTimeoutEvent:
 		// it means primary receive the notify signal, and trigger the generate batch size event
 		// we need reset the notify flag
@@ -933,8 +940,10 @@ func (p *txPoolImpl[T, Constraint]) handleRemoveTimeoutTxs() int {
 				if commitNonce > 0 {
 					cleanNonce = commitNonce - 1
 				}
-				p.txStore.priorityByPrice.removeTxBeforeNonce(txAccount, cleanNonce)
+				removed := p.txStore.priorityByPrice.removeTxBeforeNonce(txAccount, cleanNonce)
+				removedTxs[txAccount] = removed
 				clearedAccount[txAccount] = true
+				readyCount += len(removed)
 			} else {
 				if tx := p.txStore.priorityByTime.data.Get(orderedKey); tx != nil {
 					if txNonce < commitNonce {
@@ -945,6 +954,8 @@ func (p *txPoolImpl[T, Constraint]) handleRemoveTimeoutTxs() int {
 					return true
 				}
 			}
+			// if removed priority txs, we need to decrease priorityNonBatchSize
+			p.decreasePriorityNonBatchSize(uint64(readyCount))
 
 			deleteTx := func(index *btreeIndex[T, Constraint]) bool {
 				if tx := index.data.Get(orderedKey); tx != nil {
@@ -983,6 +994,7 @@ func (p *txPoolImpl[T, Constraint]) Stop() {
 			p.logger.Errorf("Failed to close txRecords: %v", err)
 		}
 	}
+	p.started.Store(false)
 	p.logger.Infof("TxPool stopped!!!")
 }
 
@@ -1078,6 +1090,13 @@ func newTxPoolImpl[T any, Constraint types.TXConstraint[T]](config Config) (*txP
 	txpoolImp.logger.Infof("TxPool enable price priority = %v", txpoolImp.enablePricePriority)
 	txpoolImp.logger.Infof("TxPool chain info:[gasPrice: %v][height: %v][epoch Config: %+v]", txpoolImp.chainInfo.GasPrice.String(), txpoolImp.chainInfo.Height, txpoolImp.chainInfo.EpochConf)
 	return txpoolImp, nil
+}
+
+func (p *txPoolImpl[T, Constraint]) ReplyBatchSignal() {
+	ev := &batchEvent{
+		EventType: commonpool.ReplyBatchSignalEvent,
+	}
+	p.postEvent(ev)
 }
 
 func (p *txPoolImpl[T, Constraint]) Init(conf commonpool.ConsensusConfig) {
@@ -1328,29 +1347,9 @@ func (p *txPoolImpl[T, Constraint]) handleRestoreOneBatch(batchHash string) erro
 		return errors.New("can't find batch from batchesCache")
 	}
 
-	// remove from batchedTxs and batchStore
-	for _, hash := range batch.TxHashList {
-		ptr := p.txStore.txHashMap[hash]
-		if ptr == nil {
-			return fmt.Errorf("can't find tx from txHashMap:[txHash:%s]", hash)
-		}
-		// check if the given tx exist in priorityByTime
-		poolTx := p.txStore.getPoolTxByTxnPointer(ptr.account, ptr.nonce)
-		if p.enablePricePriority {
-			p.txStore.priorityByPrice.push(poolTx)
-		} else {
-			key := &orderedIndexKey{time: poolTx.getRawTimestamp(), account: ptr.account, nonce: ptr.nonce}
-			if tx := p.txStore.priorityByTime.data.Get(key); tx == nil {
-				return fmt.Errorf("can't find tx from priorityByTime:[txHash:%s]", hash)
-			}
-		}
-		if !p.txStore.batchedTxs[*ptr] {
-			return fmt.Errorf("can't find tx from batchedTxs:[txHash:%s]", hash)
-		}
-		delete(p.txStore.batchedTxs, *ptr)
+	if err := p.putBackBatchedTxs(batch); err != nil {
+		return err
 	}
-	delete(p.txStore.batchesCache, batchHash)
-	p.increasePriorityNonBatchSize(uint64(len(batch.TxHashList)))
 
 	p.logger.Debugf("Restore one batch, which hash is %s, now there are %d non-batched txs, "+
 		"%d batches in txPool", batchHash, p.txStore.priorityNonBatchSize, len(p.txStore.batchesCache))
@@ -1369,8 +1368,16 @@ func (p *txPoolImpl[T, Constraint]) RemoveBatches(batchHashList []string) {
 // RemoveBatches removes several batches by given digests of
 // transaction batches from the pool(batchedTxs).
 func (p *txPoolImpl[T, Constraint]) handleRemoveBatches(batchHashList []string) int {
+	priorityLen := p.txStore.priorityByTime.size()
+	if p.enablePricePriority {
+		priorityLen = int(p.txStore.priorityByPrice.size())
+	}
 	// update current cached commit nonce for account
 	p.logger.Debugf("RemoveBatches: batch len:%d", len(batchHashList))
+	p.logger.Debugf("Before RemoveBatches in txpool, and now there are %d non-batched txs, %d batches, "+
+		"priority len: %d, parkingLot len: %d, parkingLot size len: %d, batchedTx len: %d, txHashMap len: %d", p.txStore.priorityNonBatchSize,
+		len(p.txStore.batchesCache), priorityLen, p.txStore.parkingLotIndex.size(), p.txStore.parkingLotSize,
+		len(p.txStore.batchedTxs), len(p.txStore.txHashMap))
 	var count int
 	updateAccounts := make(map[string]uint64)
 	for _, batchHash := range batchHashList {
@@ -1416,9 +1423,13 @@ func (p *txPoolImpl[T, Constraint]) handleRemoveBatches(batchHashList []string) 
 	for account, pendingNonce := range updateAccounts {
 		p.logger.Debugf("Account %s update its pendingNonce to %d by commitNonce", account, pendingNonce)
 	}
-	p.logger.Infof("Removes batches in txpool, and now there are %d non-batched txs, %d batches, "+
-		"priority len: %d, parkingLot len: %d, batchedTx len: %d, txHashMap len: %d", p.txStore.priorityNonBatchSize,
-		len(p.txStore.batchesCache), p.txStore.priorityByTime.size(), p.txStore.parkingLotIndex.size(),
+	priorityLen = p.txStore.priorityByTime.size()
+	if p.enablePricePriority {
+		priorityLen = int(p.txStore.priorityByPrice.size())
+	}
+	p.logger.Infof("After Removes batches in txpool, and now there are %d non-batched txs, %d batches, "+
+		"priority len: %d, parkingLot len: %d, parkingLot size len: %d, batchedTx len: %d, txHashMap len: %d", p.txStore.priorityNonBatchSize,
+		len(p.txStore.batchesCache), priorityLen, p.txStore.parkingLotIndex.size(), p.txStore.parkingLotSize,
 		len(p.txStore.batchedTxs), len(p.txStore.txHashMap))
 	return count
 }
@@ -1528,10 +1539,14 @@ func (p *txPoolImpl[T, Constraint]) updateNonceCache(pointer *txPointer, updateA
 	if preCommitNonce < newCommitNonce {
 		p.txStore.nonceCache.setCommitNonce(pointer.account, newCommitNonce)
 		// Note!!! updating pendingNonce to commitNonce for the restart node
-		pendingNonce := p.txStore.nonceCache.getPendingNonce(pointer.account)
-		if pendingNonce < newCommitNonce {
+		pendingNonce, ok := p.txStore.nonceCache.pendingNonces[pointer.account]
+		if !ok || pendingNonce < newCommitNonce {
 			updateAccounts[pointer.account] = newCommitNonce
 			p.txStore.nonceCache.setPendingNonce(pointer.account, newCommitNonce)
+			if p.enablePricePriority {
+				p.txStore.priorityByPrice.updateAccountNonce(pointer.account, newCommitNonce)
+			}
+
 		}
 	}
 }
@@ -1575,9 +1590,6 @@ func (p *txPoolImpl[T, Constraint]) handleRemoveStateUpdatingTxs(txPointerList [
 			}
 
 		}
-
-		// update nonce because we had persist these txs
-		p.updateNonceCache(&txPointer{account: wrapperPointer.Account, nonce: wrapperPointer.Nonce}, updateAccounts)
 	})
 
 	if p.enablePricePriority && len(maxPriorityNonce) > 0 {
@@ -1596,7 +1608,15 @@ func (p *txPoolImpl[T, Constraint]) handleRemoveStateUpdatingTxs(txPointerList [
 		}
 	}
 
+	// update nonce because we had persist these txs
+	lo.ForEach(txPointerList, func(wrapperPointer *commonpool.WrapperTxPointer, _ int) {
+		p.updateNonceCache(&txPointer{account: wrapperPointer.Account, nonce: wrapperPointer.Nonce}, updateAccounts)
+	})
+
 	readyNum := uint64(p.txStore.priorityByTime.size())
+	if p.enablePricePriority {
+		readyNum = p.txStore.priorityByPrice.size()
+	}
 	// set nonBatchSize to min(nonBatchedTxs, readyNum),
 	if p.txStore.priorityNonBatchSize > readyNum {
 		p.logger.Infof("Set nonBatchSize from %d to the size of priority %d", p.txStore.priorityNonBatchSize, readyNum)
@@ -1830,6 +1850,11 @@ func (p *txPoolImpl[T, Constraint]) replaceTx(tx *T, local bool) bool {
 	// 1. insert new tx to pool
 	p.txStore.insertTxInPool(newPoolTx, local)
 
+	// if tx is the pending tx, update pending nonce
+	if txNonce == pendingNonce {
+		p.processDirtyAccount(account, newPoolTx, true)
+	}
+
 	// 2. replace old tx in priority queue or parking lot
 	if txNonce < pendingNonce {
 		if p.enablePricePriority {
@@ -1840,10 +1865,13 @@ func (p *txPoolImpl[T, Constraint]) replaceTx(tx *T, local bool) bool {
 		if !replaced {
 			p.increasePriorityNonBatchSize(1)
 		}
-	} else {
+	} else if txNonce > pendingNonce {
 		// insert new tx to parking lot
 		p.txStore.parkingLotIndex.insertKey(newPoolTx)
-		p.txStore.increaseParkingLotSize(1)
+		// replace old tx in parking lot is not needed to update parking lot size
+		if !replaced {
+			p.txStore.increaseParkingLotSize(1)
+		}
 	}
 
 	return replaced
@@ -1984,25 +2012,67 @@ func (p *txPoolImpl[T, Constraint]) RestorePool() {
 // RestorePool move all batched txs back to non-batched tx which should
 // only be used after abnormal recovery.
 func (p *txPoolImpl[T, Constraint]) handleRestorePool() {
+	priorityLen := p.txStore.priorityByTime.size()
+	if p.enablePricePriority {
+		priorityLen = int(p.txStore.priorityByPrice.size())
+	}
 	p.logger.Infof("Before restore pool, there are %d non-batched txs, %d batches, "+
-		"priority len: %d, parkingLot len: %d, batchedTx len: %d, txHashMap len: %d, local txs: %d", p.txStore.priorityNonBatchSize,
-		len(p.txStore.batchesCache), p.txStore.priorityByTime.size(), p.txStore.parkingLotIndex.size(),
+		"priority len: %d, parkingLot len: %d, parkingLot size len: %d, batchedTx len: %d, txHashMap len: %d, local txs: %d", p.txStore.priorityNonBatchSize,
+		len(p.txStore.batchesCache), priorityLen, p.txStore.parkingLotIndex.size(), p.txStore.parkingLotSize,
 		len(p.txStore.batchedTxs), len(p.txStore.txHashMap), p.txStore.localTTLIndex.size())
 
-	for batchDigest, batch := range p.txStore.batchesCache {
-		// 1. increase nonBatchSize
-		p.increasePriorityNonBatchSize(uint64(len(batch.TxList)))
-		// 2. remove batchCache
-		delete(p.txStore.batchesCache, batchDigest)
+	for _, batch := range p.txStore.batchesCache {
+		if err := p.putBackBatchedTxs(batch); err != nil {
+			p.logger.Errorf("Failed to put back batched txs: %s", err)
+			return
+		}
 	}
 
+	priorityLen = p.txStore.priorityByTime.size()
+	if p.enablePricePriority {
+		priorityLen = int(p.txStore.priorityByPrice.size())
+	}
 	// clear missingTxs after abnormal.
 	p.txStore.missingBatch = make(map[string]map[uint64]string)
 	p.txStore.batchedTxs = make(map[txPointer]bool)
 	p.logger.Infof("After restore pool, there are %d non-batched txs, %d batches, "+
-		"priority len: %d, parkingLot len: %d, batchedTx len: %d, txHashMap len: %d, local txs: %d", p.txStore.priorityNonBatchSize,
-		len(p.txStore.batchesCache), p.txStore.priorityByTime.size(), p.txStore.parkingLotIndex.size(),
+		"priority len: %d, parkingLot len: %d, parkingLot size len: %d, batchedTx len: %d, txHashMap len: %d, local txs: %d", p.txStore.priorityNonBatchSize,
+		len(p.txStore.batchesCache), priorityLen, p.txStore.parkingLotIndex.size(), p.txStore.parkingLotSize,
 		len(p.txStore.batchedTxs), len(p.txStore.txHashMap), p.txStore.localTTLIndex.size())
+}
+
+func (p *txPoolImpl[T, Constraint]) putBackBatchedTxs(batch *commonpool.RequestHashBatch[T, Constraint]) error {
+	// remove from batchedTxs and batchStore
+	p.logger.Infof("put back batched txs: %s", batch.BatchHash)
+	for i := len(batch.TxList) - 1; i >= 0; i-- {
+		tx := batch.TxList[i]
+		hash := Constraint(tx).RbftGetTxHash()
+		ptr := p.txStore.txHashMap[hash]
+		if ptr == nil {
+			return fmt.Errorf("can't find tx from txHashMap:[txHash:%s]", hash)
+		}
+
+		if !p.txStore.batchedTxs[*ptr] {
+			return fmt.Errorf("can't find tx from batchedTxs:[txHash:%s]", hash)
+		}
+		delete(p.txStore.batchedTxs, *ptr)
+
+		// check if the given tx exist in priority
+		poolTx := p.txStore.getPoolTxByTxnPointer(ptr.account, ptr.nonce)
+		if p.enablePricePriority {
+			p.txStore.priorityByPrice.pushBack(poolTx)
+		} else {
+			key := &orderedIndexKey{time: poolTx.getRawTimestamp(), account: ptr.account, nonce: ptr.nonce}
+			if poolTransaction := p.txStore.priorityByTime.data.Get(key); poolTransaction == nil {
+				return fmt.Errorf("can't find tx from priorityByTime:[txHash:%s]", hash)
+			}
+		}
+	}
+	// 1. increase nonBatchSize
+	p.increasePriorityNonBatchSize(uint64(len(batch.TxList)))
+	// 2. remove batchCache
+	delete(p.txStore.batchesCache, batch.BatchHash)
+	return nil
 }
 
 // FilterOutOfDateRequests get the remained local txs in TTLIndex and broadcast to other vp peers by tolerance time.

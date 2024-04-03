@@ -7,8 +7,8 @@ replace github.com/ethereum/go-ethereum v1.12.0 => github.com/axiomesh/go-ethere
 require (
 	github.com/Rican7/retry v0.3.1
 	github.com/VictoriaMetrics/fastcache v1.12.1
-	github.com/axiomesh/axiom-bft v0.0.3-0.20240320053810-33b5bcd5e7fc
-	github.com/axiomesh/axiom-kit v0.0.3-0.20240328095426-96ad95edfd42
+	github.com/axiomesh/axiom-bft v0.0.3-0.20240407065819-b0f188f6bf44
+	github.com/axiomesh/axiom-kit v0.0.3-0.20250714110935-a869ab0545d0
 	github.com/axiomesh/axiom-p2p v0.0.3-0.20240227055221-b5e353b29d5d
 	github.com/cbergoon/merkletree v0.2.0
 	github.com/cockroachdb/pebble v1.0.0
@@ -32,9 +32,10 @@ require (
 	github.com/rosedblabs/rosedb/v2 v2.3.3
 	github.com/rs/cors v1.9.0
 	github.com/samber/lo v1.39.0
+	github.com/schollz/progressbar/v3 v3.18.0
 	github.com/sirupsen/logrus v1.9.3
 	github.com/spf13/viper v1.16.0
-	github.com/stretchr/testify v1.8.4
+	github.com/stretchr/testify v1.9.0
 	github.com/urfave/cli/v2 v2.25.7
 	go.opentelemetry.io/otel/trace v1.16.0
 	go.uber.org/atomic v1.11.0
@@ -130,14 +131,15 @@ require (
 	github.com/magiconair/properties v1.8.7 // indirect
 	github.com/marten-seemann/tcp v0.0.0-20210406111302-dfbc87cc63fd // indirect
 	github.com/mattn/go-colorable v0.1.13 // indirect
-	github.com/mattn/go-isatty v0.0.19 // indirect
-	github.com/mattn/go-runewidth v0.0.15 // indirect
+	github.com/mattn/go-isatty v0.0.20 // indirect
+	github.com/mattn/go-runewidth v0.0.16 // indirect
 	github.com/matttproud/golang_protobuf_extensions v1.0.4 // indirect
 	github.com/miekg/dns v1.1.54 // indirect
 	github.com/mikioh/tcpinfo v0.0.0-20190314235526-30a79bb1804b // indirect
 	github.com/mikioh/tcpopt v0.0.0-20190314235656-172688c1accc // indirect
 	github.com/minio/highwayhash v1.0.2 // indirect
 	github.com/minio/sha256-simd v1.0.1 // indirect
+	github.com/mitchellh/colorstring v0.0.0-20190213212951-d06e56a500db // indirect
 	github.com/mitchellh/pointerstructure v1.2.0 // indirect
 	github.com/mr-tron/base58 v1.2.0 // indirect
 	github.com/multiformats/go-base32 v0.1.0 // indirect
@@ -166,7 +168,7 @@ require (
 	github.com/quic-go/quic-go v0.33.0 // indirect
 	github.com/quic-go/webtransport-go v0.5.3 // indirect
 	github.com/raulk/go-watchdog v1.3.0 // indirect
-	github.com/rivo/uniseg v0.4.4 // indirect
+	github.com/rivo/uniseg v0.4.7 // indirect
 	github.com/rogpeppe/go-internal v1.11.0 // indirect
 	github.com/rosedblabs/wal v1.3.3 // indirect
 	github.com/russross/blackfriday/v2 v2.1.0 // indirect
@@ -198,7 +200,8 @@ require (
 	golang.org/x/mod v0.11.0 // indirect
 	golang.org/x/net v0.12.0 // indirect
 	golang.org/x/sync v0.3.0 // indirect
-	golang.org/x/sys v0.10.0 // indirect
+	golang.org/x/sys v0.29.0 // indirect
+	golang.org/x/term v0.28.0 // indirect
 	golang.org/x/text v0.11.0 // indirect
 	golang.org/x/tools v0.9.1 // indirect
 	gonum.org/v1/gonum v0.13.0 // indirect

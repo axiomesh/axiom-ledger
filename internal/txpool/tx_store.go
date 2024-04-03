@@ -146,9 +146,7 @@ func (txStore *transactionStore[T, Constraint]) removeTxInPool(poolTx *internalT
 	if !enablePricePriority && isPriority {
 		txStore.priorityByTime.removeKey(poolTx)
 	}
-	if ok := txStore.parkingLotIndex.removeKey(poolTx); ok {
-		txStore.decreaseParkingLotSize(1)
-	}
+	txStore.parkingLotIndex.removeKey(poolTx)
 	txStore.removeTTLIndex.removeKey(poolTx)
 	txStore.localTTLIndex.removeKey(poolTx)
 }

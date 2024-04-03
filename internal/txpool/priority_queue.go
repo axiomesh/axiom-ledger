@@ -118,6 +118,21 @@ func (p *priorityQueue[T, Constraint]) push(tx *internalTransaction[T, Constrain
 	p.txsByPrice.push(tx)
 }
 
+func (p *priorityQueue[T, Constraint]) pushBack(tx *internalTransaction[T, Constraint]) {
+	from := tx.getAccount()
+	account, ok := p.accountsM[from]
+	if !ok {
+		p.accountsM[from] = newAccountQueue[T, Constraint](p.getNonceFn(from))
+		account = p.accountsM[from]
+	}
+
+	if _, ok = account.items[tx.getNonce()]; !ok {
+		account.push(tx)
+		p.increasePrioritySize()
+	}
+	p.txsByPrice.push(tx)
+}
+
 func (p *priorityQueue[T, Constraint]) pop() *internalTransaction[T, Constraint] {
 	if p.txsByPrice.length() == 0 {
 		return nil
@@ -160,17 +175,20 @@ func (p *priorityQueue[T, Constraint]) shift(from string, lastNonce uint64) {
 
 func (p *priorityQueue[T, Constraint]) increasePrioritySize() {
 	p.nonBatchSize++
-	readyTxNum.Set(float64(p.nonBatchSize))
 }
 
 func (p *priorityQueue[T, Constraint]) decreasePrioritySize() {
 	p.nonBatchSize--
-	readyTxNum.Set(float64(p.nonBatchSize))
 }
 
 func (p *priorityQueue[T, Constraint]) setPrioritySize(size uint64) {
 	p.nonBatchSize = size
-	readyTxNum.Set(float64(p.nonBatchSize))
+}
+
+func (p *priorityQueue[T, Constraint]) updateAccountNonce(from string, nonce uint64) {
+	if account, ok := p.accountsM[from]; ok {
+		account.updateLastNonce(nonce)
+	}
 }
 
 func (p *priorityQueue[T, Constraint]) replaceTx(tx *internalTransaction[T, Constraint]) bool {
@@ -213,15 +231,25 @@ func (p *priorityQueue[T, Constraint]) removeTxBehindNonce(tx *internalTransacti
 func (p *priorityQueue[T, Constraint]) removeTxBeforeNonce(from string, nonce uint64) []*internalTransaction[T, Constraint] {
 	account, ok := p.accountsM[from]
 	if !ok {
+		p.logger.Debugf("account %s not found in priority queue", from)
 		return nil
 	}
 	minNonceTx := account.peek()
-	if minNonceTx == nil || nonce < minNonceTx.getNonce() {
+	if minNonceTx == nil {
+		p.logger.Debugf("account %s has no tx", from)
 		return nil
 	}
+
+	if nonce < minNonceTx.getNonce() {
+		p.logger.Debugf("account %s min nonce[%d] is bigger than %d", from, minNonceTx.getNonce(), nonce)
+		return nil
+	}
+
 	p.txsByPrice.remove(minNonceTx)
 
+	p.logger.Debugf("start to remove txs before nonce %d from account %s, local min nonce is %d", nonce, from, minNonceTx.getNonce())
 	removeTxs := account.prune(nonce)
+	p.logger.Debugf("remove %d txs from account %s", len(removeTxs), from)
 	oldSize := p.nonBatchSize
 	p.setPrioritySize(oldSize - uint64(len(removeTxs)))
 	if shiftTx := account.peek(); shiftTx != nil {

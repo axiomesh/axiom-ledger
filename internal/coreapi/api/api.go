@@ -72,4 +72,5 @@ type TxPoolAPI interface {
 	GetAccountMeta(account string, full bool) any
 	GetMeta(full bool) any
 	GetChainInfo() any
+	IsStarted() bool
 }

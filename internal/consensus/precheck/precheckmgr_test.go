@@ -138,7 +138,12 @@ func TestTxPreCheckMgr_Start(t *testing.T) {
 		require.True(t, ledger.getBalance(s.Addr.String()).Cmp(transfer) == 0)
 
 		event := createLocalTxEvent(tx)
+		txWithResp := event.Event.(*common2.TxWithResp)
 		tp.PostUncheckedTxEvent(event)
+		resp := <-txWithResp.CheckCh
+		require.True(t, resp.Status)
+		require.Equal(t, "", resp.ErrorMsg)
+
 		require.True(t, ledger.getBalance(s.Addr.String()).Cmp(transfer) == 0)
 
 		gasFeeCap := 1
@@ -246,7 +251,7 @@ func TestTxPreCheckMgr_BasicCheck(t *testing.T) {
 		tp.PostUncheckedTxEvent(localEvent)
 		resp := <-localEvent.Event.(*common2.TxWithResp).CheckCh
 		require.False(t, resp.Status)
-		require.Contains(t, resp.ErrorMsg, ErrGasPriceTooLow)
+		require.Contains(t, resp.ErrorMsg, errGasPriceTooLow.Error())
 	})
 }
 
@@ -287,7 +292,7 @@ func TestTxPreCheckMgr_VerifySign(t *testing.T) {
 				tp.PostUncheckedTxEvent(event)
 				resp := <-event.Event.(*common2.TxWithResp).CheckCh
 				require.False(t, resp.Status)
-				require.Contains(t, resp.ErrorMsg, ErrTxSign)
+				require.Contains(t, resp.ErrorMsg, errTxSign.Error())
 
 				event = createRemoteTxEvent([]*types.Transaction{tx})
 				tp.PostUncheckedTxEvent(event)
@@ -342,7 +347,7 @@ func TestTxPreCheckMgr_VerifySign(t *testing.T) {
 				tp.PostUncheckedTxEvent(event)
 				resp := <-event.Event.(*common2.TxWithResp).CheckCh
 				require.False(t, resp.Status)
-				require.Contains(t, resp.ErrorMsg, ErrTo)
+				require.Contains(t, resp.ErrorMsg, errTo.Error())
 			},
 		},
 	}

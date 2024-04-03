@@ -14,7 +14,6 @@ import (
 
 	rbft "github.com/axiomesh/axiom-bft"
 	common "github.com/axiomesh/axiom-ledger/internal/consensus/common"
-	precheck "github.com/axiomesh/axiom-ledger/internal/consensus/precheck"
 	gomock "go.uber.org/mock/gomock"
 )
 
@@ -41,42 +40,9 @@ func (m *MockPreCheck) EXPECT() *MockPreCheckMockRecorder {
 	return m.recorder
 }
 
-// CommitValidTxs mocks base method.
-func (m *MockPreCheck) CommitValidTxs() chan *precheck.ValidTxs {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "CommitValidTxs")
-	ret0, _ := ret[0].(chan *precheck.ValidTxs)
-	return ret0
-}
-
-// CommitValidTxs indicates an expected call of CommitValidTxs.
-func (mr *MockPreCheckMockRecorder) CommitValidTxs() *MockPreCheckCommitValidTxsCall {
-	mr.mock.ctrl.T.Helper()
-	call := mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CommitValidTxs", reflect.TypeOf((*MockPreCheck)(nil).CommitValidTxs))
-	return &MockPreCheckCommitValidTxsCall{Call: call}
-}
-
-// MockPreCheckCommitValidTxsCall wrap *gomock.Call
-type MockPreCheckCommitValidTxsCall struct {
-	*gomock.Call
-}
-
-// Return rewrite *gomock.Call.Return
-func (c *MockPreCheckCommitValidTxsCall) Return(arg0 chan *precheck.ValidTxs) *MockPreCheckCommitValidTxsCall {
-	c.Call = c.Call.Return(arg0)
-	return c
-}
-
-// Do rewrite *gomock.Call.Do
-func (c *MockPreCheckCommitValidTxsCall) Do(f func() chan *precheck.ValidTxs) *MockPreCheckCommitValidTxsCall {
-	c.Call = c.Call.Do(f)
-	return c
-}
-
-// DoAndReturn rewrite *gomock.Call.DoAndReturn
-func (c *MockPreCheckCommitValidTxsCall) DoAndReturn(f func() chan *precheck.ValidTxs) *MockPreCheckCommitValidTxsCall {
-	c.Call = c.Call.DoAndReturn(f)
-	return c
+// ISGOMOCK indicates that this struct is a gomock mock.
+func (m *MockPreCheck) ISGOMOCK() struct{} {
+	return struct{}{}
 }
 
 // PostUncheckedTxEvent mocks base method.

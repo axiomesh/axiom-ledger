@@ -7,9 +7,9 @@ import (
 	"testing"
 	"time"
 
+	"github.com/axiomesh/axiom-kit/txpool/mock_txpool"
 	"github.com/axiomesh/axiom-ledger/internal/components/timer"
 	"github.com/axiomesh/axiom-ledger/internal/consensus/rbft/testutil"
-	txpoolImpl "github.com/axiomesh/axiom-ledger/internal/txpool"
 	"github.com/samber/lo"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -55,7 +55,7 @@ func TestNode_Start(t *testing.T) {
 				GasPrice: big.NewInt(0),
 			}
 		}),
-		common.WithTxPool(mockTxPool(t)),
+		common.WithTxPool(mock_txpool.NewMockMinimalTxPool[types.Transaction, *types.Transaction](500, mockCtl)),
 		common.WithGetCurrentEpochInfoFromEpochMgrContractFunc(func() (*rbft.EpochInfo, error) {
 			return r.GenesisConfig.EpochInfo, nil
 		}),
@@ -93,10 +93,6 @@ func TestNode_Start(t *testing.T) {
 	txSubscribeMockCh := make(chan events.ExecutedEvent, 1)
 	mockSub := solo.SubscribeMockBlockEvent(txSubscribeMockCh)
 	defer mockSub.Unsubscribe()
-
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
-	mockAddTx(solo, ctx)
 
 	err = solo.Prepare(tx)
 	require.Nil(t, err)
@@ -153,16 +149,12 @@ func TestNode_ReportState(t *testing.T) {
 		node.GetLowWatermark()
 		ast.Equal(0, len(node.batchDigestM))
 
-		txList, signer := prepareMultiTx(t, 10)
+		txList, _ := prepareMultiTx(t, 10)
 		ast.Equal(10, len(txList))
 
 		txSubscribeCh := make(chan []*types.Transaction, 1)
 		sub := node.SubscribeTxEvent(txSubscribeCh)
 		defer sub.Unsubscribe()
-
-		ctx, cancel := context.WithCancel(context.Background())
-		defer cancel()
-		mockAddTx(node, ctx)
 
 		for _, tx := range txList {
 			err = node.Prepare(tx)
@@ -172,19 +164,6 @@ func TestNode_ReportState(t *testing.T) {
 			time.Sleep(batchTimeout + 10*time.Millisecond)
 		}
 
-		// test pool full
-		ast.Equal(10, len(node.batchDigestM))
-		tx11, err := types.GenerateTransactionWithSigner(uint64(11),
-			types.NewAddressByStr("0xdAC17F958D2ee523a2206206994597C13D831ec7"), big.NewInt(0), nil, signer)
-
-		ast.Nil(err)
-		err = node.Prepare(tx11)
-		ast.NotNil(err)
-		<-txSubscribeCh
-		ast.Contains(err.Error(), txpoolImpl.ErrTxPoolFull.Error())
-		ast.Equal(10, len(node.batchDigestM), "the pool should be full, tx11 is not add in txpool successfully")
-
-		ast.NotNil(node.txpool.GetPendingTxByHash(txList[9].RbftGetTxHash()), "tx10 should be in txpool")
 		// trigger the report state
 		pointer9 := &events.TxPointer{
 			Hash:    txList[9].GetHash(),
@@ -217,42 +196,6 @@ func prepareMultiTx(t *testing.T, count int) ([]*types.Transaction, *types.Signe
 	return txList, signer
 }
 
-func TestNode_RemoveTxFromPool(t *testing.T) {
-	ast := assert.New(t)
-	node, err := mockSoloNode(t, false)
-	ast.Nil(err)
-
-	err = node.Start()
-	ast.Nil(err)
-	defer node.Stop()
-
-	txList, _ := prepareMultiTx(t, 10)
-	// remove the first tx
-	txList = txList[1:]
-	ast.Equal(9, len(txList))
-
-	txSubscribeCh := make(chan []*types.Transaction, 1)
-	sub := node.SubscribeTxEvent(txSubscribeCh)
-	defer sub.Unsubscribe()
-
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
-	mockAddTx(node, ctx)
-
-	for _, tx := range txList {
-		err = node.Prepare(tx)
-		<-txSubscribeCh
-		ast.Nil(err)
-	}
-	// lack nonce 0, so the txs will not be generated to the batch
-	ast.Equal(0, len(node.batchDigestM))
-	ast.NotNil(node.txpool.GetPendingTxByHash(txList[8].RbftGetTxHash()), "tx9 should be in txpool")
-	// sleep to make sure trigger the remove tx from pool
-	time.Sleep(2*removeTxTimeout + 500*time.Millisecond)
-
-	ast.Nil(node.txpool.GetPendingTxByHash(txList[8].RbftGetTxHash()), "tx9 should be removed from txpool")
-}
-
 func TestNode_GetLowWatermark(t *testing.T) {
 	ast := assert.New(t)
 	node, err := mockSoloNode(t, false)
@@ -269,9 +212,6 @@ func TestNode_GetLowWatermark(t *testing.T) {
 	txSubscribeCh := make(chan []*types.Transaction, 1)
 	sub := node.SubscribeTxEvent(txSubscribeCh)
 	defer sub.Unsubscribe()
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
-	mockAddTx(node, ctx)
 
 	err = node.Prepare(tx)
 	<-txSubscribeCh
@@ -323,15 +263,13 @@ func TestNode_Prepare(t *testing.T) {
 		ast.NotNil(err)
 		ast.Contains(err.Error(), "add pool error")
 
-		rightPrecheckMgr := mock_precheck.NewMockMinPreCheck(ctrl, validTxsCh)
+		rightPrecheckMgr := mock_precheck.NewMockMinPreCheck(ctrl, node.txpool)
 		node.txPreCheck = rightPrecheckMgr
 
 		txSubscribeCh := make(chan []*types.Transaction, 1)
 		sub := node.SubscribeTxEvent(txSubscribeCh)
 		defer sub.Unsubscribe()
-		ctx, cancel := context.WithCancel(context.Background())
-		defer cancel()
-		mockAddTx(node, ctx)
+
 		err = node.Prepare(tx)
 		<-txSubscribeCh
 		ast.Nil(err)
@@ -345,37 +283,14 @@ func TestNode_Prepare(t *testing.T) {
 		repoRoot := t.TempDir()
 		r, err := repo.Load(repo.DefaultKeyJsonPassword, repoRoot, true)
 		ast.Nil(err)
-		cfg := r.ConsensusConfig
 
 		recvCh := make(chan consensusEvent, maxChanSize)
 		mockCtl := gomock.NewController(t)
 		mockNetwork := mock_network.NewMockNetwork(mockCtl)
-		mockPrecheck := mock_precheck.NewMockMinPreCheck(mockCtl, validTxsCh)
 
 		batchSize := 4
-		txpoolConf := txpoolImpl.Config{
-			Logger:              &common.Logger{FieldLogger: log.NewWithModule("pool")},
-			PoolSize:            poolSize,
-			ToleranceRemoveTime: removeTxTimeout,
-			GetAccountNonce: func(address string) uint64 {
-				return 0
-			},
-			GetAccountBalance: func(address string) *big.Int {
-				maxGasPrice := new(big.Int).Mul(big.NewInt(10000), big.NewInt(1e9))
-				return new(big.Int).Mul(big.NewInt(math.MaxInt64), maxGasPrice)
-			},
-			ChainInfo: &txpool.ChainInfo{
-				Height:   1,
-				GasPrice: new(big.Int).Mul(big.NewInt(5000), big.NewInt(1e9)),
-				EpochConf: &txpool.EpochConfig{
-					EnableGenEmptyBatch: false,
-					BatchSize:           uint64(batchSize),
-				},
-			},
-		}
-
-		txpoolInst, err := txpoolImpl.NewTxPool[types.Transaction, *types.Transaction](txpoolConf)
-		ast.Nil(err)
+		pool := mock_txpool.NewMockMinimalTxPool[types.Transaction, *types.Transaction](batchSize, mockCtl)
+		mockPrecheck := mock_precheck.NewMockMinPreCheck(mockCtl, pool)
 
 		s, err := types.GenerateSigner()
 		ast.Nil(err)
@@ -388,28 +303,25 @@ func TestNode_Prepare(t *testing.T) {
 				Config:  r.ConsensusConfig,
 				PrivKey: s.Sk,
 			},
-			lastExec:         uint64(0),
-			noTxBatchTimeout: batchTime,
-			batchTimeout:     cfg.Solo.BatchTimeout.ToDuration(),
-			commitC:          make(chan *common.CommitEvent, maxChanSize),
-			blockCh:          make(chan *txpool.RequestHashBatch[types.Transaction, *types.Transaction], maxChanSize),
-			txpool:           txpoolInst,
-			network:          mockNetwork,
-			batchDigestM:     make(map[uint64]string),
-			recvCh:           recvCh,
-			logger:           logger,
-			ctx:              ctx,
-			cancel:           cancel,
-			txPreCheck:       mockPrecheck,
+			lastExec:     uint64(0),
+			commitC:      make(chan *common.CommitEvent, maxChanSize),
+			blockCh:      make(chan *txpool.RequestHashBatch[types.Transaction, *types.Transaction], maxChanSize),
+			txpool:       pool,
+			network:      mockNetwork,
+			batchDigestM: make(map[uint64]string),
+			recvCh:       recvCh,
+			logger:       logger,
+			ctx:          ctx,
+			cancel:       cancel,
+			txPreCheck:   mockPrecheck,
 			epcCnf: &epochConfig{
 				epochPeriod:         r.GenesisConfig.EpochInfo.EpochPeriod,
 				startBlock:          r.GenesisConfig.EpochInfo.StartBlock,
 				checkpoint:          r.GenesisConfig.EpochInfo.ConsensusParams.CheckpointPeriod,
-				enableGenEmptyBlock: txpoolConf.ChainInfo.EpochConf.EnableGenEmptyBatch,
+				enableGenEmptyBlock: false,
 			},
 		}
 
-		soloNode.txpool = txpoolInst
 		batchTimerMgr := timer.NewTimerManager(logger)
 		err = batchTimerMgr.CreateTimer(timer.Batch, batchTime, soloNode.handleTimeoutEvent)
 		require.Nil(t, err)
@@ -423,7 +335,6 @@ func TestNode_Prepare(t *testing.T) {
 
 		err = soloNode.Start()
 		require.Nil(t, err)
-		mockAddTx(soloNode, ctx)
 
 		txs := testutil.ConstructTxs(s, batchSize)
 

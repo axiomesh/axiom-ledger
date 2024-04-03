@@ -51,3 +51,7 @@ func (api *TxPoolAPI) GetChainInfo() any {
 	}
 	return api.axiomLedger.TxPool.GetChainInfo()
 }
+
+func (api *TxPoolAPI) IsStarted() bool {
+	return api.axiomLedger.TxPool.IsStarted()
+}
