@@ -83,6 +83,7 @@ OUTER_LOOP:
 		for {
 			select {
 			case <-r.quitCh:
+				ticker.Stop()
 				return
 			case <-r.ctx.Done():
 				return

@@ -28,6 +28,7 @@ type ConsensusConfig struct {
 	TxCache       TxCache           `mapstructure:"tx_cache" toml:"tx_cache"`
 	Rbft          RBFT              `mapstructure:"rbft" toml:"rbft"`
 	Solo          Solo              `mapstructure:"solo" toml:"solo"`
+	DagBft        DagBft            `mapstructure:"dag_bft" toml:"dag_bft"`
 }
 
 type TimedGenBlock struct {
@@ -73,6 +74,26 @@ type RBFTTimeout struct {
 
 type Solo struct {
 	BatchTimeout Duration `mapstructure:"batch_timeout" toml:"batch_timeout"`
+}
+
+type DagBft struct {
+	MinHeaderBatchesSize           uint64   `mapstructure:"min_header_batches_size" toml:"min_header_batches_size"`
+	MaxHeaderBatchesSize           uint64   `mapstructure:"max_header_batches_size" toml:"max_header_batches_size"`
+	MaxHeaderDelay                 Duration `mapstructure:"max_header_delay" toml:"max_header_delay"`
+	MinHeaderDelay                 Duration `mapstructure:"min_header_delay" toml:"min_header_delay"`
+	HeaderResentDelay              Duration `mapstructure:"header_resent_delay" toml:"header_resent_delay"`
+	GcRoundDepth                   uint64   `mapstructure:"gc_round_depth" toml:"gc_round_depth"`
+	ExpiredRoundDepth              uint64   `mapstructure:"expired_round_depth" toml:"expired_round_depth"`
+	SealingBatchLimit              uint64   `mapstructure:"sealing_batch_limit" toml:"sealing_batch_limit"`
+	MaxBatchCount                  uint64   `mapstructure:"max_batch_count" toml:"max_batch_count"`
+	MaxBatchSize                   uint64   `mapstructure:"max_batch_size" toml:"max_batch_size"`
+	MaxBatchDelay                  Duration `mapstructure:"max_batch_delay" toml:"max_batch_delay"`
+	SyncRetryDelay                 Duration `mapstructure:"sync_retry_delay" toml:"sync_retry_delay"`
+	SyncRetryNodes                 uint64   `mapstructure:"sync_retry_nodes" toml:"sync_retry_nodes"`
+	HeartbeatsTimeout              Duration `mapstructure:"heartbeats_timeout" toml:"heartbeats_timeout"`
+	EnableFastSyncRecovery         bool     `mapstructure:"enable_fast_sync_recovery" toml:"enable_fast_sync_recovery"`
+	EnableLeaderReputation         bool     `mapstructure:"enable_leader_reputation" toml:"enable_leader_reputation"`
+	AllowInconsistentExecuteResult bool     `mapstructure:"allow_inconsistent_execute_result" toml:"allow_inconsistent_execute_result"`
 }
 
 func DefaultConsensusConfig() *ConsensusConfig {
@@ -127,6 +148,25 @@ func defaultConsensusConfig() *ConsensusConfig {
 		},
 		Solo: Solo{
 			BatchTimeout: Duration(500 * time.Millisecond),
+		},
+		DagBft: DagBft{
+			MinHeaderBatchesSize:           10,
+			MaxHeaderBatchesSize:           100,
+			MaxHeaderDelay:                 Duration(200000000),
+			MinHeaderDelay:                 Duration(50000000),
+			HeaderResentDelay:              Duration(-1), // todo(lrx): not sure
+			GcRoundDepth:                   50,
+			ExpiredRoundDepth:              100,
+			SealingBatchLimit:              100,
+			MaxBatchCount:                  100,
+			MaxBatchSize:                   500000,
+			MaxBatchDelay:                  Duration(100000000),
+			SyncRetryDelay:                 Duration(5000000000),
+			SyncRetryNodes:                 3,
+			HeartbeatsTimeout:              Duration(1000000000),
+			EnableFastSyncRecovery:         true,
+			EnableLeaderReputation:         true,
+			AllowInconsistentExecuteResult: false,
 		},
 	}
 }

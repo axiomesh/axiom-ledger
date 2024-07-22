@@ -50,7 +50,7 @@ type Node struct {
 }
 
 func NewNode(config *common.Config) (*Node, error) {
-	currentEpoch := config.ChainState.EpochInfo
+	currentEpoch := config.ChainState.GetCurrentEpochInfo()
 
 	epochConf := &epochConfig{
 		epochPeriod:         currentEpoch.EpochPeriod,
@@ -186,7 +186,7 @@ func (n *Node) ReportState(height uint64, blockHash *types.Hash, txPointerList [
 		txHashList[i] = item.Hash
 	})
 	epochChanged := false
-	if common.NeedChangeEpoch(height, &types.EpochInfo{StartBlock: n.epcCnf.startBlock, EpochPeriod: n.epcCnf.epochPeriod}) {
+	if common.NeedChangeEpoch(height, types.EpochInfo{StartBlock: n.epcCnf.startBlock, EpochPeriod: n.epcCnf.epochPeriod}) {
 		epochChanged = true
 	}
 	state := &chainState{
@@ -250,7 +250,7 @@ func (n *Node) listenEvent() {
 				}
 
 				if e.EpochChanged {
-					currentEpoch := n.config.ChainState.EpochInfo
+					currentEpoch := n.config.ChainState.GetCurrentEpochInfo()
 
 					n.epcCnf.startBlock = currentEpoch.StartBlock
 					n.epcCnf.epochPeriod = currentEpoch.EpochPeriod

@@ -211,7 +211,7 @@ func (api *BlockChainAPI) GetBlockByNumber(blockNum rpctypes.BlockNumber, fullTx
 		return nil, err
 	}
 
-	return formatBlock(api.api, api.api.ChainState().EpochInfo, blockHeader, fullTx)
+	return formatBlock(api.api, api.api.ChainState().GetCurrentEpochInfo(), blockHeader, fullTx)
 }
 
 // GetBlockByHash returns the block identified by hash.
@@ -233,7 +233,7 @@ func (api *BlockChainAPI) GetBlockByHash(hash common.Hash, fullTx bool) (ret map
 		}
 		return nil, err
 	}
-	return formatBlock(api.api, api.api.ChainState().EpochInfo, blockHeader, fullTx)
+	return formatBlock(api.api, api.api.ChainState().GetCurrentEpochInfo(), blockHeader, fullTx)
 }
 
 // GetCode returns the contract code at the given address, blockNum is ignored.
@@ -514,7 +514,7 @@ func (api *BlockChainAPI) CreateAccessList(args types.CallArgs, blockNrOrHash *r
 
 // FormatBlock creates an ethereum block from a tendermint header and ethereum-formatted
 // transactions.
-func formatBlock(api api.CoreAPI, epochInfo *types.EpochInfo, blockHeader *types.BlockHeader, fullTx bool) (map[string]any, error) {
+func formatBlock(api api.CoreAPI, epochInfo types.EpochInfo, blockHeader *types.BlockHeader, fullTx bool) (map[string]any, error) {
 	var err error
 	var transactions []any
 	if fullTx {

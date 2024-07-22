@@ -7,6 +7,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/axiomesh/axiom-kit/types/pb"
 	"github.com/common-nighthawk/go-figure"
 	"github.com/ethereum/go-ethereum/common/fdlimit"
 	"github.com/ethereum/go-ethereum/core/bloombits"
@@ -14,7 +15,6 @@ import (
 	"github.com/samber/lo"
 	"github.com/sirupsen/logrus"
 
-	consensuspb "github.com/axiomesh/axiom-bft/common/consensus"
 	"github.com/axiomesh/axiom-kit/log"
 	"github.com/axiomesh/axiom-kit/storage/kv"
 	"github.com/axiomesh/axiom-kit/txpool"
@@ -82,8 +82,8 @@ func NewAxiomLedger(rep *repo.Repo, ctx context.Context, cancel context.CancelFu
 
 		priceLimit := poolConf.PriceLimit
 		// ensure price limit is not less than min gas price
-		if axm.ChainState.EpochInfo.FinanceParams.MinGasPrice.ToBigInt().Cmp(priceLimit.ToBigInt()) > 0 {
-			priceLimit = axm.ChainState.EpochInfo.FinanceParams.MinGasPrice
+		if axm.ChainState.GetCurrentEpochInfo().FinanceParams.MinGasPrice.ToBigInt().Cmp(priceLimit.ToBigInt()) > 0 {
+			priceLimit = axm.ChainState.GetCurrentEpochInfo().FinanceParams.MinGasPrice
 		}
 
 		txpoolConf := txpool2.Config{
@@ -237,6 +237,13 @@ func NewAxiomLedgerWithoutConsensus(rep *repo.Repo, ctx context.Context, cancel 
 		if err != nil {
 			return nil, err
 		}
+
+		selfGenesisInfo, find := lo.Find(rep.GenesisConfig.Nodes, func(i repo.GenesisNodeInfo) bool { return i.P2PPubKey == nodeInfo.P2PID })
+		if !find {
+			return nil, errors.New("DagBft is not support for non-genesis node temporarily")
+		}
+		nodeInfo.Primary = selfGenesisInfo.Primary
+		nodeInfo.Workers = selfGenesisInfo.Workers
 		return &nodeInfo, nil
 	}, func(p2pID string) (uint64, error) {
 		lg := vl.NewView()
@@ -311,7 +318,7 @@ func NewAxiomLedgerWithoutConsensus(rep *repo.Repo, ctx context.Context, cancel 
 				}(verifiedCh)
 
 				// 3. start chain data sync
-				err = axm.startSnapSync(verifiedCh, snapCheckpoint, axm.snapMeta.snapPeers, latestHeight+1, prepareRes.Data.([]*consensuspb.EpochChange))
+				err = axm.startSnapSync(verifiedCh, snapCheckpoint, axm.snapMeta.snapPeers, latestHeight+1, prepareRes.Data.([]*pb.EpochChange))
 				if err != nil {
 					return nil, fmt.Errorf("snap sync err: %w", err)
 				}
@@ -443,6 +450,15 @@ func (axm *AxiomLedger) initChainState() error {
 	}
 	axm.ChainState.UpdateChainMeta(chainMeta)
 	axm.ChainState.TryUpdateSelfNodeInfo()
+
+	currentCheckpoint := &pb.QuorumCheckpoint{
+		Epoch: currentEpoch.Epoch,
+		State: &pb.ExecuteState{
+			Height: chainMeta.Height,
+			Digest: chainMeta.BlockHash.String(),
+		},
+	}
+	axm.ChainState.UpdateCheckpoint(currentCheckpoint)
 	return nil
 }
 

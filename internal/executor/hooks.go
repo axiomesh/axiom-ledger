@@ -12,7 +12,7 @@ import (
 
 func (exec *BlockExecutor) tryTurnIntoNewEpoch(block *types.Block) error {
 	// check need turn into NewEpoch
-	epochInfo := exec.chainState.EpochInfo
+	epochInfo := exec.chainState.GetCurrentEpochInfo()
 	if block.Header.Number == (epochInfo.StartBlock + epochInfo.EpochPeriod - 1) {
 		epochManagerContract := framework.EpochManagerBuildConfig.Build(syscommon.NewVMContextByExecutor(exec.ledger.StateLedger))
 		nodeManagerContract := framework.NodeManagerBuildConfig.Build(syscommon.NewVMContextByExecutor(exec.ledger.StateLedger))
@@ -24,10 +24,10 @@ func (exec *BlockExecutor) tryTurnIntoNewEpoch(block *types.Block) error {
 		}
 		typesNewEpoch := newEpoch.ToTypesEpoch()
 
-		if err := stakingManagerContract.TurnIntoNewEpoch(epochInfo, typesNewEpoch); err != nil {
+		if err := stakingManagerContract.TurnIntoNewEpoch(&epochInfo, typesNewEpoch); err != nil {
 			return err
 		}
-		if err := nodeManagerContract.TurnIntoNewEpoch(epochInfo, typesNewEpoch); err != nil {
+		if err := nodeManagerContract.TurnIntoNewEpoch(&epochInfo, typesNewEpoch); err != nil {
 			return err
 		}
 

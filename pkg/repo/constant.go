@@ -40,10 +40,12 @@ const (
 const (
 	ConsensusTypeSolo    = "solo"
 	ConsensusTypeRbft    = "rbft"
+	ConsensusTypeDagBft  = "dagbft"
 	ConsensusTypeSoloDev = "solo_dev"
 
 	ConsensusStorageTypeMinifile = "minifile"
 	ConsensusStorageTypeRosedb   = "rosedb"
+	ConsensusStorageTypePebble   = "pebble"
 
 	KVStorageTypeLeveldb = "leveldb"
 	KVStorageTypePebble  = "pebble"

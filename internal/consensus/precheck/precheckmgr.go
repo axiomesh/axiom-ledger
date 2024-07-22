@@ -312,7 +312,7 @@ func (tp *TxPreCheckMgr) basicCheckTx(tx *types.Transaction) error {
 		return ErrOversizedData
 	}
 
-	minGasPrice := tp.chainState.EpochInfo.FinanceParams.MinGasPrice.ToBigInt()
+	minGasPrice := tp.chainState.GetCurrentEpochInfo().FinanceParams.MinGasPrice.ToBigInt()
 
 	if tx.GetGasPrice() == nil {
 		return errors.New("tx has no gas price")

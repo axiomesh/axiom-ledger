@@ -36,6 +36,8 @@ type NodeInfo struct {
 	Operator        common.Address
 	MetaData        NodeMetaData
 	Status          uint8
+	Primary         string
+	Workers         []string
 }
 
 // NodeMetaData is an auto generated low-level Go binding around an user-defined struct.

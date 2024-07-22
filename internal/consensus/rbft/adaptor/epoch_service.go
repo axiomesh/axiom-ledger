@@ -6,7 +6,8 @@ import (
 )
 
 func (a *RBFTAdaptor) GetCurrentEpochInfo() (*types.EpochInfo, error) {
-	return a.config.ChainState.EpochInfo, nil
+	info := a.config.ChainState.GetCurrentEpochInfo()
+	return &info, nil
 }
 
 func (a *RBFTAdaptor) GetEpochInfo(epoch uint64) (*types.EpochInfo, error) {

@@ -189,7 +189,7 @@ func TestTxPoolImpl_AddLocalTx(t *testing.T) {
 
 		for _, tc := range testcase {
 			pool := tc
-			pool.chainState.EpochInfo.ConsensusParams.BlockMaxTxNum = 4
+			pool.ChainState.GetCurrentEpochInfo().ConsensusParams.BlockMaxTxNum = 4
 			err := pool.Start()
 			ast.Nil(err)
 			defer pool.Stop()
@@ -229,7 +229,7 @@ func TestTxPoolImpl_AddLocalTx(t *testing.T) {
 
 		for _, tc := range testcase {
 			pool := tc
-			pool.chainState.EpochInfo.ConsensusParams.BlockMaxTxNum = 4
+			pool.ChainState.GetCurrentEpochInfo().ConsensusParams.BlockMaxTxNum = 4
 			pool.poolMaxSize = 1
 			err := pool.Start()
 			defer pool.Stop()
@@ -511,7 +511,7 @@ func TestTxPoolImpl_AddLocalTx(t *testing.T) {
 
 		for _, tc := range testcase {
 			pool := tc
-			pool.chainState.EpochInfo.ConsensusParams.BlockMaxTxNum = 4
+			pool.ChainState.GetCurrentEpochInfo().ConsensusParams.BlockMaxTxNum = 4
 			err := pool.Start()
 			ast.Nil(err)
 			defer pool.Stop()
@@ -539,7 +539,7 @@ func TestTxPoolImpl_AddRemoteTxs(t *testing.T) {
 
 		for _, tc := range testcase {
 			pool := tc
-			pool.chainState.EpochInfo.ConsensusParams.BlockMaxTxNum = 4
+			pool.ChainState.GetCurrentEpochInfo().ConsensusParams.BlockMaxTxNum = 4
 			err := pool.Start()
 			defer pool.Stop()
 			ast.Nil(err)
@@ -574,7 +574,7 @@ func TestTxPoolImpl_AddRemoteTxs(t *testing.T) {
 
 		for _, tc := range testcase {
 			pool := tc
-			pool.chainState.EpochInfo.ConsensusParams.BlockMaxTxNum = 4
+			pool.ChainState.GetCurrentEpochInfo().ConsensusParams.BlockMaxTxNum = 4
 			pool.poolMaxSize = 2
 			err := pool.Start()
 			defer pool.Stop()
@@ -940,7 +940,7 @@ func TestTxPoolImpl_AddRemoteTxs(t *testing.T) {
 		for _, tc := range testcase {
 			pool := tc
 			pool.toleranceNonceGap = 1
-			pool.chainState.EpochInfo.ConsensusParams.BlockMaxTxNum = 500 // make sure not to trigger generate batch
+			pool.ChainState.GetCurrentEpochInfo().ConsensusParams.BlockMaxTxNum = 500 // make sure not to trigger generate batch
 			err := pool.Start()
 			defer pool.Stop()
 			ast.Nil(err)
@@ -991,7 +991,7 @@ func TestTxPoolImpl_AddRebroadcastTxs(t *testing.T) {
 
 		for _, tc := range testcase {
 			pool := tc
-			pool.chainState.EpochInfo.ConsensusParams.BlockMaxTxNum = 4
+			pool.ChainState.GetCurrentEpochInfo().ConsensusParams.BlockMaxTxNum = 4
 			err := pool.Start()
 			defer pool.Stop()
 			ast.Nil(err)
@@ -1025,7 +1025,7 @@ func TestTxPoolImpl_AddRebroadcastTxs(t *testing.T) {
 
 		for _, tc := range testcase {
 			pool := tc
-			pool.chainState.EpochInfo.ConsensusParams.BlockMaxTxNum = 4
+			pool.ChainState.GetCurrentEpochInfo().ConsensusParams.BlockMaxTxNum = 4
 			pool.poolMaxSize = 1
 			err := pool.Start()
 			defer pool.Stop()
@@ -1082,7 +1082,7 @@ func TestTxPoolImpl_ReceiveMissingRequests(t *testing.T) {
 		for _, tc := range testcase {
 			pool := tc
 			// ensure not notify generate batch
-			pool.chainState.EpochInfo.ConsensusParams.BlockMaxTxNum = 500
+			pool.ChainState.GetCurrentEpochInfo().ConsensusParams.BlockMaxTxNum = 500
 			err := pool.Start()
 			defer pool.Stop()
 			ast.Nil(err)
@@ -1123,7 +1123,7 @@ func TestTxPoolImpl_ReceiveMissingRequests(t *testing.T) {
 		for _, tc := range testcase {
 			pool := tc
 			// ensure not notify generate batch
-			pool.chainState.EpochInfo.ConsensusParams.BlockMaxTxNum = 500
+			pool.ChainState.GetCurrentEpochInfo().ConsensusParams.BlockMaxTxNum = 500
 			err := pool.Start()
 			defer pool.Stop()
 			ast.Nil(err)
@@ -1168,7 +1168,7 @@ func TestTxPoolImpl_ReceiveMissingRequests(t *testing.T) {
 		for _, tc := range testcase {
 			pool := tc
 			// ensure not notify generate batch
-			pool.chainState.EpochInfo.ConsensusParams.BlockMaxTxNum = 500
+			pool.ChainState.GetCurrentEpochInfo().ConsensusParams.BlockMaxTxNum = 500
 			err := pool.Start()
 			defer pool.Stop()
 			ast.Nil(err)
@@ -1208,7 +1208,7 @@ func TestTxPoolImpl_ReceiveMissingRequests(t *testing.T) {
 		for _, tc := range testcase {
 			pool := tc
 			// ensure not notify generate batch
-			pool.chainState.EpochInfo.ConsensusParams.BlockMaxTxNum = 500
+			pool.ChainState.GetCurrentEpochInfo().ConsensusParams.BlockMaxTxNum = 500
 			pool.poolMaxSize = 1
 			err := pool.Start()
 			defer pool.Stop()
@@ -1247,7 +1247,7 @@ func TestTxPoolImpl_ReceiveMissingRequests(t *testing.T) {
 		for _, tc := range testcase {
 			pool := tc
 			// ensure not notify generate batch
-			pool.chainState.EpochInfo.ConsensusParams.BlockMaxTxNum = 500
+			pool.ChainState.GetCurrentEpochInfo().ConsensusParams.BlockMaxTxNum = 500
 			err := pool.Start()
 			defer pool.Stop()
 			ast.Nil(err)
@@ -1291,7 +1291,7 @@ func TestTxPoolImpl_AddLocalRecordTxs(t *testing.T) {
 
 		for _, tc := range testcase {
 			pool := tc
-			pool.chainState.EpochInfo.ConsensusParams.BlockMaxTxNum = 4
+			pool.ChainState.GetCurrentEpochInfo().ConsensusParams.BlockMaxTxNum = 4
 			err := pool.Start()
 			defer pool.Stop()
 			ast.Nil(err)
@@ -1324,7 +1324,7 @@ func TestTxPoolImpl_GenerateRequestBatch(t *testing.T) {
 
 		for _, tc := range testcase {
 			pool := tc
-			pool.chainState.EpochInfo.ConsensusParams.BlockMaxTxNum = 4
+			pool.ChainState.GetCurrentEpochInfo().ConsensusParams.BlockMaxTxNum = 4
 			err := pool.Start()
 			defer pool.Stop()
 			ast.Nil(err)
@@ -1344,7 +1344,7 @@ func TestTxPoolImpl_GenerateRequestBatch(t *testing.T) {
 
 		for _, tc := range testcase {
 			pool := tc
-			pool.chainState.EpochInfo.ConsensusParams.BlockMaxTxNum = 4
+			pool.ChainState.GetCurrentEpochInfo().ConsensusParams.BlockMaxTxNum = 4
 			ch := make(chan int, 1)
 			pool.notifyGenerateBatchFn = func(typ int) {
 				ch <- typ
@@ -1386,7 +1386,7 @@ func TestTxPoolImpl_GenerateRequestBatch(t *testing.T) {
 
 		for _, tc := range testcase {
 			pool := tc
-			pool.chainState.EpochInfo.ConsensusParams.BlockMaxTxNum = 4
+			pool.ChainState.GetCurrentEpochInfo().ConsensusParams.BlockMaxTxNum = 4
 			err := pool.Start()
 			defer pool.Stop()
 			ast.Nil(err)
@@ -1410,7 +1410,7 @@ func TestTxPoolImpl_GenerateRequestBatch(t *testing.T) {
 
 		for _, tc := range testcase {
 			pool := tc
-			pool.chainState.EpochInfo.ConsensusParams.BlockMaxTxNum = 4
+			pool.ChainState.GetCurrentEpochInfo().ConsensusParams.BlockMaxTxNum = 4
 			err := pool.Start()
 			ast.Nil(err)
 			defer pool.Stop()
@@ -1448,7 +1448,7 @@ func TestTxPoolImpl_GenerateRequestBatch(t *testing.T) {
 
 		for _, tc := range testcase {
 			pool := tc
-			pool.chainState.EpochInfo.ConsensusParams.BlockMaxTxNum = 4
+			pool.ChainState.GetCurrentEpochInfo().ConsensusParams.BlockMaxTxNum = 4
 			err := pool.Start()
 			ast.Nil(err)
 			defer pool.Stop()
@@ -1480,7 +1480,7 @@ func TestTxPoolImpl_GenerateRequestBatch(t *testing.T) {
 
 		for _, tc := range testcase {
 			pool := tc
-			pool.chainState.EpochInfo.ConsensusParams.BlockMaxTxNum = 4
+			pool.ChainState.GetCurrentEpochInfo().ConsensusParams.BlockMaxTxNum = 4
 			err := pool.Start()
 			ast.Nil(err)
 			defer pool.Stop()
@@ -1507,7 +1507,7 @@ func TestTxPoolImpl_GenerateRequestBatch(t *testing.T) {
 
 		for _, tc := range testcase {
 			pool := tc
-			pool.chainState.EpochInfo.ConsensusParams.BlockMaxTxNum = 4
+			pool.ChainState.GetCurrentEpochInfo().ConsensusParams.BlockMaxTxNum = 4
 			err := pool.Start()
 			ast.Nil(err)
 			defer pool.Stop()
@@ -1527,8 +1527,8 @@ func TestTxPoolImpl_GenerateRequestBatch(t *testing.T) {
 
 		for _, tc := range testcase {
 			pool := tc
-			pool.chainState.EpochInfo.ConsensusParams.BlockMaxTxNum = 4
-			pool.chainState.EpochInfo.ConsensusParams.EnableTimedGenEmptyBlock = true
+			pool.ChainState.GetCurrentEpochInfo().ConsensusParams.BlockMaxTxNum = 4
+			pool.ChainState.GetCurrentEpochInfo().ConsensusParams.EnableTimedGenEmptyBlock = true
 			err := pool.Start()
 			ast.Nil(err)
 			defer pool.Stop()
@@ -1564,7 +1564,7 @@ func TestTxPoolImpl_GenerateRequestBatch(t *testing.T) {
 			if pool.enablePricePriority {
 				return
 			}
-			pool.chainState.EpochInfo.ConsensusParams.BlockMaxTxNum = 4
+			pool.ChainState.GetCurrentEpochInfo().ConsensusParams.BlockMaxTxNum = 4
 			ch := make(chan int, 1)
 			pool.notifyGenerateBatchFn = func(typ int) {
 				ch <- typ
@@ -1585,7 +1585,7 @@ func TestTxPoolImpl_GenerateRequestBatch(t *testing.T) {
 			ast.Equal(uint64(0), pool.txStore.priorityNonBatchSize, "lack of tx0")
 
 			// ensure txGasPrice is less than chainGasPrice
-			txGasPrice := new(big.Int).Sub(pool.chainState.EpochInfo.FinanceParams.MinGasPrice.ToBigInt(), big.NewInt(1))
+			txGasPrice := new(big.Int).Sub(pool.ChainState.GetCurrentEpochInfo().FinanceParams.MinGasPrice.ToBigInt(), big.NewInt(1))
 			tx1, err := types.GenerateTransactionWithGasPrice(0, defaultGasLimit, txGasPrice, s)
 			ast.Nil(err)
 			err = pool.AddLocalTx(tx1)
@@ -1617,7 +1617,7 @@ func TestTxPoolImpl_GenerateRequestBatch(t *testing.T) {
 			ast.Equal(uint64(2), pool.txStore.priorityNonBatchSize, "lack of tx2, tx0 and tx1 match generated batch")
 
 			// ensure verifying insufficient balance failed
-			tx2, err := types.GenerateTransactionWithGasPrice(2, math.MaxInt64, pool.chainState.EpochInfo.FinanceParams.MinGasPrice.ToBigInt(), s2)
+			tx2, err := types.GenerateTransactionWithGasPrice(2, math.MaxInt64, pool.ChainState.GetCurrentEpochInfo().FinanceParams.MinGasPrice.ToBigInt(), s2)
 			ast.Nil(err)
 			err = pool.AddLocalTx(tx2)
 			ast.Nil(err)
@@ -1648,7 +1648,7 @@ func TestTxPoolImpl_GenerateRequestBatch(t *testing.T) {
 				return big.NewInt(0)
 			}
 
-			pool.chainState.EpochInfo.ConsensusParams.BlockMaxTxNum = 4
+			pool.ChainState.GetCurrentEpochInfo().ConsensusParams.BlockMaxTxNum = 4
 			ch := make(chan int, 1)
 			pool.notifyGenerateBatchFn = func(typ int) {
 				ch <- typ
@@ -2087,7 +2087,7 @@ func TestTxPoolImpl_RestoreOneBatch(t *testing.T) {
 
 	for _, tc := range testcase {
 		pool := tc
-		pool.chainState.EpochInfo.ConsensusParams.BlockMaxTxNum = 100
+		pool.ChainState.GetCurrentEpochInfo().ConsensusParams.BlockMaxTxNum = 100
 		err := pool.Start()
 		ast.Nil(err)
 		defer pool.Stop()
@@ -2279,7 +2279,7 @@ func TestTxPoolImpl_RemoveBatches(t *testing.T) {
 
 	for _, tc := range testcase {
 		pool := tc
-		pool.chainState.EpochInfo.ConsensusParams.BlockMaxTxNum = 4
+		pool.ChainState.GetCurrentEpochInfo().ConsensusParams.BlockMaxTxNum = 4
 		err := pool.Start()
 		defer pool.Stop()
 		ast.Nil(err)
@@ -2317,7 +2317,7 @@ func TestTxPoolImpl_RemoveStateUpdatingTxs(t *testing.T) {
 
 	for _, tc := range testcase {
 		pool := tc
-		pool.chainState.EpochInfo.ConsensusParams.BlockMaxTxNum = 100
+		pool.ChainState.GetCurrentEpochInfo().ConsensusParams.BlockMaxTxNum = 100
 		err := pool.Start()
 		defer pool.Stop()
 		ast.Nil(err)
@@ -2407,7 +2407,7 @@ func TestTPSWithLocalTx(t *testing.T) {
 	for _, tc := range testcase {
 		pool := tc
 		pool.logger.(*logrus.Entry).Logger.SetLevel(logrus.ErrorLevel)
-		pool.chainState.EpochInfo.ConsensusParams.BlockMaxTxNum = 500
+		pool.ChainState.GetCurrentEpochInfo().ConsensusParams.BlockMaxTxNum = 500
 
 		batchesCache := make(chan *commonpool.RequestHashBatch[types.Transaction, *types.Transaction], 10240)
 		pool.notifyGenerateBatchFn = func(typ int) {
@@ -2467,7 +2467,7 @@ func TestTPSWithRemoteTxs(t *testing.T) {
 		// ignore log
 		pool.logger.(*logrus.Entry).Logger.SetLevel(logrus.ErrorLevel)
 
-		pool.chainState.EpochInfo.ConsensusParams.BlockMaxTxNum = 500
+		pool.ChainState.GetCurrentEpochInfo().ConsensusParams.BlockMaxTxNum = 500
 		pool.toleranceNonceGap = 100000
 		round := 10000
 		thread := 10
@@ -2587,7 +2587,7 @@ func listenBatchCache(total int, endCh chan int64, cacheCh chan *commonpool.Requ
 			fmt.Printf("GetRequestsByHashList: %d, cost: %v\n", newBatch.SeqNo, time.Since(now))
 
 			pool.RemoveBatches([]string{newBatch.BatchHash})
-			if newBatch.SeqNo >= uint64(total)/pool.chainState.EpochInfo.ConsensusParams.BlockMaxTxNum {
+			if newBatch.SeqNo >= uint64(total)/pool.chainState.GetCurrentEpochInfo().ConsensusParams.BlockMaxTxNum {
 				end := newBatch.Timestamp
 				endCh <- end
 			}

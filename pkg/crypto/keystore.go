@@ -25,6 +25,11 @@ type KeystoreKey interface {
 	Unmarshal([]byte) error
 }
 
+type PrivateKey interface {
+	KeystoreKey
+	Sign([]byte) ([]byte, error)
+}
+
 type KeystoreInfo struct {
 	KeyType     string            `json:"key_type"`
 	PrivateKey  map[string]any    `json:"private_key"`

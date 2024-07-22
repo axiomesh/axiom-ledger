@@ -48,7 +48,7 @@ func defaultRbftConfig() rbft.Config {
 func generateRbftConfig(config *common.Config) (rbft.Config, error) {
 	readConfig := config.Repo.ConsensusConfig
 
-	currentEpoch := config.ChainState.EpochInfo
+	currentEpoch := config.ChainState.GetCurrentEpochInfo()
 
 	defaultConfig := defaultRbftConfig()
 	defaultConfig.GenesisEpochInfo = config.GenesisEpochInfo

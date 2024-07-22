@@ -34,6 +34,9 @@ type GenesisNodeInfo struct {
 	IsDataSyncer   bool              `mapstructure:"is_data_syncer" toml:"is_data_syncer"`
 	StakeNumber    *types.CoinNumber `mapstructure:"stake_number" toml:"stake_number"`
 	CommissionRate uint64            `mapstructure:"commission_rate" toml:"commission_rate"`
+
+	Primary string   `mapstructure:"primary" toml:"primary"`
+	Workers []string `mapstructure:"workers" toml:"workers"`
 }
 
 type GenesisConfig struct {

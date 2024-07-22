@@ -13,7 +13,6 @@ import (
 	"github.com/samber/lo"
 	"github.com/sirupsen/logrus"
 
-	"github.com/axiomesh/axiom-bft/common/consensus"
 	"github.com/axiomesh/axiom-kit/types/pb"
 	"github.com/axiomesh/axiom-ledger/internal/network"
 	"github.com/axiomesh/axiom-ledger/internal/sync/common"
@@ -23,7 +22,7 @@ var _ common.ISyncConstructor = (*SnapSync)(nil)
 
 type SnapSync struct {
 	lock             sync2.Mutex
-	epochStateCache  map[uint64]*consensus.QuorumCheckpoint
+	epochStateCache  map[uint64]*pb.QuorumCheckpoint
 	recvCommitDataCh chan []common.CommitData
 	commitCh         chan any
 	network          network.Network
@@ -76,7 +75,7 @@ func NewSnapSync(logger logrus.FieldLogger, net network.Network) common.ISyncCon
 	return &SnapSync{
 		commitCh:         make(chan any, 1),
 		recvCommitDataCh: make(chan []common.CommitData, 100),
-		epochStateCache:  make(map[uint64]*consensus.QuorumCheckpoint),
+		epochStateCache:  make(map[uint64]*pb.QuorumCheckpoint),
 		network:          net,
 		logger:           logger,
 
@@ -95,7 +94,7 @@ func (s *SnapSync) Prepare(config *common.Config) (*common.PrepareData, error) {
 	return &common.PrepareData{Data: epcs}, nil
 }
 
-func (s *SnapSync) fetchEpochState() ([]*consensus.EpochChange, error) {
+func (s *SnapSync) fetchEpochState() ([]*pb.EpochChange, error) {
 	latestPersistEpoch := s.cnf.LatestPersistEpoch
 	snapPersistedEpoch := s.cnf.SnapPersistedEpoch
 
@@ -125,7 +124,7 @@ func (s *SnapSync) fetchEpochStates(start, end uint64) error {
 	}
 
 	taskNum := int(end - start + 1)
-	s.epochStateCache = make(map[uint64]*consensus.QuorumCheckpoint)
+	s.epochStateCache = make(map[uint64]*pb.QuorumCheckpoint)
 	wg := sync2.WaitGroup{}
 	wg.Add(taskNum)
 
@@ -203,7 +202,7 @@ func (s *SnapSync) fetchEpochStates(start, end uint64) error {
 				}).Error("Unmarshal fetch epoch state response failed")
 				return
 			}
-			epochState := &consensus.QuorumCheckpoint{}
+			epochState := &pb.QuorumCheckpoint{}
 
 			if err = epochState.UnmarshalVT(epcStateResp.Data); err != nil {
 				s.logger.WithFields(logrus.Fields{
@@ -213,7 +212,7 @@ func (s *SnapSync) fetchEpochStates(start, end uint64) error {
 				return
 			}
 			s.lock.Lock()
-			s.epochStateCache[epochState.Epoch()] = epochState
+			s.epochStateCache[epochState.Epoch] = epochState
 			s.lock.Unlock()
 		}(i)
 	}
@@ -227,18 +226,14 @@ func (s *SnapSync) fetchEpochStates(start, end uint64) error {
 	return nil
 }
 
-func (s *SnapSync) fillEpochChanges(start, end uint64) ([]*consensus.EpochChange, error) {
-	epochChanges := make([]*consensus.EpochChange, 0)
+func (s *SnapSync) fillEpochChanges(start, end uint64) ([]*pb.EpochChange, error) {
+	epochChanges := make([]*pb.EpochChange, 0)
 	for epoch := start; epoch <= end; epoch++ {
 		epc, ok := s.epochStateCache[epoch]
 		if !ok {
 			return nil, fmt.Errorf("epoch %d not found", epoch)
 		}
-		epochChanges = append(epochChanges, &consensus.EpochChange{
-			Checkpoint: &consensus.QuorumCheckpoint{
-				Checkpoint: epc.GetCheckpoint(),
-			},
-		})
+		epochChanges = append(epochChanges, &pb.EpochChange{QuorumCheckpoint: epc})
 	}
 
 	return epochChanges, nil

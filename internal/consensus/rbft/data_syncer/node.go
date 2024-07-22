@@ -23,7 +23,6 @@ import (
 	"github.com/axiomesh/axiom-ledger/internal/components/status"
 	"github.com/axiomesh/axiom-ledger/internal/components/timer"
 	"github.com/axiomesh/axiom-ledger/internal/consensus/common"
-	"github.com/axiomesh/axiom-ledger/internal/consensus/rbft/adaptor"
 )
 
 type Node[T any, Constraint types.TXConstraint[T]] struct {
@@ -1142,7 +1141,7 @@ func (n *Node[T, Constraint]) findNextCommit() (*readyExecute[T, Constraint], []
 	}
 	n.chainConfig.lock.RLock()
 	defer n.chainConfig.lock.RUnlock()
-	if common.NeedChangeEpoch(height-1, n.chainConfig.epochInfo) {
+	if common.NeedChangeEpoch(height-1, *n.chainConfig.epochInfo) {
 		n.checkpointCache.insertReady(height)
 		n.logger.Warningf("replica %d not reach next epoch: %d, ignore commit height: %d", n.chainState.SelfNodeInfo.ID, n.chainConfig.epochInfo.Epoch+1, height)
 		return nil, nil, nil
@@ -1209,7 +1208,7 @@ func (n *Node[T, Constraint]) postEvent(event *localEvent) {
 }
 
 func (n *Node[T, Constraint]) reachQuorum(count int) bool {
-	return uint64(count) >= adaptor.CalQuorum(uint64(len(n.chainState.ValidatorSet)))
+	return uint64(count) >= common.CalQuorum(uint64(len(n.chainState.ValidatorSet)))
 }
 
 // setBatchCache stores a batch digest and its corresponding batch.

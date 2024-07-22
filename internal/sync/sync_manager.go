@@ -21,7 +21,6 @@ import (
 	"github.com/samber/lo"
 	"github.com/sirupsen/logrus"
 
-	"github.com/axiomesh/axiom-bft/common/consensus"
 	"github.com/axiomesh/axiom-kit/types"
 	"github.com/axiomesh/axiom-kit/types/pb"
 	"github.com/axiomesh/axiom-ledger/internal/ledger"
@@ -54,8 +53,8 @@ type SyncManager struct {
 	requesterLen        atomic.Int64        // requester length
 	idleRequesterLen    atomic.Uint64       // idle requester length
 
-	quorumCheckpoint   *consensus.SignedCheckpoint // latest checkpoint from remote
-	epochChanges       []*consensus.EpochChange    // every epoch change which the node behind
+	quorumCheckpoint   *pb.QuorumCheckpoint // latest checkpoint from remote
+	epochChanges       []*pb.EpochChange    // every epoch change which the node behind
 	getChainMetaFunc   func() *types.ChainMeta
 	getBlockFunc       func(height uint64) (*types.Block, error)
 	getBlockHeaderFunc func(height uint64) (*types.BlockHeader, error)
@@ -566,7 +565,7 @@ func (sm *SyncManager) updateLatestCheckedState(height uint64, digest string) {
 }
 
 func (sm *SyncManager) InitBlockSyncInfo(peers []*common.Node, latestBlockHash string, quorum, curHeight, targetHeight uint64,
-	quorumCheckpoint *consensus.SignedCheckpoint, epc ...*consensus.EpochChange) {
+	quorumCheckpoint *pb.QuorumCheckpoint, epc ...*pb.EpochChange) {
 	sm.peers = make([]*common.Peer, len(peers))
 	sm.initPeers = make([]*common.Peer, len(peers))
 	lo.ForEach(peers, func(p *common.Node, index int) {
@@ -606,11 +605,9 @@ func (sm *SyncManager) initChunk() {
 	// if we have epoch change, chunk size need smaller than epoch size
 	if len(sm.epochChanges) != 0 {
 		latestEpoch := sm.epochChanges[0]
-		if latestEpoch != nil {
-			epochSize := latestEpoch.GetCheckpoint().Checkpoint.Height() - sm.curHeight + 1
-			if epochSize < chunkSize {
-				chunkSize = epochSize
-			}
+		epochSize := latestEpoch.GetQuorumCheckpoint().GetState().GetHeight() - sm.curHeight + 1
+		if epochSize < chunkSize {
+			chunkSize = epochSize
 		}
 	}
 
@@ -624,13 +621,13 @@ func (sm *SyncManager) initChunk() {
 
 	if len(sm.epochChanges) != 0 {
 		chunkCheckpoint = &pb.CheckpointState{
-			Height: sm.epochChanges[0].GetCheckpoint().Checkpoint.Height(),
-			Digest: sm.epochChanges[0].GetCheckpoint().Checkpoint.Digest(),
+			Height: sm.epochChanges[0].GetQuorumCheckpoint().GetState().GetHeight(),
+			Digest: sm.epochChanges[0].GetQuorumCheckpoint().GetState().GetDigest(),
 		}
 	} else {
 		chunkCheckpoint = &pb.CheckpointState{
-			Height: sm.quorumCheckpoint.Height(),
-			Digest: sm.quorumCheckpoint.Digest(),
+			Height: sm.quorumCheckpoint.State.Height,
+			Digest: sm.quorumCheckpoint.State.Digest,
 		}
 	}
 	sm.chunk.FillCheckPoint(chunkMaxHeight, chunkCheckpoint)

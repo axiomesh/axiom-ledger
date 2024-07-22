@@ -35,13 +35,12 @@ func TestSnapSync_Commit(t *testing.T) {
 	sync.Start()
 	defer sync.Stop()
 
-	epochStates := make(map[uint64]*consensus.QuorumCheckpoint)
-	epochStates[1] = &consensus.QuorumCheckpoint{
-		Checkpoint: &consensus.Checkpoint{
-			ExecuteState: &consensus.Checkpoint_ExecuteState{
-				Height: 2,
-				Digest: "test2",
-			},
+	epochStates := make(map[uint64]*pb.QuorumCheckpoint)
+	epochStates[1] = &pb.QuorumCheckpoint{
+		Epoch: uint64(0),
+		State: &pb.ExecuteState{
+			Height: 2,
+			Digest: "test2",
 		},
 	}
 	sync.(*SnapSync).epochStateCache = epochStates
@@ -52,7 +51,7 @@ func TestSnapSync_Commit(t *testing.T) {
 	sync.PostCommitData(commitData)
 
 	res := <-sync.Commit()
-	require.Equal(t, "test2", res.(*common.SnapCommitData).EpochState.Checkpoint.Digest())
+	require.Equal(t, "test2", res.(*common.SnapCommitData).EpochState.GetState().GetDigest())
 }
 
 func TestSnapSync_Prepare(t *testing.T) {
@@ -71,24 +70,20 @@ func TestSnapSync_Prepare(t *testing.T) {
 		},
 	}
 
-	epcStates := make(map[string]map[uint64]*consensus.QuorumCheckpoint)
-	epcStates[peersSet[0].PeerID] = make(map[uint64]*consensus.QuorumCheckpoint)
-	epcStates[peersSet[0].PeerID][1] = &consensus.QuorumCheckpoint{
-		Checkpoint: &consensus.Checkpoint{
-			Epoch: 1,
-			ExecuteState: &consensus.Checkpoint_ExecuteState{
-				Height: 100,
-				Digest: "test100",
-			},
+	epcStates := make(map[string]map[uint64]*pb.QuorumCheckpoint)
+	epcStates[peersSet[0].PeerID] = make(map[uint64]*pb.QuorumCheckpoint)
+	epcStates[peersSet[0].PeerID][1] = &pb.QuorumCheckpoint{
+		Epoch: 1,
+		State: &pb.ExecuteState{
+			Height: 100,
+			Digest: "test100",
 		},
 	}
-	epcStates[peersSet[0].PeerID][2] = &consensus.QuorumCheckpoint{
-		Checkpoint: &consensus.Checkpoint{
-			Epoch: 2,
-			ExecuteState: &consensus.Checkpoint_ExecuteState{
-				Height: 200,
-				Digest: "test200",
-			},
+	epcStates[peersSet[0].PeerID][2] = &pb.QuorumCheckpoint{
+		Epoch: 2,
+		State: &pb.ExecuteState{
+			Height: 200,
+			Digest: "test200",
 		},
 	}
 
@@ -199,7 +194,7 @@ func TestSnapSync_Prepare(t *testing.T) {
 	})
 }
 
-func mockNetwork(t *testing.T, mockEpcStates map[string]map[uint64]*consensus.QuorumCheckpoint) network.Network {
+func mockNetwork(t *testing.T, mockEpcStates map[string]map[uint64]*pb.QuorumCheckpoint) network.Network {
 	ctrl := gomock.NewController(t)
 	net := mock_network.NewMockNetwork(ctrl)
 	net.EXPECT().Send(gomock.Any(), gomock.Any()).DoAndReturn(func(peerId string, msg *pb.Message) (*pb.Message, error) {

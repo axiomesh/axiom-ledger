@@ -425,7 +425,7 @@ func (n *Node) ReportState(height uint64, blockHash *types.Hash, txPointerList [
 	// need update cached epoch info, old epochInfo
 	epochInfo := n.stack.EpochInfo
 	epochChanged := false
-	if common.NeedChangeEpoch(height, epochInfo) {
+	if common.NeedChangeEpoch(height, *epochInfo) {
 		err := n.stack.UpdateEpoch()
 		if err != nil {
 			panic(err)
@@ -513,7 +513,7 @@ func (n *Node) verifyStateUpdatedCheckpoint(checkpoint *common.Checkpoint) error
 
 func (n *Node) Quorum(totalNum uint64) uint64 {
 	// N := uint64(len(n.stack.EpochInfo.ValidatorSet))
-	return adaptor.CalQuorum(totalNum)
+	return common.CalQuorum(totalNum)
 }
 
 func (n *Node) checkQuorum() error {

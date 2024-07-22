@@ -47,7 +47,7 @@ func (api *GasPriceAPI) GasPrice(_ context.Context) (ret *hexutil.Big, err error
 		return nil, err
 	}
 
-	minGasPrice := api.api.ChainState().EpochInfo.FinanceParams.MinGasPrice.ToBigInt()
+	minGasPrice := api.api.ChainState().GetCurrentEpochInfo().FinanceParams.MinGasPrice.ToBigInt()
 	if minGasPrice.Cmp(res) > 0 {
 		res = minGasPrice
 	}
@@ -71,7 +71,7 @@ func (api *GasPriceAPI) MaxPriorityFeePerGas(_ context.Context) (ret *hexutil.Bi
 	if err != nil {
 		return nil, err
 	}
-	minGasPrice := api.api.ChainState().EpochInfo.FinanceParams.MinGasPrice.ToBigInt()
+	minGasPrice := api.api.ChainState().GetCurrentEpochInfo().FinanceParams.MinGasPrice.ToBigInt()
 	if minGasPrice.Cmp(res) > 0 {
 		res = minGasPrice
 	}

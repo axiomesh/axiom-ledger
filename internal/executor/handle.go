@@ -218,6 +218,7 @@ func (exec *BlockExecutor) processExecuteEvent(commitEvent *consensuscommon.Comm
 
 	exec.currentHeight = block.Header.Number
 	exec.currentBlockHash = block.Hash()
+
 	exec.chainState.UpdateChainMeta(exec.ledger.ChainLedger.GetChainMeta())
 	exec.chainState.TryUpdateSelfNodeInfo()
 

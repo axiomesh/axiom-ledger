@@ -44,11 +44,13 @@ type Config struct {
 }
 
 type Port struct {
-	JsonRpc   int64 `mapstructure:"jsonrpc" toml:"jsonrpc"`
-	WebSocket int64 `mapstructure:"websocket" toml:"websocket"`
-	P2P       int64 `mapstructure:"p2p" toml:"p2p"`
-	PProf     int64 `mapstructure:"pprof" toml:"pprof"`
-	Monitor   int64 `mapstructure:"monitor" toml:"monitor"`
+	JsonRpc   int64   `mapstructure:"jsonrpc" toml:"jsonrpc"`
+	WebSocket int64   `mapstructure:"websocket" toml:"websocket"`
+	P2P       int64   `mapstructure:"p2p" toml:"p2p"`
+	PProf     int64   `mapstructure:"pprof" toml:"pprof"`
+	Monitor   int64   `mapstructure:"monitor" toml:"monitor"`
+	Primary   int64   `mapstructure:"primary" toml:"primary"`
+	Workers   []int64 `mapstructure:"workers" toml:"workers"`
 }
 
 type Node struct {

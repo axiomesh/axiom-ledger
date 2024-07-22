@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/axiomesh/axiom-kit/types/pb"
 	"github.com/axiomesh/axiom-ledger/pkg/repo"
 	ethcommon "github.com/ethereum/go-ethereum/common"
 	"github.com/samber/lo"
@@ -60,7 +61,7 @@ func loadSnapMeta(lg *ledger.Ledger, args *repo.SyncArgs) (*snapMeta, error) {
 	}, nil
 }
 
-func (axm *AxiomLedger) prepareSnapSync(latestHeight uint64) (*common.PrepareData, *consensus.SignedCheckpoint, error) {
+func (axm *AxiomLedger) prepareSnapSync(latestHeight uint64) (*common.PrepareData, *pb.QuorumCheckpoint, error) {
 	// 1. switch to snapshot mode
 	err := axm.Sync.SwitchMode(common.SyncModeSnapshot)
 	if err != nil {
@@ -101,22 +102,20 @@ func (axm *AxiomLedger) prepareSnapSync(latestHeight uint64) (*common.PrepareDat
 		return nil, nil, fmt.Errorf("prepare sync err: %w", err)
 	}
 
-	snapCheckpoint := &consensus.SignedCheckpoint{
-		Checkpoint: &consensus.Checkpoint{
-			Epoch: axm.snapMeta.snapPersistEpoch,
-			ExecuteState: &consensus.Checkpoint_ExecuteState{
-				Height: axm.snapMeta.snapBlockHeader.Number,
-				Digest: axm.snapMeta.snapBlockHeader.Hash().String(),
-			},
+	snapCheckpoint := &pb.QuorumCheckpoint{
+		Epoch: axm.snapMeta.snapPersistEpoch,
+		State: &pb.ExecuteState{
+			Height: axm.snapMeta.snapBlockHeader.Number,
+			Digest: axm.snapMeta.snapBlockHeader.Hash().String(),
 		},
 	}
 
 	return res, snapCheckpoint, nil
 }
 
-func (axm *AxiomLedger) startSnapSync(verifySnapCh chan bool, ckpt *consensus.SignedCheckpoint, peers []*common.Node, startHeight uint64, epochChanges []*consensus.EpochChange) error {
+func (axm *AxiomLedger) startSnapSync(verifySnapCh chan bool, ckpt *pb.QuorumCheckpoint, peers []*common.Node, startHeight uint64, epochChanges []*pb.EpochChange) error {
 	syncTaskDoneCh := make(chan error, 1)
-	targetHeight := ckpt.Height()
+	targetHeight := ckpt.State.Height
 	params := axm.genSnapSyncParams(peers, startHeight, targetHeight, ckpt, epochChanges)
 	start := time.Now()
 	if err := axm.Sync.StartSync(params, syncTaskDoneCh); err != nil {
@@ -182,11 +181,8 @@ func (axm *AxiomLedger) persistChainData(data *common.SnapCommitData) error {
 		}
 	}
 
-	storeEpochStateFn := func(key string, value []byte) error {
-		return consensuscommon.StoreEpochState(axm.epochStore, key, value)
-	}
 	if data.EpochState != nil {
-		if err := rbft.PersistEpochQuorumCheckpoint(storeEpochStateFn, data.EpochState); err != nil {
+		if err := consensuscommon.PersistEpochChange(axm.epochStore, data.EpochState); err != nil {
 			return err
 		}
 	}
@@ -194,7 +190,7 @@ func (axm *AxiomLedger) persistChainData(data *common.SnapCommitData) error {
 }
 
 func (axm *AxiomLedger) genSnapSyncParams(peers []*common.Node, startHeight, targetHeight uint64,
-	quorumCkpt *consensus.SignedCheckpoint, epochChanges []*consensus.EpochChange) *common.SyncParams {
+	quorumCkpt *pb.QuorumCheckpoint, epochChanges []*pb.EpochChange) *common.SyncParams {
 	latestBlockHash := ethcommon.Hash{}.String()
 	if axm.ViewLedger.ChainLedger.GetChainMeta().BlockHash != nil {
 		latestBlockHash = axm.ViewLedger.ChainLedger.GetChainMeta().BlockHash.String()

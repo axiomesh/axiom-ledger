@@ -22,7 +22,6 @@ import (
 	"go.uber.org/mock/gomock"
 
 	rbft "github.com/axiomesh/axiom-bft"
-	"github.com/axiomesh/axiom-bft/common/consensus"
 	"github.com/axiomesh/axiom-kit/log"
 	"github.com/axiomesh/axiom-kit/types"
 	"github.com/axiomesh/axiom-kit/types/pb"
@@ -53,7 +52,7 @@ type mockLedger struct {
 	blockDb      map[uint64]*types.Block
 	chainMeta    *types.ChainMeta
 	receiptsDb   map[uint64][]*types.Receipt
-	epochStateDb map[string]*consensus.QuorumCheckpoint
+	epochStateDb map[string]*pb.EpochChange
 
 	stateResponse      chan *pb.Message
 	epochStateResponse chan *pb.Message
@@ -78,7 +77,7 @@ func newMockMinLedger(t *testing.T, genesisBlock *types.Block) *mockLedger {
 			genesis.Height(): genesis,
 		},
 		receiptsDb:         make(map[uint64][]*types.Receipt),
-		epochStateDb:       make(map[string]*consensus.QuorumCheckpoint),
+		epochStateDb:       make(map[string]*pb.EpochChange),
 		stateResponse:      make(chan *pb.Message, 1),
 		epochStateResponse: make(chan *pb.Message, 1),
 		chainMeta: &types.ChainMeta{
@@ -125,10 +124,10 @@ func newMockMinLedger(t *testing.T, genesisBlock *types.Block) *mockLedger {
 		if h%epochPeriod == 0 {
 			epoch := h / epochPeriod
 			key := fmt.Sprintf(epochPrefix+"%d", epoch)
-			mockLg.epochStateDb[key] = &consensus.QuorumCheckpoint{
-				Checkpoint: &consensus.Checkpoint{
+			mockLg.epochStateDb[key] = &pb.EpochChange{
+				QuorumCheckpoint: &pb.QuorumCheckpoint{
 					Epoch: h / epochPeriod,
-					ExecuteState: &consensus.Checkpoint_ExecuteState{
+					State: &pb.ExecuteState{
 						Height: h,
 						Digest: block.Hash().String(),
 					},
@@ -607,10 +606,10 @@ func stopSyncs(syncs []*SyncManager) {
 	}
 }
 
-func prepareBlockSyncs(t *testing.T, epochInterval int, local, count, txCount int, begin, end uint64) ([]*SyncManager, []*consensus.EpochChange, []*common.Node) {
+func prepareBlockSyncs(t *testing.T, epochInterval int, local, count, txCount int, begin, end uint64) ([]*SyncManager, []*pb.EpochChange, []*common.Node) {
 	syncs := make([]*SyncManager, count)
 	var (
-		epochChanges       []*consensus.EpochChange
+		epochChanges       []*pb.EpochChange
 		needGenEpochChange bool
 		ledgers            = make(map[string]*mockLedger)
 	)
@@ -738,21 +737,19 @@ func prepareBlockSyncs(t *testing.T, epochInterval int, local, count, txCount in
 	return syncs, epochChanges, peers
 }
 
-func prepareEpochChange(height uint64, hash string) *consensus.EpochChange {
-	return &consensus.EpochChange{
-		Checkpoint: &consensus.QuorumCheckpoint{
-			Checkpoint: &consensus.Checkpoint{
-				ExecuteState: &consensus.Checkpoint_ExecuteState{
-					Height: height,
-					Digest: hash,
-				},
+func prepareEpochChange(height uint64, hash string) *pb.EpochChange {
+	return &pb.EpochChange{
+		QuorumCheckpoint: &pb.QuorumCheckpoint{
+			State: &pb.ExecuteState{
+				Height: height,
+				Digest: hash,
 			},
 		},
 	}
 }
 
 func genSyncParams(peers []*common.Node, latestBlockHash string, quorum uint64, curHeight, targetHeight uint64,
-	quorumCkpt *consensus.SignedCheckpoint, epochChanges ...*consensus.EpochChange) *common.SyncParams {
+	quorumCkpt *pb.QuorumCheckpoint, epochChanges ...*pb.EpochChange) *common.SyncParams {
 	return &common.SyncParams{
 		Peers:            peers,
 		LatestBlockHash:  latestBlockHash,

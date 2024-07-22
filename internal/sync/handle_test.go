@@ -9,7 +9,6 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/axiomesh/axiom-bft/common/consensus"
 	"github.com/axiomesh/axiom-kit/types"
 	"github.com/axiomesh/axiom-kit/types/pb"
 	network "github.com/axiomesh/axiom-p2p"
@@ -189,7 +188,7 @@ func genSuccessRespMsg(t *testing.T, typ pb.Message_Type, input any) Response {
 		}
 
 	case pb.Message_FETCH_EPOCH_STATE_RESPONSE:
-		eps := input.(*consensus.QuorumCheckpoint)
+		eps := input.(*pb.QuorumCheckpoint)
 		epochState, err := eps.MarshalVT()
 		require.Nil(t, err)
 		resp = &pb.FetchEpochStateResponse{

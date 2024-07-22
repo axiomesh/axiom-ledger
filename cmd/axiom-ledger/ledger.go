@@ -15,6 +15,7 @@ import (
 
 	rbft "github.com/axiomesh/axiom-bft"
 	"github.com/axiomesh/axiom-kit/hexutil"
+	"github.com/axiomesh/axiom-kit/types/pb"
 	consensuscommon "github.com/axiomesh/axiom-ledger/internal/consensus/common"
 	"github.com/axiomesh/axiom-ledger/internal/executor/system/framework/solidity/epoch_manager"
 	"github.com/axiomesh/axiom-ledger/internal/executor/system/framework/solidity/node_manager"
@@ -812,74 +813,71 @@ func decodePrivateKeys(privateKeys []string) (map[uint64]crypto.KeystoreKey, err
 }
 
 func generateEpoch(ctx *cli.Context) error {
-	logger := loggers.Logger(loggers.App)
-	r, err := common.PrepareRepo(ctx)
-	if err != nil {
-		return err
-	}
-	lg, err := ledger.NewLedger(r)
-	if err != nil {
-		return fmt.Errorf("init ledger failed: %w", err)
-	}
-
-	priKeys, err := decodePrivateKeys(ledgerGenerateEpochArgs.ValidatorPrivateKeys.Value())
-	if err != nil {
-		return fmt.Errorf("decode private keys failed: %w", err)
-	}
-
-	// 1. clean old epoch DB
-	if err := os.RemoveAll(repo.GetStoragePath(r.RepoRoot, storagemgr.Epoch)); err != nil {
-		return err
-	}
-
-	// 2. open new epoch DB
-	epochStore, err := storagemgr.OpenWithMetrics(repo.GetStoragePath(r.RepoRoot, storagemgr.Epoch), storagemgr.Epoch)
-	if err != nil {
-		return err
-	}
-
-	vl := lg.NewView()
-	chainMeta := vl.ChainLedger.GetChainMeta()
-	epochContract := framework.EpochManagerBuildConfig.Build(syscommon.NewViewVMContext(vl.StateLedger))
-	currentEpoch, err := epochContract.CurrentEpoch()
-	if err != nil {
-		return fmt.Errorf("get current epoch failed: %w", err)
-	}
-
-	validators, err := getValidators(vl)
-	if err != nil {
-		return fmt.Errorf("get validators failed: %w", err)
-	}
-
-	logger.Infof("start generating epoch change at height: %v, end epoch: %d\n", chainMeta.Height, currentEpoch.Epoch)
-
-	for i := uint64(1); i <= currentEpoch.Epoch; i++ {
-		historyEpoch, err := epochContract.HistoryEpoch(i)
-		if err != nil {
-			return fmt.Errorf("get history epoch failed: %w", err)
-		}
-
-		// check if we need to generate epoch state
-		if chainMeta.Height < getEpochHeight(historyEpoch) {
-			break
-		}
-
-		storeEpochStateFn := func(key string, value []byte) error {
-			return consensuscommon.StoreEpochState(epochStore, key, value)
-		}
-
-		eps, err := generateEpochState(historyEpoch, lg.ChainLedger, validators, priKeys)
-		if err != nil {
-			return err
-		}
-		if err := rbft.PersistEpochQuorumCheckpoint(storeEpochStateFn, eps); err != nil {
-			return err
-		}
-
-		logger.Infof("finish generating epoch change at epoch: %d\n", i)
-	}
-
-	logger.Infof("end generate all epoch change\n")
+	//	logger := loggers.Logger(loggers.App)
+	//	r, err := common.PrepareRepo(ctx)
+	//	if err != nil {
+	//		return err
+	//	}
+	//	lg, err := ledger.NewLedger(r)
+	//	if err != nil {
+	//		return fmt.Errorf("init ledger failed: %w", err)
+	//	}
+	//
+	//	priKeys, err := decodePrivateKeys(ledgerGenerateEpochArgs.ValidatorPrivateKeys.Value())
+	//	if err != nil {
+	//		return fmt.Errorf("decode private keys failed: %w", err)
+	//	}
+	//
+	//	// 1. clean old epoch DB
+	//	if err := os.RemoveAll(repo.GetStoragePath(r.RepoRoot, storagemgr.Epoch)); err != nil {
+	//		return err
+	//	}
+	//
+	//	// 2. open new epoch DB
+	//	epochStore, err := storagemgr.OpenWithMetrics(repo.GetStoragePath(r.RepoRoot, storagemgr.Epoch), storagemgr.Epoch)
+	//	if err != nil {
+	//		return err
+	//	}
+	//
+	//	vl := lg.NewView()
+	//	chainMeta := vl.ChainLedger.GetChainMeta()
+	//	epochContract := framework.EpochManagerBuildConfig.Build(syscommon.NewViewVMContext(vl.StateLedger))
+	//	currentEpoch, err := epochContract.CurrentEpoch()
+	//	if err != nil {
+	//		return fmt.Errorf("get current epoch failed: %w", err)
+	//	}
+	//
+	//	validators, err := getValidators(vl)
+	//	if err != nil {
+	//		return fmt.Errorf("get validators failed: %w", err)
+	//	}
+	//
+	//	logger.Infof("start generating epoch change at height: %v, end epoch: %d\n", chainMeta.Height, currentEpoch.Epoch)
+	//
+	//	for i := uint64(1); i <= currentEpoch.Epoch; i++ {
+	//		historyEpoch, err := epochContract.HistoryEpoch(i)
+	//		if err != nil {
+	//			return fmt.Errorf("get history epoch failed: %w", err)
+	//		}
+	//
+	//		// check if we need to generate epoch state
+	//		if chainMeta.Height < getEpochHeight(historyEpoch) {
+	//			break
+	//		}
+	//
+	//		eps, err := generateEpochState(historyEpoch, lg.ChainLedger, validators, priKeys)
+	//		if err != nil {
+	//			return err
+	//		}
+	//
+	//		if err := consensuscommon.PersistEpochChange(epochStore, eps.GetEpoch()); err != nil {
+	//			return err
+	//		}
+	//
+	//		logger.Infof("finish generating epoch change at epoch: %d\n", i)
+	//	}
+	//
+	//	logger.Infof("end generate all epoch change\n")
 	return nil
 }
 
@@ -887,14 +885,14 @@ func getEpochHeight(epochInfo epoch_manager.EpochInfo) uint64 {
 	return epochInfo.StartBlock + epochInfo.EpochPeriod - 1
 }
 
-func getValidators(vl *ledger.Ledger) ([]consensus.ValidatorInfo, error) {
+func getValidators(vl *ledger.Ledger) ([]*pb.QuorumCheckpoint_Validator, error) {
 	nodeInfoContract := framework.NodeManagerBuildConfig.Build(syscommon.NewViewVMContext(vl.StateLedger))
 	nodes, _, err := nodeInfoContract.GetActiveValidatorSet()
 	if err != nil {
 		return nil, fmt.Errorf("get node info failed: %w", err)
 	}
-	nodeSet := lo.Map(nodes, func(info node_manager.NodeInfo, index int) consensus.ValidatorInfo {
-		return consensus.ValidatorInfo{
+	nodeSet := lo.Map(nodes, func(info node_manager.NodeInfo, index int) *pb.QuorumCheckpoint_Validator {
+		return &pb.QuorumCheckpoint_Validator{
 			Id:    info.ID,
 			P2PId: info.P2PID,
 		}
@@ -902,15 +900,10 @@ func getValidators(vl *ledger.Ledger) ([]consensus.ValidatorInfo, error) {
 	return nodeSet, nil
 }
 
-func generateEpochState(epochInfo epoch_manager.EpochInfo, lg ledger.ChainLedger, validators []consensus.ValidatorInfo, privateKeys map[uint64]crypto.KeystoreKey) (*consensus.QuorumCheckpoint, error) {
+func generateEpochState(epochInfo epoch_manager.EpochInfo, lg ledger.ChainLedger, validators []*pb.QuorumCheckpoint_Validator, privateKeys map[uint64]crypto.KeystoreKey) (*pb.QuorumCheckpoint, error) {
 	header, err := lg.GetBlockHeader(getEpochHeight(epochInfo))
 	if err != nil {
 		return nil, err
-	}
-
-	validatorSet := make(map[uint64]*consensus.ValidatorInfo)
-	for i := 0; i < len(validators); i++ {
-		validatorSet[uint64(i)] = &validators[i]
 	}
 
 	checkpoint := &consensus.Checkpoint{
@@ -931,10 +924,13 @@ func generateEpochState(epochInfo epoch_manager.EpochInfo, lg ledger.ChainLedger
 		}
 		return id, v
 	})
-	qckt := &consensus.QuorumCheckpoint{
-		Checkpoint:   checkpoint,
+	qckt := &pb.QuorumCheckpoint{
+		State: &pb.ExecuteState{
+			Height: checkpoint.Height(),
+			Digest: checkpoint.Digest(),
+		},
 		Signatures:   sigs,
-		ValidatorSet: validatorSet,
+		ValidatorSet: validators,
 	}
 
 	return qckt, nil
@@ -957,21 +953,13 @@ func getEpochState(ctx *cli.Context) error {
 	if err != nil {
 		return errors.WithMessagef(err, "failed to read epoch %d quorum chkpt", epoch)
 	}
-	cp := &consensus.QuorumCheckpoint{}
+	cp := &pb.QuorumCheckpoint{}
 	if err := cp.UnmarshalVT(raw); err != nil {
 		return errors.WithMessagef(err, "failed to unmarshal epoch %d quorum chkpt", epoch)
 	}
 
-	validators := make([]*consensus.QuorumValidator, 0)
-	for _, n := range cp.ValidatorSet {
-		validators = append(validators, &consensus.QuorumValidator{
-			Id:     n.Id,
-			PeerId: n.P2PId,
-		})
-	}
-
-	epochChanges := make([]*consensus.EpochChange, 0)
-	epochChanges = append(epochChanges, &consensus.EpochChange{Checkpoint: cp, Validators: &consensus.QuorumValidators{Validators: validators}})
+	epochChanges := make([]*pb.EpochChange, 0)
+	epochChanges = append(epochChanges, &pb.EpochChange{QuorumCheckpoint: cp})
 	logger.Infof("epoch %d quorum checkpoint: %v", epoch, epochChanges)
 	return nil
 }

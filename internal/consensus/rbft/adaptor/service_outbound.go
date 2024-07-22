@@ -6,6 +6,7 @@ import (
 
 	"github.com/Rican7/retry"
 	"github.com/Rican7/retry/strategy"
+	"github.com/axiomesh/axiom-kit/types/pb"
 	"github.com/samber/lo"
 	"github.com/sirupsen/logrus"
 
@@ -120,11 +121,27 @@ func (a *RBFTAdaptor) StateUpdate(lowWatermark, seqNo uint64, digest string, che
 			Peers:           peers,
 			LatestBlockHash: latestBlockHash,
 			// ensure sync remote count including at least one correct node
-			Quorum:           CalFaulty(uint64(len(peers))),
-			CurHeight:        startHeight,
-			TargetHeight:     seqNo,
-			QuorumCheckpoint: checkpoints[0],
-			EpochChanges:     epochChanges,
+			Quorum:       common.CalFaulty(uint64(len(peers))),
+			CurHeight:    startHeight,
+			TargetHeight: seqNo,
+			QuorumCheckpoint: &pb.QuorumCheckpoint{
+				Epoch: checkpoints[0].Epoch(),
+				State: &pb.ExecuteState{
+					Height: checkpoints[0].Height(),
+					Digest: checkpoints[0].Digest(),
+				},
+			},
+			EpochChanges: lo.Map(epochChanges, func(epoch *consensus.EpochChange, index int) *pb.EpochChange {
+				return &pb.EpochChange{
+					QuorumCheckpoint: &pb.QuorumCheckpoint{
+						Epoch: epoch.Checkpoint.Epoch(),
+						State: &pb.ExecuteState{
+							Height: epoch.Checkpoint.Height(),
+							Digest: epoch.Checkpoint.Digest(),
+						},
+					},
+				}
+			}),
 		}
 		err := a.sync.StartSync(params, syncTaskDoneCh)
 		if err != nil {
@@ -214,14 +231,4 @@ func (a *RBFTAdaptor) postMockBlockEvent(block *types.Block, txHashList []*event
 		TxPointerList:          txHashList,
 		StateUpdatedCheckpoint: ckp,
 	})
-}
-
-func CalQuorum(N uint64) uint64 {
-	f := (N - 1) / 3
-	return (N + f + 2) / 2
-}
-
-func CalFaulty(N uint64) uint64 {
-	f := (N - 1) / 3
-	return f
 }

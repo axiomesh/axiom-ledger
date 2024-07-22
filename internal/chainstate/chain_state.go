@@ -3,6 +3,7 @@ package chainstate
 import (
 	"sync"
 
+	"github.com/axiomesh/axiom-kit/types/pb"
 	"github.com/pkg/errors"
 	"github.com/samber/lo"
 
@@ -16,6 +17,8 @@ type ExpandedNodeInfo struct {
 	node_manager.NodeInfo
 	P2PPubKey       *crypto.Ed25519PublicKey
 	ConsensusPubKey *crypto.Bls12381PublicKey
+	Primary         string
+	Workers         []string
 }
 
 type ValidatorInfo struct {
@@ -34,6 +37,7 @@ type ChainState struct {
 	p2pID2NodeIDCache     map[string]uint64
 	epochInfoCache        map[uint64]*types.EpochInfo
 	selfRegistered        bool
+	latestCheckpoint      *pb.QuorumCheckpoint
 
 	// states
 	EpochInfo *types.EpochInfo
@@ -83,6 +87,21 @@ func NewChainState(p2pID string, p2pPubKey *crypto.Ed25519PublicKey, consensusPu
 		IsDataSyncer:          isDataSyncer,
 		IsValidator:           !isDataSyncer,
 	}
+}
+
+func (c *ChainState) UpdateCheckpoint(checkpoint *pb.QuorumCheckpoint) {
+	c.latestCheckpoint = checkpoint
+}
+
+func (c *ChainState) GetCurrentCheckpointState() pb.ExecuteState {
+	return pb.ExecuteState{
+		Height: c.latestCheckpoint.GetState().GetHeight(),
+		Digest: c.latestCheckpoint.GetState().GetDigest(),
+	}
+}
+
+func (c *ChainState) GetCurrentEpochInfo() types.EpochInfo {
+	return *c.EpochInfo
 }
 
 func (c *ChainState) UpdateChainMeta(chainMeta *types.ChainMeta) {
