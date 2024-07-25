@@ -2,6 +2,7 @@ package storagemgr
 
 import (
 	"fmt"
+	"path/filepath"
 	"runtime"
 	"sync"
 
@@ -17,16 +18,18 @@ import (
 )
 
 const (
-	BlockChain  = "blockchain"
-	Ledger      = "ledger"
-	Indexer     = "indexer"
-	Snapshot    = "snapshot"
-	Blockfile   = "blockfile"
-	Consensus   = "consensus"
-	Epoch       = "epoch"
-	TxPool      = "txpool"
-	Sync        = "sync"
-	TrieIndexer = "trie_indexer"
+	BlockChain      = "blockchain"
+	Ledger          = "ledger"
+	Indexer         = "indexer"
+	Snapshot        = "snapshot"
+	Blockfile       = "blockfile"
+	Consensus       = "consensus"
+	Epoch           = "epoch"
+	TxPool          = "txpool"
+	TrieIndexer     = "trie_indexer"
+	ArchiveHistory  = "archive_history"
+	ArchiveSnapshot = "archive_snapshot"
+	ArchiveJournal  = "archive_journal"
 )
 
 var globalStorageMgr = &storageMgr{
@@ -139,4 +142,24 @@ func OpenSpecifyType(typ string, p string, metricName string) (kv.Storage, error
 		globalStorageMgr.storages[p] = s
 	}
 	return s, nil
+}
+
+func GetLedgerComponentPath(rep *repo.Repo, component string) string {
+	if rep.Config != nil && rep.Config.Ledger.Path.EnableConfigPath {
+		switch component {
+		case BlockChain:
+			return rep.Config.Ledger.Path.ChainLedgerPath
+		case Blockfile:
+			return rep.Config.Ledger.Path.BlockfilePath
+		case Ledger:
+			return rep.Config.Ledger.Path.StateLedgerPath
+		case ArchiveSnapshot:
+			return rep.Config.Ledger.Path.ArchiveSnapshotPath
+		case ArchiveHistory:
+			return rep.Config.Ledger.Path.ArchiveHistoryPath
+		case ArchiveJournal:
+			return rep.Config.Ledger.Path.ArchiveJournalPath
+		}
+	}
+	return filepath.Join(rep.RepoRoot, "storage", component)
 }

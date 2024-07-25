@@ -89,7 +89,7 @@ func newChainLedger(rep *repo.Repo, bcStorage kv.Storage, bf blockfile.BlockFile
 }
 
 func NewChainLedger(rep *repo.Repo, storageDir string) (*ChainLedgerImpl, error) {
-	bcStoragePath := repo.GetStoragePath(rep.RepoRoot, storagemgr.BlockChain)
+	bcStoragePath := storagemgr.GetLedgerComponentPath(rep, storagemgr.BlockChain)
 	if storageDir != "" {
 		bcStoragePath = path.Join(storageDir, storagemgr.BlockChain)
 	}
@@ -100,7 +100,7 @@ func NewChainLedger(rep *repo.Repo, storageDir string) (*ChainLedgerImpl, error)
 
 	cachedStateStorage := storagemgr.NewCachedStorage(bcStorage, 128)
 
-	bfStoragePath := repo.GetStoragePath(rep.RepoRoot, storagemgr.Blockfile)
+	bfStoragePath := storagemgr.GetLedgerComponentPath(rep, storagemgr.Blockfile)
 	if storageDir != "" {
 		bfStoragePath = path.Join(storageDir, storagemgr.Blockfile)
 	}

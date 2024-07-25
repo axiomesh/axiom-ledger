@@ -15,7 +15,6 @@ import (
 	"github.com/axiomesh/axiom-ledger/cmd/axiom-ledger/common"
 	"github.com/axiomesh/axiom-ledger/internal/storagemgr"
 	"github.com/axiomesh/axiom-ledger/internal/txpool"
-	"github.com/axiomesh/axiom-ledger/pkg/repo"
 )
 
 var decodeTxPoolPath string
@@ -46,7 +45,7 @@ func getAllTxRecords(ctx *cli.Context) error {
 	if err != nil {
 		return err
 	}
-	p := path.Join(repo.GetStoragePath(r.RepoRoot), storagemgr.TxPool, txpool.TxRecordsFile)
+	p := path.Join(storagemgr.GetLedgerComponentPath(r, storagemgr.TxPool), txpool.TxRecordsFile)
 	if !fileutil.Exist(p) {
 		err = fmt.Errorf("axiom-ledger is not starting, please run axiom-ledger first, " + p)
 		return err
@@ -54,7 +53,7 @@ func getAllTxRecords(ctx *cli.Context) error {
 
 	// open the decodeTxPool file for writing
 	if decodeTxPoolPath == "" {
-		decodeTxPoolPath = path.Join(repo.GetStoragePath(r.RepoRoot), storagemgr.TxPool, txpool.DecodeTxRecordsFile)
+		decodeTxPoolPath = path.Join(storagemgr.GetLedgerComponentPath(r, storagemgr.TxPool), txpool.DecodeTxRecordsFile)
 	}
 
 	if !fileutil.ExistDir(path.Dir(decodeTxPoolPath)) {

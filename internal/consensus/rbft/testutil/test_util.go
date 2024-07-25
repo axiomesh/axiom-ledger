@@ -115,7 +115,7 @@ func MockMiniBlockSync(ctrl *gomock.Controller) *mock_sync.MockSync {
 func MockConsensusConfig(logger logrus.FieldLogger, ctrl *gomock.Controller, t *testing.T) (*common.Config, txpool.TxPool[types.Transaction, *types.Transaction]) {
 	rep := repo.MockRepo(t)
 
-	epochStore, err := storagemgr.Open(repo.GetStoragePath(rep.RepoRoot, storagemgr.Epoch))
+	epochStore, err := storagemgr.Open(storagemgr.GetLedgerComponentPath(rep, storagemgr.Epoch))
 	require.Nil(t, err)
 
 	chainState := chainstate.NewMockChainState(rep.GenesisConfig, map[uint64]*types.EpochInfo{

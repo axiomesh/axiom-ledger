@@ -578,7 +578,7 @@ func rollback(ctx *cli.Context) error {
 		if err := os.MkdirAll(backupStorageDir, os.ModePerm); err != nil {
 			return errors.Errorf("mkdir storage-backup dir error: %v", err.Error())
 		}
-		if err := copyDir(repo.GetStoragePath(r.RepoRoot), backupStorageDir); err != nil {
+		if err := copyDir(storagemgr.GetLedgerComponentPath(r, ""), backupStorageDir); err != nil {
 			return errors.Errorf("backup original storage dir error: %v", err.Error())
 		}
 		logger.Infof("backup original storage success")
@@ -590,10 +590,10 @@ func rollback(ctx *cli.Context) error {
 	}
 
 	// remove original snapshot
-	if err := os.RemoveAll(repo.GetStoragePath(r.RepoRoot, storagemgr.Snapshot)); err != nil {
+	if err := os.RemoveAll(storagemgr.GetLedgerComponentPath(r, storagemgr.Snapshot)); err != nil {
 		return err
 	}
-	if err := os.RemoveAll(repo.GetStoragePath(r.RepoRoot, storagemgr.Consensus)); err != nil {
+	if err := os.RemoveAll(storagemgr.GetLedgerComponentPath(r, storagemgr.Consensus)); err != nil {
 		return err
 	}
 	logger.Infof("remove original snapshot successfully")
@@ -826,12 +826,12 @@ func generateEpoch(ctx *cli.Context) error {
 	}
 
 	// 1. clean old epoch DB
-	if err := os.RemoveAll(repo.GetStoragePath(r.RepoRoot, storagemgr.Epoch)); err != nil {
+	if err := os.RemoveAll(storagemgr.GetLedgerComponentPath(r, storagemgr.Epoch)); err != nil {
 		return err
 	}
 
 	// 2. open new epoch DB
-	epochStore, err := storagemgr.OpenWithMetrics(repo.GetStoragePath(r.RepoRoot, storagemgr.Epoch), storagemgr.Epoch)
+	epochStore, err := storagemgr.OpenWithMetrics(storagemgr.GetLedgerComponentPath(r, storagemgr.Epoch), storagemgr.Epoch)
 	if err != nil {
 		return err
 	}
@@ -945,7 +945,7 @@ func getEpochState(ctx *cli.Context) error {
 		return err
 	}
 	epoch := ledgerGetEpochStateArgs.Epoch
-	epochStore, err := storagemgr.OpenWithMetrics(repo.GetStoragePath(r.RepoRoot, storagemgr.Epoch), storagemgr.Epoch)
+	epochStore, err := storagemgr.OpenWithMetrics(storagemgr.GetLedgerComponentPath(r, storagemgr.Epoch), storagemgr.Epoch)
 	if err != nil {
 		return err
 	}

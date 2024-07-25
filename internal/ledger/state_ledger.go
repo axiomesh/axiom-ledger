@@ -354,7 +354,7 @@ func newStateLedger(rep *repo.Repo, stateStorage, snapshotStorage kv.Storage) (S
 	accountTrieCache := storagemgr.NewCacheWrapper(rep.Config.Ledger.StateLedgerAccountTrieCacheMegabytesLimit, true)
 	storageTrieCache := storagemgr.NewCacheWrapper(rep.Config.Ledger.StateLedgerStorageTrieCacheMegabytesLimit, true)
 
-	trieIndexerKv, err := storagemgr.OpenWithMetrics(repo.GetStoragePath(rep.RepoRoot, storagemgr.TrieIndexer), storagemgr.TrieIndexer)
+	trieIndexerKv, err := storagemgr.OpenWithMetrics(storagemgr.GetLedgerComponentPath(rep, storagemgr.TrieIndexer), storagemgr.TrieIndexer)
 	if err != nil {
 		return nil, err
 	}
@@ -385,7 +385,7 @@ func newStateLedger(rep *repo.Repo, stateStorage, snapshotStorage kv.Storage) (S
 
 // NewStateLedger create a new ledger instance
 func NewStateLedger(rep *repo.Repo, storageDir string) (StateLedger, error) {
-	stateStoragePath := repo.GetStoragePath(rep.RepoRoot, storagemgr.Ledger)
+	stateStoragePath := storagemgr.GetLedgerComponentPath(rep, storagemgr.Ledger)
 	if storageDir != "" {
 		stateStoragePath = path.Join(storageDir, storagemgr.Ledger)
 	}
@@ -394,7 +394,7 @@ func NewStateLedger(rep *repo.Repo, storageDir string) (StateLedger, error) {
 		return nil, fmt.Errorf("create stateDB: %w", err)
 	}
 
-	snapshotStoragePath := repo.GetStoragePath(rep.RepoRoot, storagemgr.Snapshot)
+	snapshotStoragePath := storagemgr.GetLedgerComponentPath(rep, storagemgr.Snapshot)
 	if storageDir != "" {
 		snapshotStoragePath = path.Join(storageDir, storagemgr.Snapshot)
 	}

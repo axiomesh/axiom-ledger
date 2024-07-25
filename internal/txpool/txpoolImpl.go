@@ -1025,7 +1025,7 @@ func newTxPoolImpl[T any, Constraint types.TXConstraint[T]](config Config, chain
 	txpoolImp.txStore = newTransactionStore[T, Constraint](config.GetAccountNonce, config.Logger)
 
 	txpoolImp.enableLocalsPersist = config.EnableLocalsPersist
-	txpoolImp.txRecordsFile = path.Join(repo.GetStoragePath(config.RepoRoot, storagemgr.TxPool), TxRecordsFile)
+	txpoolImp.txRecordsFile = path.Join(storagemgr.GetLedgerComponentPath(&repo.Repo{RepoRoot: config.RepoRoot}, storagemgr.TxPool), TxRecordsFile)
 	if txpoolImp.enableLocalsPersist {
 		txpoolImp.txRecords = newTxRecords[T, Constraint](txpoolImp.txRecordsFile, config.Logger)
 	}

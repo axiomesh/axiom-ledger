@@ -40,7 +40,7 @@ import (
 func mockConfig(t *testing.T, ctrl *gomock.Controller) (map[int32]p2p.Pipe, *common.Config, map[uint64]map[string]p2p.Pipe) {
 	rep := repo.MockRepoWithNodeID(t, 5, 5, repo.MockDefaultIsDataSyncers, repo.MockDefaultStakeNumbers)
 
-	epochStore, err := storagemgr.Open(repo.GetStoragePath(rep.RepoRoot, storagemgr.Epoch))
+	epochStore, err := storagemgr.Open(storagemgr.GetLedgerComponentPath(rep, storagemgr.Epoch))
 	require.Nil(t, err)
 
 	chainState := chainstate.NewMockChainStateWithNodeID(rep.GenesisConfig, map[uint64]*types.EpochInfo{

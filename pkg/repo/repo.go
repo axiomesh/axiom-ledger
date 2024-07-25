@@ -161,15 +161,6 @@ func Load(repoRoot string) (*Repo, error) {
 	return repo, nil
 }
 
-func GetStoragePath(repoRoot string, subPath ...string) string {
-	p := filepath.Join(repoRoot, "storage")
-	for _, s := range subPath {
-		p = filepath.Join(p, s)
-	}
-
-	return p
-}
-
 func LoadRepoRootFromEnv(repoRoot string) (string, error) {
 	if repoRoot != "" {
 		return repoRoot, nil

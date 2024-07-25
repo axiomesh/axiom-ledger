@@ -170,11 +170,11 @@ func NewAxiomLedgerWithoutConsensus(rep *repo.Repo, ctx context.Context, cancel 
 	// 0. load ledger
 	var snap *snapMeta
 	if rep.StartArgs.SnapshotMode {
-		stateLg, err := storagemgr.OpenWithMetrics(repo.GetStoragePath(rep.RepoRoot, storagemgr.Ledger), storagemgr.Ledger)
+		stateLg, err := storagemgr.OpenWithMetrics(storagemgr.GetLedgerComponentPath(rep, storagemgr.Ledger), storagemgr.Ledger)
 		if err != nil {
 			return nil, err
 		}
-		snapshotStorage, err := storagemgr.OpenWithMetrics(repo.GetStoragePath(rep.RepoRoot, storagemgr.Snapshot), storagemgr.Snapshot)
+		snapshotStorage, err := storagemgr.OpenWithMetrics(storagemgr.GetLedgerComponentPath(rep, storagemgr.Snapshot), storagemgr.Snapshot)
 		if err != nil {
 			return nil, err
 		}
@@ -227,7 +227,7 @@ func NewAxiomLedgerWithoutConsensus(rep *repo.Repo, ctx context.Context, cancel 
 	var syncMgr *sync.SyncManager
 	var epochStore kv.Storage
 	if !rep.StartArgs.ReadonlyMode {
-		epochStore, err = storagemgr.OpenWithMetrics(repo.GetStoragePath(rep.RepoRoot, storagemgr.Epoch), storagemgr.Epoch)
+		epochStore, err = storagemgr.OpenWithMetrics(storagemgr.GetLedgerComponentPath(rep, storagemgr.Epoch), storagemgr.Epoch)
 		if err != nil {
 			return nil, err
 		}
@@ -361,7 +361,7 @@ func NewAxiomLedgerWithoutConsensus(rep *repo.Repo, ctx context.Context, cancel 
 	axm.BlockExecutor = txExec
 
 	if rep.Config.Ledger.EnableIndexer {
-		indexLg, err := storagemgr.OpenWithMetrics(repo.GetStoragePath(rep.RepoRoot, storagemgr.Indexer), storagemgr.Indexer)
+		indexLg, err := storagemgr.OpenWithMetrics(storagemgr.GetLedgerComponentPath(rep, storagemgr.Indexer), storagemgr.Indexer)
 		if err != nil {
 			return nil, err
 		}
@@ -451,6 +451,10 @@ func (axm *AxiomLedger) initChainState() error {
 	}
 	axm.ChainState.UpdateChainMeta(chainMeta)
 	axm.ChainState.TryUpdateSelfNodeInfo()
+	// if current node is archive node, forbid pruning state data.
+	if axm.ChainState.IsDataSyncer {
+		axm.Repo.Config.Ledger.EnablePrune = false
+	}
 	return nil
 }
 

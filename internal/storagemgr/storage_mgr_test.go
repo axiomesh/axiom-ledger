@@ -40,7 +40,12 @@ func TestGet(t *testing.T) {
 			err := Initialize(repoConfig)
 			require.Nil(t, err)
 
-			s, err := Open(repo.GetStoragePath(dir+tc.kvType, BlockChain))
+			rep := &repo.Repo{
+				RepoRoot: dir,
+				Config:   repoConfig,
+			}
+
+			s, err := Open(GetLedgerComponentPath(rep, BlockChain))
 			require.Nil(t, err)
 			require.NotNil(t, s)
 		})

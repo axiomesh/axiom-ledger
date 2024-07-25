@@ -206,6 +206,17 @@ type Ledger struct {
 	EnablePreload                             bool `mapstructure:"enable_preload" toml:"enable_preload"`
 	EnableIndexer                             bool `mapstructure:"enable_indexer" toml:"enable_indexer"`
 	StateLedgerReservedHistoryBlockNum        int  `mapstructure:"state_ledger_reserved_history_block_num" toml:"state_ledger_reserved_history_block_num"`
+	Path                                      Path `mapstructure:"path" toml:"path"`
+}
+
+type Path struct {
+	EnableConfigPath    bool   `mapstructure:"enable_config_path" toml:"enable_config_path"`
+	StateLedgerPath     string `mapstructure:"state_ledger_path" toml:"state_ledger_path"`
+	ChainLedgerPath     string `mapstructure:"chain_ledger_path" toml:"chain_ledger_path"`
+	BlockfilePath       string `mapstructure:"blockfile_path" toml:"blockfile_path"`
+	ArchiveHistoryPath  string `mapstructure:"archive_history_path" toml:"archive_history_path"`
+	ArchiveSnapshotPath string `mapstructure:"archive_snapshot_path" toml:"archive_snapshot_path"`
+	ArchiveJournalPath  string `mapstructure:"archive_journal_path" toml:"archive_journal_path"`
 }
 
 type Snapshot struct {
@@ -214,8 +225,7 @@ type Snapshot struct {
 }
 
 type Executor struct {
-	Type            string `mapstructure:"type" toml:"type"`
-	DisableRollback bool   `mapstructure:"disable_rollback" toml:"disable_rollback"`
+	Type string `mapstructure:"type" toml:"type"`
 }
 
 var SupportMultiNode = make(map[string]bool)
@@ -341,14 +351,21 @@ func defaultConfig() *Config {
 			EnablePreload:                      false,
 			EnableIndexer:                      false,
 			StateLedgerReservedHistoryBlockNum: 256,
+			Path: Path{
+				EnableConfigPath:    false,
+				StateLedgerPath:     "",
+				ChainLedgerPath:     "",
+				BlockfilePath:       "",
+				ArchiveHistoryPath:  "",
+				ArchiveSnapshotPath: "",
+			},
 		},
 		Snapshot: Snapshot{
 			AccountSnapshotCacheMegabytesLimit:  128,
 			ContractSnapshotCacheMegabytesLimit: 128,
 		},
 		Executor: Executor{
-			Type:            ExecTypeNative,
-			DisableRollback: false,
+			Type: ExecTypeNative,
 		},
 		PProf: PProf{
 			Enable:   true,

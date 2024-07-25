@@ -61,7 +61,7 @@ type Ready struct {
 
 func NewRBFTAdaptor(config *common.Config) (*RBFTAdaptor, error) {
 	var err error
-	storePath := repo.GetStoragePath(config.Repo.RepoRoot, storagemgr.Consensus)
+	storePath := storagemgr.GetLedgerComponentPath(config.Repo, storagemgr.Consensus)
 	var store rbft.Storage
 	switch config.Repo.Config.Consensus.StorageType {
 	case repo.ConsensusStorageTypeMinifile:
