@@ -2,7 +2,9 @@ package utils
 
 import (
 	"crypto/sha256"
+	"encoding/json"
 	"fmt"
+	"github.com/axiomesh/axiom-bft/common/consensus"
 	"strconv"
 
 	"github.com/axiomesh/axiom-kit/hexutil"
@@ -21,6 +23,7 @@ const (
 	RollbackBlockKey   = "rollback-block"
 	RollbackStateKey   = "rollback-state"
 	TrieNodeIndexKey   = "tni-"
+	ArchiveKey         = "archive-"
 )
 
 const (
@@ -70,4 +73,67 @@ func UnmarshalUint64(data []byte) uint64 {
 	}
 
 	return res
+}
+
+type SnapshotMeta struct {
+	BlockHeader *types.BlockHeader
+	EpochInfo   *types.EpochInfo
+	Nodes       *consensus.QuorumValidators
+}
+
+type snapshotMetaMarshalHelper struct {
+	BlockHeader []byte `json:"block_header"`
+	EpochInfo   []byte `json:"epoch_info"`
+	Nodes       []byte `json:"nodes"`
+}
+
+func (m *SnapshotMeta) Marshal() ([]byte, error) {
+	blockHeader, err := m.BlockHeader.Marshal()
+	if err != nil {
+		return nil, err
+	}
+	epochInfo, err := m.EpochInfo.Marshal()
+	if err != nil {
+		return nil, err
+	}
+	nodes, err := m.Nodes.MarshalVTStrict()
+	if err != nil {
+		return nil, err
+	}
+
+	return json.Marshal(&snapshotMetaMarshalHelper{
+		BlockHeader: blockHeader,
+		EpochInfo:   epochInfo,
+		Nodes:       nodes,
+	})
+}
+
+func (m *SnapshotMeta) Unmarshal(data []byte) error {
+	var helper snapshotMetaMarshalHelper
+	if err := json.Unmarshal(data, &helper); err != nil {
+		return err
+	}
+
+	blockHeader := &types.BlockHeader{}
+	err := blockHeader.Unmarshal(helper.BlockHeader)
+	if err != nil {
+		return err
+	}
+	epochInfo := &types.EpochInfo{}
+	err = epochInfo.Unmarshal(helper.EpochInfo)
+	if err != nil {
+		return err
+	}
+
+	nodes := &consensus.QuorumValidators{}
+	err = nodes.UnmarshalVT(helper.Nodes)
+	if err != nil {
+		return err
+	}
+
+	m.BlockHeader = blockHeader
+	m.EpochInfo = epochInfo
+	m.Nodes = nodes
+
+	return nil
 }

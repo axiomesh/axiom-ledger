@@ -1807,7 +1807,7 @@ func (c *StateLedgerGetStateCall) DoAndReturn(f func(*types.Address, []byte) (bo
 // GetStateDelta mocks base method.
 func (m *MockStateLedger) GetStateDelta(blockNumber uint64) *types.StateDelta {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetStateDelta", blockNumber)
+	ret := m.ctrl.Call(m, "GetStateJournal", blockNumber)
 	ret0, _ := ret[0].(*types.StateDelta)
 	return ret0
 }
@@ -1815,7 +1815,7 @@ func (m *MockStateLedger) GetStateDelta(blockNumber uint64) *types.StateDelta {
 // GetStateDelta indicates an expected call of GetStateDelta.
 func (mr *MockStateLedgerMockRecorder) GetStateDelta(blockNumber any) *StateLedgerGetStateDeltaCall {
 	mr.mock.ctrl.T.Helper()
-	call := mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetStateDelta", reflect.TypeOf((*MockStateLedger)(nil).GetStateDelta), blockNumber)
+	call := mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetStateJournal", reflect.TypeOf((*MockStateLedger)(nil).GetStateDelta), blockNumber)
 	return &StateLedgerGetStateDeltaCall{Call: call}
 }
 

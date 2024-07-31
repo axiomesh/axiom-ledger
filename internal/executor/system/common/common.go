@@ -140,7 +140,7 @@ func NewVMContext(stateLedger ledger.StateLedger, evm *vm.EVM, from ethcommon.Ad
 func NewVMContextByExecutor(stateLedger ledger.StateLedger) *VMContext {
 	return &VMContext{
 		StateLedger:    &LogsCollectorStateLedger{StateLedger: stateLedger},
-		BlockNumber:    stateLedger.CurrentBlockHeight(),
+		BlockNumber:    stateLedger.Version(),
 		From:           ethcommon.Address{},
 		CallFromSystem: true,
 	}
@@ -149,7 +149,7 @@ func NewVMContextByExecutor(stateLedger ledger.StateLedger) *VMContext {
 func NewViewVMContext(stateLedger ledger.StateLedger) *VMContext {
 	return &VMContext{
 		StateLedger: &LogsCollectorStateLedger{StateLedger: stateLedger},
-		BlockNumber: stateLedger.CurrentBlockHeight(),
+		BlockNumber: stateLedger.Version(),
 		From:        ethcommon.Address{},
 		CurrentEVM:  nil,
 	}
@@ -158,7 +158,7 @@ func NewViewVMContext(stateLedger ledger.StateLedger) *VMContext {
 func NewTestVMContext(stateLedger ledger.StateLedger, from ethcommon.Address) *VMContext {
 	return &VMContext{
 		StateLedger: &LogsCollectorStateLedger{StateLedger: stateLedger},
-		BlockNumber: stateLedger.CurrentBlockHeight(),
+		BlockNumber: stateLedger.Version(),
 		From:        from,
 		CurrentEVM:  nil,
 	}

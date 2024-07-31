@@ -122,12 +122,12 @@ func (exec *BlockExecutor) processExecuteEvent(commitEvent *consensuscommon.Comm
 	block.Header.ReceiptRoot = receiptRoot
 	block.Header.ParentHash = exec.currentBlockHash
 
-	stateRoot, err := exec.ledger.StateLedger.Commit()
+	stateJournal, err := exec.ledger.StateLedger.Commit()
 	if err != nil {
 		panic(fmt.Errorf("commit stateLedger failed: %w", err))
 	}
 
-	block.Header.StateRoot = stateRoot
+	block.Header.StateRoot = stateJournal.RootHash
 	block.Header.GasUsed = exec.cumulativeGasUsed
 
 	// update block hash cache
@@ -180,10 +180,16 @@ func (exec *BlockExecutor) processExecuteEvent(commitEvent *consensuscommon.Comm
 		"elapse": time.Since(now),
 	}).Info("[Execute-Block] Persisted block")
 
+	// only archive node will archive data
+	if err = exec.ledger.StateLedger.Archive(data.Block.Header, stateJournal); err != nil {
+		panic(err)
+	}
+
 	exec.currentHeight = block.Header.Number
 	exec.currentBlockHash = block.Hash()
 	exec.chainState.UpdateChainMeta(exec.ledger.ChainLedger.GetChainMeta())
 	exec.chainState.TryUpdateSelfNodeInfo()
+	exec.ledger.StateLedger.UpdateChainState(exec.chainState)
 
 	txPointerList := make([]*events.TxPointer, len(data.Block.Transactions))
 	lo.ForEach(data.Block.Transactions, func(item *types.Transaction, index int) {

@@ -58,7 +58,7 @@ func (c *CacheWrapper) Has(k []byte) bool {
 }
 
 func (c *CacheWrapper) Enable() bool {
-	return c.cache != nil
+	return c != nil && c.cache != nil
 }
 
 func (c *CacheWrapper) Set(k []byte, v []byte) {

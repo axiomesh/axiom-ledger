@@ -202,11 +202,11 @@ type Ledger struct {
 	ChainLedgerCacheSize                      int  `mapstructure:"chain_ledger_cache_size" toml:"chain_ledger_cache_size"`
 	StateLedgerAccountTrieCacheMegabytesLimit int  `mapstructure:"state_ledger_account_trie_cache_megabytes_limit" toml:"state_ledger_account_trie_cache_megabytes_limit"`
 	StateLedgerStorageTrieCacheMegabytesLimit int  `mapstructure:"state_ledger_storage_trie_cache_megabytes_limit" toml:"state_ledger_storage_trie_cache_megabytes_limit"`
-	EnablePrune                               bool `mapstructure:"enable_prune" toml:"enable_prune"`
 	EnablePreload                             bool `mapstructure:"enable_preload" toml:"enable_preload"`
 	EnableIndexer                             bool `mapstructure:"enable_indexer" toml:"enable_indexer"`
 	StateLedgerReservedHistoryBlockNum        int  `mapstructure:"state_ledger_reserved_history_block_num" toml:"state_ledger_reserved_history_block_num"`
 	Path                                      Path `mapstructure:"path" toml:"path"`
+	ArchiveBlockNum                           int  `mapstructure:"archive_block_num" toml:"archive_block_num"`
 }
 
 type Path struct {
@@ -347,10 +347,10 @@ func defaultConfig() *Config {
 			ChainLedgerCacheSize:                      100,
 			StateLedgerAccountTrieCacheMegabytesLimit: 128,
 			StateLedgerStorageTrieCacheMegabytesLimit: 128,
-			EnablePrune:                        true,
-			EnablePreload:                      false,
-			EnableIndexer:                      false,
-			StateLedgerReservedHistoryBlockNum: 256,
+			EnablePreload:                             false,
+			EnableIndexer:                             false,
+			StateLedgerReservedHistoryBlockNum:        256,
+			ArchiveBlockNum:                           10000,
 			Path: Path{
 				EnableConfigPath:    false,
 				StateLedgerPath:     "",

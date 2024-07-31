@@ -69,10 +69,6 @@ func (s *states) rebuildAllKeyMap() {
 }
 
 func NewPruneCache(rep *repo.Repo, ledgerStorage kv.Storage, accountTrieCache *storagemgr.CacheWrapper, storageTrieCache *storagemgr.CacheWrapper, logger logrus.FieldLogger) *PruneCache {
-	if !rep.Config.Ledger.EnablePrune {
-		logger.Infof("[Prune] pruning is disabled")
-		return nil
-	}
 	tc := &PruneCache{
 		rep:           rep,
 		ledgerStorage: ledgerStorage,
@@ -86,7 +82,7 @@ func NewPruneCache(rep *repo.Repo, ledgerStorage kv.Storage, accountTrieCache *s
 	return tc
 }
 
-func (tc *PruneCache) addNewDiff(batch kv.Batch, height uint64, ledgerStorage kv.Storage, stateDelta *types.StateDelta, persist bool) {
+func (tc *PruneCache) addNewDiff(batch kv.Batch, height uint64, ledgerStorage kv.Storage, stateJournal *types.StateJournal, persist bool) {
 	l := &diff{
 		height:        height,
 		ledgerStorage: ledgerStorage,
@@ -94,14 +90,14 @@ func (tc *PruneCache) addNewDiff(batch kv.Batch, height uint64, ledgerStorage kv
 		storageDiff:   make(map[string]types.Node),
 	}
 	if persist {
-		batch.Put(utils.CompositeKey(utils.PruneJournalKey, height), stateDelta.Encode())
+		batch.Put(utils.CompositeKey(utils.PruneJournalKey, height), stateJournal.Encode())
 		batch.Put(utils.CompositeKey(utils.PruneJournalKey, utils.MaxHeightStr), utils.MarshalUint64(height))
 		if height == 0 {
 			batch.Put(utils.CompositeKey(utils.PruneJournalKey, utils.MinHeightStr), utils.MarshalUint64(height))
 		}
 	}
 
-	for _, journal := range stateDelta.Journal {
+	for _, journal := range stateJournal.TrieJournal {
 		batch.Put(journal.RootHash[:], journal.RootNodeKey.Encode())
 		for k := range journal.PruneSet {
 			if journal.Type == TypeAccount {
@@ -123,7 +119,7 @@ func (tc *PruneCache) addNewDiff(batch kv.Batch, height uint64, ledgerStorage kv
 	tc.states.diffs = append(tc.states.diffs, l)
 }
 
-func (tc *PruneCache) Update(batch kv.Batch, height uint64, trieJournals *types.StateDelta) {
+func (tc *PruneCache) Update(batch kv.Batch, height uint64, trieJournals *types.StateJournal) {
 	tc.states.lock.Lock()
 	defer tc.states.lock.Unlock()
 
@@ -194,7 +190,7 @@ func (tc *PruneCache) Rollback(height uint64, persist bool) error {
 
 	batch := tc.ledgerStorage.NewBatch()
 	for i := minHeight; i <= height; i++ {
-		trieJournal := tc.GetStateDelta(i)
+		trieJournal := tc.GetStateJournal(i)
 		tc.logger.Debugf("[PruneCache-Rollback] apply trie journal of height=%v, trieJournal=%v", i, trieJournal)
 		if trieJournal == nil {
 			tc.logger.Warnf("[PruneCache-Rollback] trie journal is empty at height: %v", i)
@@ -233,13 +229,13 @@ func (tc *PruneCache) GetRange() (uint64, uint64) {
 	return minHeight, maxHeight
 }
 
-func (tc *PruneCache) GetStateDelta(height uint64) *types.StateDelta {
+func (tc *PruneCache) GetStateJournal(height uint64) *types.StateJournal {
 	data := tc.ledgerStorage.Get(utils.CompositeKey(utils.PruneJournalKey, height))
 	if data == nil {
 		return nil
 	}
 
-	res, err := types.DecodeStateDelta(data)
+	res, err := types.DecodeStateJournal(data)
 	if err != nil {
 		panic(err)
 	}

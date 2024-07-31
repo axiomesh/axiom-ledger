@@ -109,7 +109,6 @@ func MockRepoWithNodeID(t testing.TB, nodeCount int, nodeID uint64, isDataSyncer
 		P2PKeystore:       p2pKeystore,
 		StartArgs:         &StartArgs{},
 	}
-	rep.Config.Ledger.EnablePrune = false
 	rep.Config.Ledger.EnablePreload = true
 	rep.GenesisConfig.EpochInfo.StakeParams.MinValidatorStake = types.CoinNumberByAxc(1)
 

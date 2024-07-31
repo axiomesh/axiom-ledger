@@ -32,11 +32,11 @@ func NewTrieIndexer(rep *repo.Repo, backend kv.Storage, logger logrus.FieldLogge
 
 // todo(zqr): consider using journal to better support ledger rollback
 // todo(zqr): batch write after several blocks
-func (indexer *TrieIndexer) Update(height uint64, stateDelta *types.StateDelta) {
+func (indexer *TrieIndexer) Update(height uint64, stateDelta *types.StateJournal) {
 	current := time.Now()
 	batch := indexer.backend.NewBatch()
 
-	for _, tj := range stateDelta.Journal {
+	for _, tj := range stateDelta.TrieJournal {
 		for rawNk, node := range tj.DirtySet {
 			nk := types.DecodeNodeKey([]byte(rawNk))
 			if node.Type() == types.TypeLeafNode {

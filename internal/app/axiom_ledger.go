@@ -211,7 +211,7 @@ func NewAxiomLedgerWithoutConsensus(rep *repo.Repo, ctx context.Context, cancel 
 			}
 			logger.WithFields(logrus.Fields{
 				"genesis block hash": rwLdg.ChainLedger.GetChainMeta().BlockHash,
-			}).Info("Initialize genesis")
+			}).Info("	Initialize genesis")
 		}
 	}
 
@@ -451,10 +451,7 @@ func (axm *AxiomLedger) initChainState() error {
 	}
 	axm.ChainState.UpdateChainMeta(chainMeta)
 	axm.ChainState.TryUpdateSelfNodeInfo()
-	// if current node is archive node, forbid pruning state data.
-	if axm.ChainState.IsDataSyncer {
-		axm.Repo.Config.Ledger.EnablePrune = false
-	}
+	axm.ViewLedger.StateLedger.UpdateChainState(axm.ChainState)
 	return nil
 }
 

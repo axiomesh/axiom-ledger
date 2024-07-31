@@ -32,7 +32,7 @@ func Initialize(genesis *repo.GenesisConfig, lg *ledger.Ledger) error {
 	}
 	lg.StateLedger.Finalise()
 
-	stateRoot, err := lg.StateLedger.Commit()
+	stateJournal, err := lg.StateLedger.Commit()
 	if err != nil {
 		return err
 	}
@@ -40,7 +40,7 @@ func Initialize(genesis *repo.GenesisConfig, lg *ledger.Ledger) error {
 	block := &types.Block{
 		Header: &types.BlockHeader{
 			Number:         genesis.EpochInfo.StartBlock,
-			StateRoot:      stateRoot,
+			StateRoot:      stateJournal.RootHash,
 			TxRoot:         &types.Hash{},
 			ReceiptRoot:    &types.Hash{},
 			ParentHash:     &types.Hash{},
@@ -60,6 +60,9 @@ func Initialize(genesis *repo.GenesisConfig, lg *ledger.Ledger) error {
 	}
 	block.Header.CalculateHash()
 	lg.PersistBlockData(blockData)
+	if err = lg.StateLedger.Archive(block.Header, stateJournal); err != nil {
+		return err
+	}
 
 	return nil
 }

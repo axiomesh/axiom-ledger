@@ -119,21 +119,21 @@ func Initialize(repoConfig *repo.Config) error {
 }
 
 func Open(p string) (kv.Storage, error) {
-	return OpenSpecifyType(globalStorageMgr.defaultKVType, p, "")
+	return OpenSpecifyType(true, globalStorageMgr.defaultKVType, p, "")
 }
 
 func OpenWithMetrics(p string, uniqueMetricsPrefixName string) (kv.Storage, error) {
 	if uniqueMetricsPrefixName != "" && !model.IsValidMetricName(model.LabelValue(uniqueMetricsPrefixName)) {
 		return nil, fmt.Errorf("%q is not a valid metric name", uniqueMetricsPrefixName)
 	}
-	return OpenSpecifyType(globalStorageMgr.defaultKVType, p, uniqueMetricsPrefixName)
+	return OpenSpecifyType(false, globalStorageMgr.defaultKVType, p, uniqueMetricsPrefixName)
 }
 
-func OpenSpecifyType(typ string, p string, metricName string) (kv.Storage, error) {
+func OpenSpecifyType(force bool, typ string, p string, metricName string) (kv.Storage, error) {
 	globalStorageMgr.lock.Lock()
 	defer globalStorageMgr.lock.Unlock()
 	s, ok := globalStorageMgr.storages[p]
-	if !ok {
+	if force || !ok {
 		var err error
 		s, err = globalStorageMgr.open(typ, p, metricName)
 		if err != nil {
@@ -160,6 +160,10 @@ func GetLedgerComponentPath(rep *repo.Repo, component string) string {
 		case ArchiveJournal:
 			return rep.Config.Ledger.Path.ArchiveJournalPath
 		}
+	}
+
+	if component == ArchiveSnapshot || component == ArchiveHistory || component == ArchiveJournal {
+		return filepath.Join(rep.RepoRoot, "storage", "archive", component)
 	}
 	return filepath.Join(rep.RepoRoot, "storage", component)
 }

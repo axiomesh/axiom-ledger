@@ -2,6 +2,8 @@ package ledger
 
 import (
 	"fmt"
+	"github.com/axiomesh/axiom-ledger/internal/chainstate"
+	"github.com/axiomesh/axiom-ledger/internal/ledger/utils"
 	"math/big"
 
 	"github.com/ethereum/go-ethereum/common"
@@ -88,9 +90,9 @@ type StateLedger interface {
 	// NewView get a view at specific block. We can enable snapshot if and only if the block were the latest block.
 	NewView(blockHeader *types.BlockHeader, enableSnapshot bool) (StateLedger, error)
 
-	IterateTrie(snapshotMeta *SnapshotMeta, kv kv.Storage, errC chan error)
+	IterateTrie(snapshotMeta *utils.SnapshotMeta, kv kv.Storage, errC chan error)
 
-	GetTrieSnapshotMeta() (*SnapshotMeta, error)
+	GetTrieSnapshotMeta() (*utils.SnapshotMeta, error)
 
 	VerifyTrie(blockHeader *types.BlockHeader) (bool, error)
 
@@ -100,9 +102,11 @@ type StateLedger interface {
 
 	GetHistoryRange() (uint64, uint64)
 
-	CurrentBlockHeight() uint64
+	GetStateDelta(blockNumber uint64) *types.StateJournal
 
-	GetStateDelta(blockNumber uint64) *types.StateDelta
+	UpdateChainState(chainState *chainstate.ChainState)
+
+	Archive(blockHeader *types.BlockHeader, stateJournal *types.StateJournal) error
 }
 
 // StateAccessor manipulates the state data
@@ -162,7 +166,7 @@ type StateAccessor interface {
 	GetCommittedState(*types.Address, []byte) []byte
 
 	// Commit commits the state data
-	Commit() (*types.Hash, error)
+	Commit() (*types.StateJournal, error)
 
 	// SelfDestruct
 	SelfDestruct(*types.Address) bool

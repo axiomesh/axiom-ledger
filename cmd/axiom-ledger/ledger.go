@@ -347,7 +347,7 @@ func importAccountsFromFile(r *repo.Repo, lg *ledger.Ledger, filePath string, ba
 
 func persistBlock4Test(r *repo.Repo, lg *ledger.Ledger, currentHeight uint64, parentBlockHeader *types.BlockHeader) error {
 	lg.StateLedger.Finalise()
-	stateRoot, err := lg.StateLedger.Commit()
+	stateJournal, err := lg.StateLedger.Commit()
 	if err != nil {
 		return err
 	}
@@ -355,7 +355,7 @@ func persistBlock4Test(r *repo.Repo, lg *ledger.Ledger, currentHeight uint64, pa
 	block := &types.Block{
 		Header: &types.BlockHeader{
 			Number:         currentHeight + 1,
-			StateRoot:      stateRoot,
+			StateRoot:      stateJournal.RootHash,
 			TxRoot:         &types.Hash{},
 			ReceiptRoot:    &types.Hash{},
 			ParentHash:     parentBlockHeader.Hash(),
@@ -374,6 +374,9 @@ func persistBlock4Test(r *repo.Repo, lg *ledger.Ledger, currentHeight uint64, pa
 	}
 
 	lg.PersistBlockData(blockData)
+	if err = lg.StateLedger.Archive(block.Header, stateJournal); err != nil {
+		return err
+	}
 	return nil
 }
 
@@ -616,11 +619,9 @@ func rollback(ctx *cli.Context) error {
 	if targetBlockNumber >= chainMeta.Height {
 		return errors.Errorf("target-block-number %d must be less than the current latest block height %d\n", targetBlockNumber, chainMeta.Height)
 	}
-	if r.Config.Ledger.EnablePrune {
-		minHeight, maxHeight := originStateLedger.GetHistoryRange()
-		if targetBlockNumber < minHeight || targetBlockNumber > maxHeight {
-			return errors.Errorf("this is a prune node, target-block-number %d must be within valid range, which is from %d to %d\n", targetBlockNumber, minHeight, maxHeight)
-		}
+	minHeight, maxHeight := originStateLedger.GetHistoryRange()
+	if targetBlockNumber < minHeight || targetBlockNumber > maxHeight {
+		return errors.Errorf("this is a prune node, target-block-number %d must be within valid range, which is from %d to %d\n", targetBlockNumber, minHeight, maxHeight)
 	}
 
 	targetBlockHeader, err := originChainLedger.GetBlockHeader(targetBlockNumber)
@@ -664,18 +665,15 @@ func rollback(ctx *cli.Context) error {
 		}
 
 		// write stale ledger state deltas
-		if r.Config.Ledger.EnablePrune {
-			_, maxHeight := originStateLedger.GetHistoryRange()
-			for i := maxHeight; i > targetBlockNumber; i-- {
-				stateDelta := originStateLedger.GetStateDelta(i)
-				batch.Put(utils.CompositeKey(utils.RollbackStateKey, i), stateDelta.Encode())
-				if batch.Size() > maxBatchSize {
-					batch.Commit()
-					batch.Reset()
-					logger.Infof("[rollback] write batch periodically")
-				}
+		_, maxHeight := originStateLedger.GetHistoryRange()
+		for i := maxHeight; i > targetBlockNumber; i-- {
+			stateDelta := originStateLedger.GetStateDelta(i)
+			batch.Put(utils.CompositeKey(utils.RollbackStateKey, i), stateDelta.Encode())
+			if batch.Size() > maxBatchSize {
+				batch.Commit()
+				batch.Reset()
+				logger.Infof("[rollback] write batch periodically")
 			}
-
 		}
 		batch.Commit()
 	}
@@ -735,11 +733,9 @@ func generateTrie(ctx *cli.Context) error {
 	if err != nil {
 		return fmt.Errorf("init state ledger failed: %w", err)
 	}
-	if r.Config.Ledger.EnablePrune {
-		minHeight, maxHeight := originStateLedger.GetHistoryRange()
-		if ledgerGenerateTrieArgs.TargetBlockNumber < minHeight || ledgerGenerateTrieArgs.TargetBlockNumber > maxHeight {
-			return errors.Errorf("This is a prune node, target-block-number %d must be within valid range, which is from %d to %d\n", ledgerGenerateTrieArgs.TargetBlockNumber, minHeight, maxHeight)
-		}
+	minHeight, maxHeight := originStateLedger.GetHistoryRange()
+	if ledgerGenerateTrieArgs.TargetBlockNumber < minHeight || ledgerGenerateTrieArgs.TargetBlockNumber > maxHeight {
+		return errors.Errorf("This is a prune node, target-block-number %d must be within valid range, which is from %d to %d\n", ledgerGenerateTrieArgs.TargetBlockNumber, minHeight, maxHeight)
 	}
 
 	epochManagerContract := framework.EpochManagerBuildConfig.Build(syscommon.NewViewVMContext(originStateLedger))
@@ -749,7 +745,7 @@ func generateTrie(ctx *cli.Context) error {
 	}
 
 	errC := make(chan error)
-	go originStateLedger.IterateTrie(&ledger.SnapshotMeta{
+	go originStateLedger.IterateTrie(&utils.SnapshotMeta{
 		BlockHeader: blockHeader,
 		EpochInfo:   epochInfo.ToTypesEpoch(),
 		Nodes:       peers,

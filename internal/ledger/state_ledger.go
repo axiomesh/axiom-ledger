@@ -1,9 +1,10 @@
 package ledger
 
 import (
-	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/axiomesh/axiom-ledger/internal/chainstate"
+	archive "github.com/axiomesh/axiom-ledger/internal/ledger/archive"
 	"math/big"
 	"path"
 	"time"
@@ -11,7 +12,6 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/sirupsen/logrus"
 
-	"github.com/axiomesh/axiom-bft/common/consensus"
 	"github.com/axiomesh/axiom-kit/jmt"
 	"github.com/axiomesh/axiom-kit/storage/kv"
 	"github.com/axiomesh/axiom-kit/types"
@@ -44,9 +44,12 @@ type StateLedgerImpl struct {
 
 	pruneCache       *prune.PruneCache
 	trieIndexer      *trie_indexer.TrieIndexer
+	archiver         *archive.Archiver
 	backend          kv.Storage
 	accountTrieCache *storagemgr.CacheWrapper
 	storageTrieCache *storagemgr.CacheWrapper
+
+	chainState *chainstate.ChainState
 
 	triePreloader *triePreloaderManager
 	accounts      map[string]IAccount
@@ -69,77 +72,31 @@ type StateLedgerImpl struct {
 	transientStorage transientStorage
 }
 
-type SnapshotMeta struct {
-	BlockHeader *types.BlockHeader
-	EpochInfo   *types.EpochInfo
-	Nodes       *consensus.QuorumValidators
-}
-
-type snapshotMetaMarshalHelper struct {
-	BlockHeader []byte `json:"block_header"`
-	EpochInfo   []byte `json:"epoch_info"`
-	Nodes       []byte `json:"nodes"`
-}
-
-func (m *SnapshotMeta) Marshal() ([]byte, error) {
-	blockHeader, err := m.BlockHeader.Marshal()
-	if err != nil {
-		return nil, err
-	}
-	epochInfo, err := m.EpochInfo.Marshal()
-	if err != nil {
-		return nil, err
-	}
-	nodes, err := m.Nodes.MarshalVTStrict()
-	if err != nil {
-		return nil, err
-	}
-
-	return json.Marshal(&snapshotMetaMarshalHelper{
-		BlockHeader: blockHeader,
-		EpochInfo:   epochInfo,
-		Nodes:       nodes,
-	})
-}
-
-func (m *SnapshotMeta) Unmarshal(data []byte) error {
-	var helper snapshotMetaMarshalHelper
-	if err := json.Unmarshal(data, &helper); err != nil {
-		return err
-	}
-
-	blockHeader := &types.BlockHeader{}
-	err := blockHeader.Unmarshal(helper.BlockHeader)
-	if err != nil {
-		return err
-	}
-	epochInfo := &types.EpochInfo{}
-	err = epochInfo.Unmarshal(helper.EpochInfo)
-	if err != nil {
-		return err
-	}
-
-	nodes := &consensus.QuorumValidators{}
-	err = nodes.UnmarshalVT(helper.Nodes)
-	if err != nil {
-		return err
-	}
-
-	m.BlockHeader = blockHeader
-	m.EpochInfo = epochInfo
-	m.Nodes = nodes
-
-	return nil
-}
-
 // NewView get a view at specific block. We can enable snapshot if and only if the block were the latest block.
 func (l *StateLedgerImpl) NewView(blockHeader *types.BlockHeader, enableSnapshot bool) (StateLedger, error) {
 	l.logger.Debugf("[NewView] height: %v, stateRoot: %v", blockHeader.Number, blockHeader.StateRoot)
-	if l.repo.Config.Ledger.EnablePrune {
-		min, max := l.GetHistoryRange()
-		if blockHeader.Number < min || blockHeader.Number > max {
-			return nil, fmt.Errorf("history at target block %v is invalid, the valid range is from %v to %v", blockHeader.Number, min, max)
+
+	// if current node is an archive node, and request query historical state, then use archived history ledger as backend.
+	if !enableSnapshot && l.chainState != nil && l.chainState.IsDataSyncer {
+		lg := &StateLedgerImpl{
+			repo:        l.repo,
+			logger:      l.logger,
+			backend:     l.archiver.GetHistoryBackend(),
+			archiver:    l.archiver,
+			accounts:    make(map[string]IAccount),
+			preimages:   make(map[types.Hash][]byte),
+			changer:     newChanger(),
+			accessList:  NewAccessList(),
+			logs:        newEvmLogs(),
+			blockHeight: blockHeader.Number,
 		}
+		lg.refreshAccountTrie(blockHeader.StateRoot)
+		return lg, nil
+	}
+
+	min, max := l.GetHistoryRange()
+	if blockHeader.Number < min || blockHeader.Number > max {
+		return nil, fmt.Errorf("history at target block %v is invalid, the valid range is from %v to %v", blockHeader.Number, min, max)
 	}
 
 	lg := &StateLedgerImpl{
@@ -150,6 +107,7 @@ func (l *StateLedgerImpl) NewView(blockHeader *types.BlockHeader, enableSnapshot
 		accountTrieCache: l.accountTrieCache,
 		storageTrieCache: l.storageTrieCache,
 		trieIndexer:      l.trieIndexer,
+		archiver:         l.archiver,
 		accounts:         make(map[string]IAccount),
 		preimages:        make(map[types.Hash][]byte),
 		changer:          newChanger(),
@@ -168,8 +126,17 @@ func (l *StateLedgerImpl) GetHistoryRange() (uint64, uint64) {
 	return l.pruneCache.GetRange()
 }
 
-func (l *StateLedgerImpl) GetStateDelta(blockNumber uint64) *types.StateDelta {
-	return l.pruneCache.GetStateDelta(blockNumber)
+func (l *StateLedgerImpl) GetStateDelta(blockNumber uint64) *types.StateJournal {
+	return l.pruneCache.GetStateJournal(blockNumber)
+}
+
+func (l *StateLedgerImpl) UpdateChainState(chainState *chainstate.ChainState) {
+	l.archiver.UpdateChainState(chainState)
+	l.chainState = chainState
+}
+
+func (l *StateLedgerImpl) Archive(blockHeader *types.BlockHeader, stateJournal *types.StateJournal) error {
+	return l.archiver.Archive(blockHeader, stateJournal)
 }
 
 func (l *StateLedgerImpl) Finalise() {
@@ -186,7 +153,7 @@ func (l *StateLedgerImpl) Finalise() {
 }
 
 // IterateTrie iterate the whole account trie and all contract storage tries of target block, and store them in kv.
-func (l *StateLedgerImpl) IterateTrie(snapshotMeta *SnapshotMeta, kv kv.Storage, errC chan error) {
+func (l *StateLedgerImpl) IterateTrie(snapshotMeta *utils.SnapshotMeta, kv kv.Storage, errC chan error) {
 	stateRoot := snapshotMeta.BlockHeader.StateRoot.ETHHash()
 	l.logger.Infof("[IterateTrie] blockhash: %v, rootHash: %v", snapshotMeta.BlockHeader.Hash(), stateRoot)
 	batch := kv.NewBatch()
@@ -257,13 +224,13 @@ func (l *StateLedgerImpl) IterateTrie(snapshotMeta *SnapshotMeta, kv kv.Storage,
 	errC <- nil
 }
 
-func (l *StateLedgerImpl) GetTrieSnapshotMeta() (*SnapshotMeta, error) {
+func (l *StateLedgerImpl) GetTrieSnapshotMeta() (*utils.SnapshotMeta, error) {
 	raw := l.backend.Get([]byte(utils.SnapshotMetaKey))
 	if len(raw) == 0 {
 		return nil, ErrNotFound
 	}
 
-	snapshotMeta := &SnapshotMeta{}
+	snapshotMeta := &utils.SnapshotMeta{}
 	if err := snapshotMeta.Unmarshal(raw); err != nil {
 		return nil, err
 	}
@@ -276,11 +243,10 @@ func (l *StateLedgerImpl) GenerateSnapshot(blockHeader *types.BlockHeader, errC 
 	l.logger.Infof("[GenerateSnapshot] blockNum: %v, blockhash: %v, rootHash: %v", blockHeader.Number, blockHeader.Hash(), stateRoot)
 
 	// in validate node, we should rebuild prune cache before iterate trie
-	if l.repo.Config.Ledger.EnablePrune {
-		if err := l.pruneCache.Rollback(blockHeader.Number, false); err != nil {
-			errC <- err
-			return
-		}
+	// todo check logic here
+	if err := l.pruneCache.Rollback(blockHeader.Number, false); err != nil {
+		errC <- err
+		return
 	}
 
 	queue := []common.Hash{stateRoot}
@@ -288,7 +254,7 @@ func (l *StateLedgerImpl) GenerateSnapshot(blockHeader *types.BlockHeader, errC 
 	for len(queue) > 0 {
 		trieRoot := queue[0]
 		iter := jmt.NewIterator(trieRoot, l.backend, l.pruneCache, 10000, 300*time.Second)
-		l.logger.Debugf("[GenerateSnapshot] trie root=%v", trieRoot)
+		l.logger.Infof("[GenerateSnapshot] trie root=%v", trieRoot)
 		go iter.IterateLeaf()
 
 		for {
@@ -359,6 +325,20 @@ func newStateLedger(rep *repo.Repo, stateStorage, snapshotStorage kv.Storage) (S
 		return nil, err
 	}
 
+	// init archive path
+	archiveHistoryStorage, err := storagemgr.Open(storagemgr.GetLedgerComponentPath(rep, storagemgr.ArchiveHistory))
+	if err != nil {
+		return nil, err
+	}
+	archiveJournalStorage, err := storagemgr.Open(storagemgr.GetLedgerComponentPath(rep, storagemgr.ArchiveJournal))
+	if err != nil {
+		return nil, err
+	}
+	archiveArgs := &archive.ArchiveArgs{
+		HistoryStorage: archiveHistoryStorage,
+		JournalStorage: archiveJournalStorage,
+	}
+
 	ledger := &StateLedgerImpl{
 		repo:             rep,
 		logger:           loggers.Logger(loggers.Storage),
@@ -367,6 +347,7 @@ func newStateLedger(rep *repo.Repo, stateStorage, snapshotStorage kv.Storage) (S
 		storageTrieCache: storageTrieCache,
 		pruneCache:       prune.NewPruneCache(rep, stateCachedStorage, accountTrieCache, storageTrieCache, loggers.Logger(loggers.Storage)),
 		trieIndexer:      trie_indexer.NewTrieIndexer(rep, trieIndexerKv, loggers.Logger(loggers.Storage)),
+		archiver:         archive.NewArchiver(rep, archiveArgs, loggers.Logger(loggers.Storage)),
 		accounts:         make(map[string]IAccount),
 		preimages:        make(map[types.Hash][]byte),
 		changer:          newChanger(),
@@ -415,8 +396,4 @@ func (l *StateLedgerImpl) SetTxContext(thash *types.Hash, ti int) {
 func (l *StateLedgerImpl) Close() {
 	_ = l.backend.Close()
 	l.triePreloader.close()
-}
-
-func (l *StateLedgerImpl) CurrentBlockHeight() uint64 {
-	return l.blockHeight
 }

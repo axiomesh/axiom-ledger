@@ -232,7 +232,7 @@ func (l *StateLedgerImpl) collectDirtyData() (map[string]IAccount, *types.Snapsh
 }
 
 // Commit the state, and get account trie root hash
-func (l *StateLedgerImpl) Commit() (*types.Hash, error) {
+func (l *StateLedgerImpl) Commit() (*types.StateJournal, error) {
 	l.logger.Debugf("==================[Commit-Start]==================")
 	defer l.logger.Debugf("==================[Commit-End]==================")
 
@@ -251,7 +251,10 @@ func (l *StateLedgerImpl) Commit() (*types.Hash, error) {
 	destructSet := make(map[string]struct{})
 	accountSet := make(map[string]*types.InnerAccount)
 	storageSet := make(map[string]map[string][]byte)
-	stateDelta := &types.StateDelta{Journal: make([]*types.TrieJournal, 0)}
+	stateJournal := &types.StateJournal{
+		TrieJournal: make([]*types.TrieJournal, 0),
+		CodeJournal: make(map[string][]byte),
+	}
 
 	kvBatch := l.backend.NewBatch()
 	updateTriesTime := time.Now()
@@ -274,7 +277,9 @@ func (l *StateLedgerImpl) Commit() (*types.Hash, error) {
 		}
 
 		if !bytes.Equal(account.originCode, account.dirtyCode) && account.dirtyCode != nil {
-			kvBatch.Put(utils.CompositeCodeKey(account.Addr, account.dirtyAccount.CodeHash), account.dirtyCode)
+			codeKey := utils.CompositeCodeKey(account.Addr, account.dirtyAccount.CodeHash)
+			kvBatch.Put(codeKey, account.dirtyCode)
+			stateJournal.CodeJournal[string(codeKey)] = account.dirtyCode
 		}
 
 		l.logger.Debugf("[Commit-Before] committing storage trie begin, addr: %v,account.dirtyAccount.StorageRoot: %v", account.Addr, account.dirtyAccount.StorageRoot)
@@ -325,15 +330,10 @@ func (l *StateLedgerImpl) Commit() (*types.Hash, error) {
 
 		// commit account's storage trie
 		if account.storageTrie != nil {
-			pruneArgs := &jmt.PruneArgs{
-				Enable: l.repo.Config.Ledger.EnablePrune,
-			}
-			storageRoot := account.storageTrie.Commit(pruneArgs)
-			account.dirtyAccount.StorageRoot = storageRoot
-			if l.repo.Config.Ledger.EnablePrune {
-				pruneArgs.Journal.Type = prune.TypeStorage
-				stateDelta.Journal = append(stateDelta.Journal, pruneArgs.Journal)
-			}
+			journal := account.storageTrie.Commit()
+			account.dirtyAccount.StorageRoot = journal.RootHash
+			journal.Type = prune.TypeStorage
+			stateJournal.TrieJournal = append(stateJournal.TrieJournal, journal)
 			l.logger.Debugf("[Commit-After] committing storage trie end, addr: %v,account.dirtyAccount.StorageRoot: %v", account.Addr, account.dirtyAccount.StorageRoot)
 		}
 
@@ -349,21 +349,17 @@ func (l *StateLedgerImpl) Commit() (*types.Hash, error) {
 			l.logger.Debugf("[Commit] update account trie, addr: %v, origin account: %v, dirty account: %v", account.Addr, account.originAccount, account.dirtyAccount)
 		}
 	}
-	pruneArgs := &jmt.PruneArgs{
-		Enable: l.repo.Config.Ledger.EnablePrune,
-	}
-	stateRoot := l.accountTrie.Commit(pruneArgs)
+	journal := l.accountTrie.Commit()
 	l.logger.WithFields(logrus.Fields{
 		"elapse": time.Since(updateTriesTime),
 	}).Info("[StateLedger-Commit] Update all trie")
 
-	if l.repo.Config.Ledger.EnablePrune {
-		pruneArgs.Journal.Type = prune.TypeAccount
-		stateDelta.Journal = append(stateDelta.Journal, pruneArgs.Journal)
-		l.pruneCache.Update(kvBatch, height, stateDelta)
-		l.trieIndexer.Update(height, stateDelta)
-	}
-	l.logger.Debugf("[Commit] after committed world state trie, StateRoot: %v", stateRoot)
+	journal.Type = prune.TypeAccount
+	stateJournal.TrieJournal = append(stateJournal.TrieJournal, journal)
+	stateJournal.RootHash = types.NewHash(journal.RootHash.Bytes())
+	l.pruneCache.Update(kvBatch, height, stateJournal)
+	l.trieIndexer.Update(height, stateJournal)
+	l.logger.Debugf("[Commit] after committed world state trie, StateRoot: %v", journal.RootHash)
 
 	current := time.Now()
 
@@ -393,7 +389,7 @@ func (l *StateLedgerImpl) Commit() (*types.Hash, error) {
 		}).Info("[StateLedger-Commit] Update snapshot")
 	}
 
-	return types.NewHash(stateRoot.Bytes()), nil
+	return stateJournal, nil
 }
 
 func (l *StateLedgerImpl) getJnlHeightSize() uint64 {
