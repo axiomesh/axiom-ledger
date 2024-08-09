@@ -26,9 +26,10 @@ import (
 var startArgs = struct {
 	Readonly bool
 	Snapshot bool
+	Archive  bool
 }{}
 
-var syncSnapshotArgs = struct {
+var syncPeerArgs = struct {
 	remotePeers cli.StringSlice
 }{}
 
@@ -55,9 +56,9 @@ func start(ctx *cli.Context) error {
 	if err != nil {
 		return err
 	}
-	r.StartArgs = &repo.StartArgs{ReadonlyMode: startArgs.Readonly, SnapshotMode: startArgs.Snapshot}
+	r.StartArgs = &repo.StartArgs{ReadonlyMode: startArgs.Readonly, SnapshotMode: startArgs.Snapshot, ArchiveMode: startArgs.Archive}
 	r.SyncArgs = &repo.SyncArgs{}
-	if peers := syncSnapshotArgs.remotePeers.Value(); len(peers) != 0 {
+	if peers := syncPeerArgs.remotePeers.Value(); len(peers) != 0 {
 		r.SyncArgs.RemotePeers, err = common.DecodePeers(peers)
 		if err != nil {
 			return err

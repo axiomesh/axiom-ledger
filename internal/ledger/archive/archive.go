@@ -2,40 +2,44 @@ package prune
 
 import (
 	"fmt"
-	"github.com/axiomesh/axiom-ledger/internal/storagemgr"
-	"github.com/pkg/errors"
-	"github.com/sirupsen/logrus"
 	"io"
 	"os"
 	"path/filepath"
 	"sync"
 	"time"
 
+	"github.com/pkg/errors"
+	"github.com/sirupsen/logrus"
+
 	"github.com/axiomesh/axiom-kit/storage/kv"
 	"github.com/axiomesh/axiom-kit/types"
 	"github.com/axiomesh/axiom-ledger/internal/chainstate"
 	"github.com/axiomesh/axiom-ledger/internal/ledger/utils"
+	"github.com/axiomesh/axiom-ledger/internal/storagemgr"
 	"github.com/axiomesh/axiom-ledger/pkg/repo"
 )
 
 type Archiver struct {
 	rep *repo.Repo
 
-	chainState             *chainstate.ChainState
-	archiveHistoryBackend  kv.Storage
-	archiveJournalBackend  kv.Storage
-	archiveSnapshotBackend kv.Storage
+	chainState                 *chainstate.ChainState
+	archiveHistoryBackend      kv.Storage
+	archiveJournalBackend      kv.Storage
+	archiveTrieSnapshotBackend kv.Storage
 
-	lastArchiveBlock   uint64
-	snapshotPath       string
-	snapshotOriginPath string
+	lastArchiveBlock              uint64
+	archiveTrieSnapshotPath       string
+	archiveTrieSnapshotOriginPath string
+
+	ledgerBackend   kv.Storage
+	snapshotBackend kv.Storage
 
 	logger logrus.FieldLogger
 }
 
 type ArchiveArgs struct {
-	HistoryStorage kv.Storage
-	JournalStorage kv.Storage
+	ArchiveHistoryStorage kv.Storage
+	ArchiveJournalStorage kv.Storage
 }
 
 func NewArchiver(rep *repo.Repo, archiveArgs *ArchiveArgs, logger logrus.FieldLogger) *Archiver {
@@ -46,15 +50,15 @@ func NewArchiver(rep *repo.Repo, archiveArgs *ArchiveArgs, logger logrus.FieldLo
 		panic(err)
 	}
 	archiver := &Archiver{
-		rep:                    rep,
-		archiveSnapshotBackend: archiveSnapshotStorage,
-		archiveJournalBackend:  archiveArgs.JournalStorage,
-		archiveHistoryBackend:  archiveArgs.HistoryStorage,
-		logger:                 logger,
-		snapshotPath:           snapshotPath,
-		snapshotOriginPath:     snapshotOriginPath,
+		rep:                           rep,
+		archiveTrieSnapshotBackend:    archiveSnapshotStorage,
+		archiveJournalBackend:         archiveArgs.ArchiveJournalStorage,
+		archiveHistoryBackend:         archiveArgs.ArchiveHistoryStorage,
+		logger:                        logger,
+		archiveTrieSnapshotPath:       snapshotPath,
+		archiveTrieSnapshotOriginPath: snapshotOriginPath,
 	}
-	if data := archiver.archiveSnapshotBackend.Get(utils.CompositeKey(utils.ArchiveKey, utils.MaxHeightStr)); data != nil {
+	if data := archiver.archiveTrieSnapshotBackend.Get(utils.CompositeKey(utils.ArchiveKey, utils.MaxHeightStr)); data != nil {
 		archiver.lastArchiveBlock = utils.UnmarshalUint64(data)
 	}
 	return archiver
@@ -67,7 +71,6 @@ func (archiver *Archiver) Archive(blockHeader *types.BlockHeader, stateJournal *
 
 	cur := time.Now()
 	var wg sync.WaitGroup
-	defer archiver.logger.Infof("[Archive] archive history at height: %v, time: %v", blockHeader.Number, time.Since(cur))
 
 	// archive journal data
 	wg.Add(1)
@@ -95,11 +98,11 @@ func (archiver *Archiver) Archive(blockHeader *types.BlockHeader, stateJournal *
 		historyBatch.Commit()
 	}()
 
-	// update snapshot data
+	// update trie snapshot data
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
-		snapshotBatch := archiver.archiveSnapshotBackend.NewBatch()
+		snapshotBatch := archiver.archiveTrieSnapshotBackend.NewBatch()
 		for _, journal := range stateJournal.TrieJournal {
 			snapshotBatch.Put(journal.RootHash[:], journal.RootNodeKey.Encode())
 			for k, v := range journal.DirtySet {
@@ -122,7 +125,7 @@ func (archiver *Archiver) Archive(blockHeader *types.BlockHeader, stateJournal *
 	}
 
 	// archive snapshot data
-	snapshotBatch := archiver.archiveSnapshotBackend.NewBatch()
+	snapshotBatch := archiver.archiveTrieSnapshotBackend.NewBatch()
 	epochInfo, err := archiver.chainState.GetEpochInfo(blockHeader.Epoch)
 	if err != nil {
 		return fmt.Errorf("get epoch info failed: %w", err)
@@ -141,23 +144,25 @@ func (archiver *Archiver) Archive(blockHeader *types.BlockHeader, stateJournal *
 	snapshotBatch.Put(utils.CompositeKey(utils.ArchiveKey, utils.MaxHeightStr), utils.MarshalUint64(snapshotMeta.BlockHeader.Number))
 	snapshotBatch.Commit()
 
-	if err := archiver.archiveSnapshotBackend.Close(); err != nil {
+	if err := archiver.archiveTrieSnapshotBackend.Close(); err != nil {
 		return errors.Errorf("archive snapshot error: %v", err)
 	}
-	snapshotTargetPath := filepath.Join(archiver.snapshotPath, fmt.Sprintf("snapshot-%v-%v", blockHeader.Number, time.Now().Format("2006-01-02T15-04-05")))
+	snapshotTargetPath := filepath.Join(archiver.archiveTrieSnapshotPath, fmt.Sprintf("snapshot-%v-%v", blockHeader.Number, time.Now().Format("2006-01-02T15-04-05")))
 	if err := os.MkdirAll(snapshotTargetPath, os.ModePerm); err != nil {
 		return errors.Errorf("mkdir snapshot archive dir error: %v", err.Error())
 	}
-	if err := copyDir(archiver.snapshotOriginPath, snapshotTargetPath); err != nil {
+	if err := copyDir(archiver.archiveTrieSnapshotOriginPath, snapshotTargetPath); err != nil {
 		return errors.Errorf("copy archived snapshot error: %v", err)
 	}
-	originSnapshotStorage, err := storagemgr.Open(archiver.snapshotOriginPath)
+	originSnapshotStorage, err := storagemgr.Open(archiver.archiveTrieSnapshotOriginPath)
 	if err != nil {
 		return errors.Errorf("reopen snapshot storage error: %v", err)
 	}
 
-	archiver.archiveSnapshotBackend = originSnapshotStorage
+	archiver.archiveTrieSnapshotBackend = originSnapshotStorage
 	archiver.lastArchiveBlock = blockHeader.Number
+
+	archiver.logger.Infof("[Archive] archive history at height: %v, time: %v", blockHeader.Number, time.Since(cur))
 	return nil
 }
 
@@ -167,6 +172,21 @@ func (archiver *Archiver) UpdateChainState(chainState *chainstate.ChainState) {
 
 func (archiver *Archiver) GetHistoryBackend() kv.Storage {
 	return archiver.archiveHistoryBackend
+}
+
+func (archiver *Archiver) GetStateJournal(height uint64) *types.StateJournal {
+	data := archiver.archiveJournalBackend.Get(utils.CompositeKey(utils.PruneJournalKey, height))
+	if data == nil {
+		return nil
+	}
+
+	res := &types.StateJournal{}
+	err := res.Decode(data)
+	if err != nil {
+		panic(err)
+	}
+
+	return res
 }
 
 // todo confirm archiver may need rollback

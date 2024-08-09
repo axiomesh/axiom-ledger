@@ -58,6 +58,8 @@ type TxResp struct {
 type CommitEvent struct {
 	Block                  *types.Block
 	StateUpdatedCheckpoint *Checkpoint
+	StateJournal           *types.StateJournal
+	Receipts               []*types.Receipt
 }
 
 type Checkpoint struct {

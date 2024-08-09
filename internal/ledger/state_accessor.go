@@ -21,8 +21,6 @@ import (
 
 var _ StateLedger = (*StateLedgerImpl)(nil)
 
-const MinJournalHeight = 10
-
 // GetOrCreateAccount get the account, if not exist, create a new account
 func (l *StateLedgerImpl) GetOrCreateAccount(addr *types.Address) IAccount {
 	account := l.GetAccount(addr)
@@ -249,7 +247,7 @@ func (l *StateLedgerImpl) Commit() (*types.StateJournal, error) {
 	accounts, journals := l.collectDirtyData()
 	height := l.blockHeight
 	destructSet := make(map[string]struct{})
-	accountSet := make(map[string]*types.InnerAccount)
+	accountSet := make(map[string][]byte)
 	storageSet := make(map[string]map[string][]byte)
 	stateJournal := &types.StateJournal{
 		TrieJournal: make([]*types.TrieJournal, 0),
@@ -345,7 +343,7 @@ func (l *StateLedgerImpl) Commit() (*types.StateJournal, error) {
 			if err := l.accountTrie.Update(height, utils.CompositeAccountKey(account.Addr), data); err != nil {
 				panic(err)
 			}
-			accountSet[account.Addr.String()] = account.dirtyAccount
+			accountSet[account.Addr.String()], _ = account.dirtyAccount.Marshal()
 			l.logger.Debugf("[Commit] update account trie, addr: %v, origin account: %v, dirty account: %v", account.Addr, account.originAccount, account.dirtyAccount)
 		}
 	}
@@ -357,14 +355,17 @@ func (l *StateLedgerImpl) Commit() (*types.StateJournal, error) {
 	journal.Type = prune.TypeAccount
 	stateJournal.TrieJournal = append(stateJournal.TrieJournal, journal)
 	stateJournal.RootHash = types.NewHash(journal.RootHash.Bytes())
+	stateJournal.SnapshotJournal = &types.SnapJournal{
+		Destruct: destructSet,
+		Account:  accountSet,
+		Storage:  storageSet,
+	}
+
 	l.pruneCache.Update(kvBatch, height, stateJournal)
 	l.trieIndexer.Update(height, stateJournal)
-	l.logger.Debugf("[Commit] after committed world state trie, StateRoot: %v", journal.RootHash)
-
 	current := time.Now()
-
 	kvBatch.Commit()
-
+	l.logger.Debugf("[Commit] after committed world state trie, StateRoot: %v", journal.RootHash)
 	l.logger.WithFields(logrus.Fields{
 		"elapse":             time.Since(current),
 		"write size (bytes)": kvBatch.Size(),
@@ -376,13 +377,6 @@ func (l *StateLedgerImpl) Commit() (*types.StateJournal, error) {
 		if err != nil {
 			return nil, fmt.Errorf("update snapshot error: %w", err)
 		}
-
-		if height > l.getJnlHeightSize() {
-			if err := l.snapshot.RemoveJournalsBeforeBlock(height - l.getJnlHeightSize()); err != nil {
-				return nil, fmt.Errorf("remove journals before block %d failed: %w", height-l.getJnlHeightSize(), err)
-			}
-		}
-
 		l.logger.WithFields(logrus.Fields{
 			"elapse":             time.Since(current),
 			"write size (bytes)": size,
@@ -392,8 +386,23 @@ func (l *StateLedgerImpl) Commit() (*types.StateJournal, error) {
 	return stateJournal, nil
 }
 
-func (l *StateLedgerImpl) getJnlHeightSize() uint64 {
-	return MinJournalHeight
+func (l *StateLedgerImpl) ApplyStateJournal(height uint64, stateJournal *types.StateJournal) error {
+	current := time.Now()
+
+	kvBatch := l.backend.NewBatch()
+	l.pruneCache.Update(kvBatch, height, stateJournal)
+	l.trieIndexer.Update(height, stateJournal)
+	for k, v := range stateJournal.CodeJournal {
+		kvBatch.Put([]byte(k), v)
+	}
+	kvBatch.Commit()
+
+	if _, err := l.snapshot.Update(height, nil, stateJournal.SnapshotJournal.Destruct, stateJournal.SnapshotJournal.Account, stateJournal.SnapshotJournal.Storage); err != nil {
+		return err
+	}
+
+	l.logger.Infof("[StateLedger-ApplyStateJournal] apply state journal height:%v, time: %v", height, time.Since(current))
+	return nil
 }
 
 // Version returns the current version

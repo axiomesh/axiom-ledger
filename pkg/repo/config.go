@@ -18,6 +18,7 @@ import (
 type StartArgs struct {
 	ReadonlyMode bool
 	SnapshotMode bool
+	ArchiveMode  bool
 }
 
 type SyncArgs struct {

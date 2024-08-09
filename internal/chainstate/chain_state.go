@@ -23,6 +23,11 @@ type ValidatorInfo struct {
 	ConsensusVotingPower int64
 }
 
+type ArchiverInfo struct {
+	ID    uint64
+	P2PID string
+}
+
 type ChainState struct {
 	nodeInfoCacheLock     sync.RWMutex
 	p2pID2NodeIDCacheLock sync.RWMutex
@@ -38,15 +43,17 @@ type ChainState struct {
 	// states
 	EpochInfo *types.EpochInfo
 
-	ChainMeta    *types.ChainMeta
-	ValidatorSet []ValidatorInfo
-	SelfNodeInfo *ExpandedNodeInfo
-	IsSyncing    bool
-	IsValidator  bool
-	IsDataSyncer bool
+	ChainMeta     *types.ChainMeta
+	ValidatorSet  []ValidatorInfo
+	ArchiverSet   []ArchiverInfo
+	SelfNodeInfo  *ExpandedNodeInfo
+	IsSyncing     bool
+	IsValidator   bool
+	IsDataSyncer  bool
+	IsArchiveMode bool // is a new data syncer
 }
 
-func NewChainState(p2pID string, p2pPubKey *crypto.Ed25519PublicKey, consensusPubKey *crypto.Bls12381PublicKey, getNodeInfoFn func(uint64) (*node_manager.NodeInfo, error), getNodeIDByP2PIDFn func(p2pID string) (uint64, error), getEpochInfoFn func(epoch uint64) (*types.EpochInfo, error)) *ChainState {
+func NewChainState(isArchiveMode bool, p2pID string, p2pPubKey *crypto.Ed25519PublicKey, consensusPubKey *crypto.Bls12381PublicKey, getNodeInfoFn func(uint64) (*node_manager.NodeInfo, error), getNodeIDByP2PIDFn func(p2pID string) (uint64, error), getEpochInfoFn func(epoch uint64) (*types.EpochInfo, error)) *ChainState {
 	selfRegistered := false
 	selfNodeInfo := &ExpandedNodeInfo{
 		NodeInfo: node_manager.NodeInfo{
@@ -82,6 +89,7 @@ func NewChainState(p2pID string, p2pPubKey *crypto.Ed25519PublicKey, consensusPu
 		SelfNodeInfo:          selfNodeInfo,
 		IsDataSyncer:          isDataSyncer,
 		IsValidator:           !isDataSyncer,
+		IsArchiveMode:         isArchiveMode,
 	}
 }
 

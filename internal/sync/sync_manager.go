@@ -54,13 +54,14 @@ type SyncManager struct {
 	requesterLen        atomic.Int64        // requester length
 	idleRequesterLen    atomic.Uint64       // idle requester length
 
-	quorumCheckpoint   *consensus.SignedCheckpoint // latest checkpoint from remote
-	epochChanges       []*consensus.EpochChange    // every epoch change which the node behind
-	getChainMetaFunc   func() *types.ChainMeta
-	getBlockFunc       func(height uint64) (*types.Block, error)
-	getBlockHeaderFunc func(height uint64) (*types.BlockHeader, error)
-	getReceiptsFunc    func(height uint64) ([]*types.Receipt, error)
-	getEpochStateFunc  func(key []byte) []byte
+	quorumCheckpoint    *consensus.SignedCheckpoint // latest checkpoint from remote
+	epochChanges        []*consensus.EpochChange    // every epoch change which the node behind
+	getChainMetaFunc    func() *types.ChainMeta
+	getBlockFunc        func(height uint64) (*types.Block, error)
+	getBlockHeaderFunc  func(height uint64) (*types.BlockHeader, error)
+	getReceiptsFunc     func(height uint64) ([]*types.Receipt, error)
+	getEpochStateFunc   func(key []byte) []byte
+	getStateJournalFunc func(height uint64) *types.StateJournal
 
 	network               network.Network
 	chainDataRequestPipe  network.Pipe
@@ -89,25 +90,27 @@ type SyncManager struct {
 }
 
 func NewSyncManager(logger logrus.FieldLogger, getChainMetaFn func() *types.ChainMeta, getBlockFn func(height uint64) (*types.Block, error), getBlockHeaderFun func(height uint64) (*types.BlockHeader, error),
-	receiptFn func(height uint64) ([]*types.Receipt, error), getEpochStateFunc func(key []byte) []byte, network network.Network, cnf repo.Sync) (*SyncManager, error) {
+	receiptFn func(height uint64) ([]*types.Receipt, error), getEpochStateFunc func(key []byte) []byte, getStateJournalFunc func(height uint64) *types.StateJournal,
+	network network.Network, cnf repo.Sync) (*SyncManager, error) {
 	ctx, cancel := context.WithCancel(context.Background())
 	syncMgr := &SyncManager{
-		fullValidate:       cnf.FullValidation,
-		mode:               common.SyncModeFull,
-		modeConstructor:    newModeConstructor(common.SyncModeFull, common.WithContext(ctx)),
-		logger:             logger,
-		recvEventCh:        make(chan *common.LocalEvent, cnf.ConcurrencyLimit),
-		recvStateCh:        make(chan *common.WrapperStateResp, cnf.ConcurrencyLimit),
-		validChunkTaskCh:   make(chan struct{}, 1),
-		quitStateCh:        make(chan error, 1),
-		requesterCh:        make(chan struct{}, cnf.ConcurrencyLimit),
-		getChainMetaFunc:   getChainMetaFn,
-		getBlockFunc:       getBlockFn,
-		getBlockHeaderFunc: getBlockHeaderFun,
-		getReceiptsFunc:    receiptFn,
-		getEpochStateFunc:  getEpochStateFunc,
-		network:            network,
-		conf:               cnf,
+		fullValidate:        cnf.FullValidation,
+		mode:                common.SyncModeFull,
+		modeConstructor:     newModeConstructor(common.SyncModeFull, common.WithContext(ctx)),
+		logger:              logger,
+		recvEventCh:         make(chan *common.LocalEvent, cnf.ConcurrencyLimit),
+		recvStateCh:         make(chan *common.WrapperStateResp, cnf.ConcurrencyLimit),
+		validChunkTaskCh:    make(chan struct{}, 1),
+		quitStateCh:         make(chan error, 1),
+		requesterCh:         make(chan struct{}, cnf.ConcurrencyLimit),
+		getChainMetaFunc:    getChainMetaFn,
+		getBlockFunc:        getBlockFn,
+		getBlockHeaderFunc:  getBlockHeaderFun,
+		getReceiptsFunc:     receiptFn,
+		getEpochStateFunc:   getEpochStateFunc,
+		getStateJournalFunc: getStateJournalFunc,
+		network:             network,
+		conf:                cnf,
 
 		ctx:    ctx,
 		cancel: cancel,
@@ -884,9 +887,38 @@ func (sm *SyncManager) handleCommitDataRequest(msg *network2.PipeMsg, mode commo
 		msgResp []byte
 		err     error
 	)
+	// todo: construct receipts and state journal only in archive sync mode
 	switch mode {
 	case common.SyncModeFull:
 		commitDataResp := &pb.SyncBlockResponse{Height: requestHeight, Block: blockBytes, Status: pb.Status_SUCCESS}
+		// get state journal by block height
+		stateJournal := sm.getStateJournalFunc(requestHeight)
+		if stateJournal == nil {
+			sm.logger.WithFields(logrus.Fields{
+				"from":   msg.From,
+				"height": requestHeight,
+			}).Warn("Get state journal fail")
+		}
+
+		// get receipts by block height
+		receipts, respErr := sm.getReceiptsFunc(requestHeight)
+		if respErr != nil {
+			sm.logger.WithFields(logrus.Fields{
+				"from": msg.From,
+				"err":  respErr,
+			}).Error("Get receipts failed")
+			failedResp, err := genFailedResp(requestHeight, respErr)
+			return failedResp, 0, err
+		}
+		receiptsBytes, respErr := types.MarshalReceipts(receipts)
+		if respErr != nil {
+			sm.logger.Errorf("Marshal receipts failed: %s", respErr)
+			failedResp, err := genFailedResp(requestHeight, respErr)
+			return failedResp, 0, err
+		}
+
+		commitDataResp.Receipts = receiptsBytes
+		commitDataResp.StateJournal = stateJournal.Encode()
 		commitDataBytes, respErr := commitDataResp.MarshalVT()
 		if respErr != nil {
 			sm.logger.Errorf("Marshal sync commitData response failed: %s", respErr)
@@ -1096,7 +1128,17 @@ func (sm *SyncManager) listenSyncCommitDataResponse() {
 				if err = block.Unmarshal(blockResp.GetBlock()); err != nil {
 					retrySendRequest(dataRequester, fmt.Errorf("unmarshal block failed: %w", err))
 				}
-				commitData = &common.BlockData{Block: block}
+
+				receipts, err := types.UnmarshalReceipts(blockResp.GetReceipts())
+				if err != nil {
+					retrySendRequest(dataRequester, fmt.Errorf("unmarshal receipts failed: %w", err))
+				}
+
+				stateJournal := &types.StateJournal{}
+				if err = stateJournal.Decode(blockResp.StateJournal); err != nil && err != types.ErrorEmptyStateJournal {
+					retrySendRequest(dataRequester, fmt.Errorf("decode state journal failed: %w", err))
+				}
+				commitData = &common.BlockData{Block: block, StateJournal: stateJournal, Receipts: receipts}
 
 			case common.SyncModeSnapshot:
 				chainResp, ok := resp.(*pb.SyncChainDataResponse)

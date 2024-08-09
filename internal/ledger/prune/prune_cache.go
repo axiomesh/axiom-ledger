@@ -190,7 +190,7 @@ func (tc *PruneCache) Rollback(height uint64, persist bool) error {
 
 	batch := tc.ledgerStorage.NewBatch()
 	for i := minHeight; i <= height; i++ {
-		trieJournal := tc.GetStateJournal(i)
+		trieJournal := tc.getStateJournal(i)
 		tc.logger.Debugf("[PruneCache-Rollback] apply trie journal of height=%v, trieJournal=%v", i, trieJournal)
 		if trieJournal == nil {
 			tc.logger.Warnf("[PruneCache-Rollback] trie journal is empty at height: %v", i)
@@ -229,13 +229,14 @@ func (tc *PruneCache) GetRange() (uint64, uint64) {
 	return minHeight, maxHeight
 }
 
-func (tc *PruneCache) GetStateJournal(height uint64) *types.StateJournal {
+func (tc *PruneCache) getStateJournal(height uint64) *types.StateJournal {
 	data := tc.ledgerStorage.Get(utils.CompositeKey(utils.PruneJournalKey, height))
 	if data == nil {
 		return nil
 	}
 
-	res, err := types.DecodeStateJournal(data)
+	res := &types.StateJournal{}
+	err := res.Decode(data)
 	if err != nil {
 		panic(err)
 	}

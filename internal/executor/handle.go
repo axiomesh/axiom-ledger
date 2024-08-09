@@ -47,6 +47,7 @@ func (exec *BlockExecutor) processExecuteEvent(commitEvent *consensuscommon.Comm
 	var txHashList []*types.Hash
 	current := time.Now()
 	block := commitEvent.Block
+	blockHeader := block.Header.Clone()
 
 	// check executor handle the right block
 	if block.Header.Number != exec.currentHeight+1 {
@@ -57,10 +58,6 @@ func (exec *BlockExecutor) processExecuteEvent(commitEvent *consensuscommon.Comm
 		} else {
 			return
 		}
-	}
-
-	for _, tx := range block.Transactions {
-		txHashList = append(txHashList, tx.GetHash())
 	}
 
 	exec.cumulativeGasUsed = 0
@@ -75,7 +72,12 @@ func (exec *BlockExecutor) processExecuteEvent(commitEvent *consensuscommon.Comm
 		return
 	}
 	exec.ledger.StateLedger.PrepareBlock(parentBlockHeader.StateRoot, block.Height())
-	receipts := exec.applyTransactions(block.Transactions, block.Height())
+
+	receipts := make([]*types.Receipt, 0)
+	// if current node is a new archive node (data syncer), then skip executing txs
+	if !exec.chainState.IsDataSyncer || !exec.chainState.IsArchiveMode || commitEvent.StateJournal == nil || commitEvent.StateJournal.SnapshotJournal == nil {
+		receipts = exec.applyTransactions(block.Transactions, block.Height())
+	}
 
 	totalGasFee := new(big.Int)
 	for i, receipt := range receipts {
@@ -122,15 +124,28 @@ func (exec *BlockExecutor) processExecuteEvent(commitEvent *consensuscommon.Comm
 	block.Header.ReceiptRoot = receiptRoot
 	block.Header.ParentHash = exec.currentBlockHash
 
-	stateJournal, err := exec.ledger.StateLedger.Commit()
-	if err != nil {
-		panic(fmt.Errorf("commit stateLedger failed: %w", err))
+	var stateJournal *types.StateJournal
+	// If current node is a new archive node (data syncer), then update ledger with state journal directly.
+	// Otherwise, update ledger with the result of executing txs.
+	// todo: simplify condition here
+	if exec.chainState.IsDataSyncer && exec.chainState.IsArchiveMode && commitEvent.StateJournal != nil && commitEvent.StateJournal.SnapshotJournal != nil {
+		if err = exec.ledger.StateLedger.ApplyStateJournal(block.Height(), commitEvent.StateJournal); err != nil {
+			panic(err)
+		}
+		stateJournal = commitEvent.StateJournal
+		txCount := len(commitEvent.Block.Transactions)
+		exec.ledger.StateLedger.SetTxContext(commitEvent.Block.Transactions[txCount-1].GetHash(), txCount-1)
+		// in this mode, don't need to update block header
+		block.Header = blockHeader
+	} else {
+		stateJournal, err = exec.ledger.StateLedger.Commit()
+		if err != nil {
+			panic(fmt.Errorf("commit stateLedger failed: %w", err))
+		}
+		block.Header.StateRoot = stateJournal.RootHash
+		block.Header.GasUsed = exec.cumulativeGasUsed
 	}
 
-	block.Header.StateRoot = stateJournal.RootHash
-	block.Header.GasUsed = exec.cumulativeGasUsed
-
-	// update block hash cache
 	block.Header.CalculateHash()
 
 	exec.logger.WithFields(logrus.Fields{
@@ -152,6 +167,9 @@ func (exec *BlockExecutor) processExecuteEvent(commitEvent *consensuscommon.Comm
 	exec.updateLogsBlockHash(receipts, block.Hash())
 	block.Header.Bloom = ledger.CreateBloom(receipts)
 
+	for _, tx := range block.Transactions {
+		txHashList = append(txHashList, tx.GetHash())
+	}
 	data := &ledger.BlockData{
 		Block:      block,
 		Receipts:   receipts,

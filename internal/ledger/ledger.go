@@ -102,11 +102,13 @@ type StateLedger interface {
 
 	GetHistoryRange() (uint64, uint64)
 
-	GetStateDelta(blockNumber uint64) *types.StateJournal
+	GetStateJournal(blockNumber uint64) *types.StateJournal
 
 	UpdateChainState(chainState *chainstate.ChainState)
 
 	Archive(blockHeader *types.BlockHeader, stateJournal *types.StateJournal) error
+
+	ApplyStateJournal(blockNumber uint64, stateJournal *types.StateJournal) error
 }
 
 // StateAccessor manipulates the state data

@@ -667,7 +667,7 @@ func rollback(ctx *cli.Context) error {
 		// write stale ledger state deltas
 		_, maxHeight := originStateLedger.GetHistoryRange()
 		for i := maxHeight; i > targetBlockNumber; i-- {
-			stateDelta := originStateLedger.GetStateDelta(i)
+			stateDelta := originStateLedger.GetStateJournal(i)
 			batch.Put(utils.CompositeKey(utils.RollbackStateKey, i), stateDelta.Encode())
 			if batch.Size() > maxBatchSize {
 				batch.Commit()

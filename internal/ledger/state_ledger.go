@@ -77,7 +77,7 @@ func (l *StateLedgerImpl) NewView(blockHeader *types.BlockHeader, enableSnapshot
 	l.logger.Debugf("[NewView] height: %v, stateRoot: %v", blockHeader.Number, blockHeader.StateRoot)
 
 	// if current node is an archive node, and request query historical state, then use archived history ledger as backend.
-	if !enableSnapshot && l.chainState != nil && l.chainState.IsDataSyncer {
+	if l.chainState != nil && (!enableSnapshot && l.chainState.IsDataSyncer) {
 		lg := &StateLedgerImpl{
 			repo:        l.repo,
 			logger:      l.logger,
@@ -94,9 +94,9 @@ func (l *StateLedgerImpl) NewView(blockHeader *types.BlockHeader, enableSnapshot
 		return lg, nil
 	}
 
-	min, max := l.GetHistoryRange()
-	if blockHeader.Number < min || blockHeader.Number > max {
-		return nil, fmt.Errorf("history at target block %v is invalid, the valid range is from %v to %v", blockHeader.Number, min, max)
+	minHeight, maxHeight := l.GetHistoryRange()
+	if blockHeader.Number < minHeight || blockHeader.Number > maxHeight {
+		return nil, fmt.Errorf("history at target block %v is invalid, the valid range is from %v to %v", blockHeader.Number, minHeight, maxHeight)
 	}
 
 	lg := &StateLedgerImpl{
@@ -126,8 +126,12 @@ func (l *StateLedgerImpl) GetHistoryRange() (uint64, uint64) {
 	return l.pruneCache.GetRange()
 }
 
-func (l *StateLedgerImpl) GetStateDelta(blockNumber uint64) *types.StateJournal {
-	return l.pruneCache.GetStateJournal(blockNumber)
+func (l *StateLedgerImpl) GetStateJournal(blockNumber uint64) *types.StateJournal {
+	if !l.chainState.IsDataSyncer {
+		return nil
+	}
+
+	return l.archiver.GetStateJournal(blockNumber)
 }
 
 func (l *StateLedgerImpl) UpdateChainState(chainState *chainstate.ChainState) {
@@ -242,8 +246,15 @@ func (l *StateLedgerImpl) GenerateSnapshot(blockHeader *types.BlockHeader, errC 
 	stateRoot := blockHeader.StateRoot.ETHHash()
 	l.logger.Infof("[GenerateSnapshot] blockNum: %v, blockhash: %v, rootHash: %v", blockHeader.Number, blockHeader.Hash(), stateRoot)
 
-	// in validate node, we should rebuild prune cache before iterate trie
-	// todo check logic here
+	// make sure snapshot is empty before generate it
+	minHeight, maxHeight := l.snapshot.GetJournalRange()
+	if l.Version() == 0 || minHeight != 0 || maxHeight != 0 {
+		l.logger.Infof("[GenerateSnapshot] snapshot is non-empty, finish generating")
+		errC <- nil
+		return
+	}
+
+	//  rebuild prune cache before iterate trie
 	if err := l.pruneCache.Rollback(blockHeader.Number, false); err != nil {
 		errC <- err
 		return
@@ -335,8 +346,8 @@ func newStateLedger(rep *repo.Repo, stateStorage, snapshotStorage kv.Storage) (S
 		return nil, err
 	}
 	archiveArgs := &archive.ArchiveArgs{
-		HistoryStorage: archiveHistoryStorage,
-		JournalStorage: archiveJournalStorage,
+		ArchiveHistoryStorage: archiveHistoryStorage,
+		ArchiveJournalStorage: archiveJournalStorage,
 	}
 
 	ledger := &StateLedgerImpl{

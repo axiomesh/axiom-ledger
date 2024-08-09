@@ -33,33 +33,41 @@ func (a *RBFTAdaptor) StateUpdate(lowWatermark, seqNo uint64, digest string, che
 	a.StateUpdating = true
 	a.StateUpdateHeight = seqNo
 
-	peersM := make(map[uint64]*synccomm.Node)
-
-	// get the validator set of the current local epoch
-	for _, validatorInfo := range a.config.ChainState.ValidatorSet {
-		v, err := a.config.ChainState.GetNodeInfo(validatorInfo.ID)
-		if err == nil {
-			if v.NodeInfo.P2PID != a.config.ChainState.SelfNodeInfo.P2PID {
-				peersM[validatorInfo.ID] = &synccomm.Node{Id: validatorInfo.ID, PeerID: v.P2PID}
-			}
-		}
-	}
-
-	// get the validator set of the remote latest epoch
-	if len(epochChanges) != 0 {
-		lo.ForEach(epochChanges[len(epochChanges)-1].GetValidators().Validators, func(v *consensus.QuorumValidator, _ int) {
-			if _, ok := peersM[v.Id]; !ok && v.PeerId != a.network.PeerID() {
-				peersM[v.Id] = &synccomm.Node{Id: v.Id, PeerID: v.PeerId}
-			}
-		})
-	}
-	// flatten peersM
-	peers := lo.Values(peersM)
-
 	chain := a.config.ChainState.ChainMeta
 
 	startHeight := chain.Height + 1
 	latestBlockHash := chain.BlockHash.String()
+
+	peersM := make(map[uint64]*synccomm.Node)
+	// todo: simplify condition here
+	// if current node is a new archive node (data syncer), use other archive nodes as peers
+	if a.config.ChainState.IsArchiveMode && a.config.ChainState.IsDataSyncer && seqNo-startHeight >= 5 {
+		for _, v := range a.config.Repo.SyncArgs.RemotePeers.Validators {
+			peersM[v.Id] = &synccomm.Node{Id: v.Id, PeerID: v.PeerId}
+		}
+	} else {
+		// get the validator set of the current local epoch
+		for _, validatorInfo := range a.config.ChainState.ValidatorSet {
+			v, err := a.config.ChainState.GetNodeInfo(validatorInfo.ID)
+			if err == nil {
+				if v.NodeInfo.P2PID != a.config.ChainState.SelfNodeInfo.P2PID {
+					peersM[validatorInfo.ID] = &synccomm.Node{Id: validatorInfo.ID, PeerID: v.P2PID}
+				}
+			}
+		}
+
+		// get the validator set of the remote latest epoch
+		if len(epochChanges) != 0 {
+			lo.ForEach(epochChanges[len(epochChanges)-1].GetValidators().Validators, func(v *consensus.QuorumValidator, _ int) {
+				if _, ok := peersM[v.Id]; !ok && v.PeerId != a.network.PeerID() {
+					peersM[v.Id] = &synccomm.Node{Id: v.Id, PeerID: v.PeerId}
+				}
+			})
+		}
+	}
+
+	// flatten peersM
+	peers := lo.Values(peersM)
 
 	// if we had already persist last block of min epoch, dismiss the min epoch
 	if len(epochChanges) != 0 {
@@ -186,6 +194,8 @@ func (a *RBFTAdaptor) StateUpdate(lowWatermark, seqNo uint64, digest string, che
 				a.postCommitEvent(&common.CommitEvent{
 					Block:                  block.Block,
 					StateUpdatedCheckpoint: stateUpdatedCheckpoint,
+					StateJournal:           block.StateJournal,
+					Receipts:               block.Receipts,
 				})
 			}
 		}

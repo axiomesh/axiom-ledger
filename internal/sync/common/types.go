@@ -156,7 +156,9 @@ var CommitDataResponseType = map[SyncMode]pb.Message_Type{
 }
 
 type BlockData struct {
-	Block *types.Block
+	Block        *types.Block
+	Receipts     []*types.Receipt
+	StateJournal *types.StateJournal
 }
 
 func (b *BlockData) GetParentHash() string {

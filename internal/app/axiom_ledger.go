@@ -67,78 +67,80 @@ func NewAxiomLedger(rep *repo.Repo, ctx context.Context, cancel context.CancelFu
 
 	chainMeta := axm.ViewLedger.ChainLedger.GetChainMeta()
 
-	if !rep.StartArgs.ReadonlyMode {
-		// new txpool
-		poolConf := rep.ConsensusConfig.TxPool
-		getNonceFn := func(address *types.Address) uint64 {
+	if rep.StartArgs.ReadonlyMode {
+		return axm, nil
+	}
+
+	// new txpool
+	poolConf := rep.ConsensusConfig.TxPool
+	getNonceFn := func(address *types.Address) uint64 {
+		return axm.ViewLedger.NewView().StateLedger.GetNonce(address)
+	}
+	fn := func(addr string) uint64 {
+		return getNonceFn(types.NewAddressByStr(addr))
+	}
+	getBalanceFn := func(addr string) *big.Int {
+		return axm.ViewLedger.NewView().StateLedger.GetBalance(types.NewAddressByStr(addr))
+	}
+
+	priceLimit := poolConf.PriceLimit
+	// ensure price limit is not less than min gas price
+	if axm.ChainState.EpochInfo.FinanceParams.MinGasPrice.ToBigInt().Cmp(priceLimit.ToBigInt()) > 0 {
+		priceLimit = axm.ChainState.EpochInfo.FinanceParams.MinGasPrice
+	}
+
+	txpoolConf := txpool2.Config{
+		Logger:                 loggers.Logger(loggers.TxPool),
+		PoolSize:               poolConf.PoolSize,
+		ToleranceTime:          poolConf.ToleranceTime.ToDuration(),
+		ToleranceRemoveTime:    poolConf.ToleranceRemoveTime.ToDuration(),
+		ToleranceNonceGap:      poolConf.ToleranceNonceGap,
+		CleanEmptyAccountTime:  poolConf.CleanEmptyAccountTime.ToDuration(),
+		GetAccountNonce:        fn,
+		GetAccountBalance:      getBalanceFn,
+		EnableLocalsPersist:    poolConf.EnableLocalsPersist,
+		RepoRoot:               rep.RepoRoot,
+		RotateTxLocalsInterval: poolConf.RotateTxLocalsInterval.ToDuration(),
+		PriceLimit:             priceLimit.ToBigInt().Uint64(),
+		PriceBump:              poolConf.PriceBump,
+		GenerateBatchType:      poolConf.GenerateBatchType,
+	}
+	axm.TxPool, err = txpool2.NewTxPool[types.Transaction, *types.Transaction](txpoolConf, axm.ChainState)
+	if err != nil {
+		return nil, fmt.Errorf("new txpool failed: %w", err)
+	}
+
+	genesisBlockHeader, err := axm.ViewLedger.ChainLedger.GetBlockHeader(axm.Repo.GenesisConfig.EpochInfo.StartBlock)
+	if err != nil {
+		return nil, fmt.Errorf("get genesis block header failed: %w", err)
+	}
+	// new consensus
+	axm.Consensus, err = consensus.New(
+		rep.Config.Consensus.Type,
+		common.WithTxPool(axm.TxPool),
+		common.WithRepo(rep),
+		common.WithGenesisEpochInfo(rep.GenesisConfig.EpochInfo.Clone()),
+		common.WithChainState(axm.ChainState),
+		common.WithNetwork(axm.Network),
+		common.WithLogger(loggers.Logger(loggers.Consensus)),
+		common.WithApplied(chainMeta.Height),
+		common.WithDigest(chainMeta.BlockHash.String()),
+		common.WithGenesisDigest(genesisBlockHeader.Hash().String()),
+		common.WithGetBlockHeaderFunc(axm.ViewLedger.ChainLedger.GetBlockHeader),
+		common.WithGetAccountBalanceFunc(func(address string) *big.Int {
+			return axm.ViewLedger.NewView().StateLedger.GetBalance(types.NewAddressByStr(address))
+		}),
+		common.WithGetAccountNonceFunc(func(address *types.Address) uint64 {
 			return axm.ViewLedger.NewView().StateLedger.GetNonce(address)
-		}
-		fn := func(addr string) uint64 {
-			return getNonceFn(types.NewAddressByStr(addr))
-		}
-		getBalanceFn := func(addr string) *big.Int {
-			return axm.ViewLedger.NewView().StateLedger.GetBalance(types.NewAddressByStr(addr))
-		}
-
-		priceLimit := poolConf.PriceLimit
-		// ensure price limit is not less than min gas price
-		if axm.ChainState.EpochInfo.FinanceParams.MinGasPrice.ToBigInt().Cmp(priceLimit.ToBigInt()) > 0 {
-			priceLimit = axm.ChainState.EpochInfo.FinanceParams.MinGasPrice
-		}
-
-		txpoolConf := txpool2.Config{
-			Logger:                 loggers.Logger(loggers.TxPool),
-			PoolSize:               poolConf.PoolSize,
-			ToleranceTime:          poolConf.ToleranceTime.ToDuration(),
-			ToleranceRemoveTime:    poolConf.ToleranceRemoveTime.ToDuration(),
-			ToleranceNonceGap:      poolConf.ToleranceNonceGap,
-			CleanEmptyAccountTime:  poolConf.CleanEmptyAccountTime.ToDuration(),
-			GetAccountNonce:        fn,
-			GetAccountBalance:      getBalanceFn,
-			EnableLocalsPersist:    poolConf.EnableLocalsPersist,
-			RepoRoot:               rep.RepoRoot,
-			RotateTxLocalsInterval: poolConf.RotateTxLocalsInterval.ToDuration(),
-			PriceLimit:             priceLimit.ToBigInt().Uint64(),
-			PriceBump:              poolConf.PriceBump,
-			GenerateBatchType:      poolConf.GenerateBatchType,
-		}
-		axm.TxPool, err = txpool2.NewTxPool[types.Transaction, *types.Transaction](txpoolConf, axm.ChainState)
-		if err != nil {
-			return nil, fmt.Errorf("new txpool failed: %w", err)
-		}
-
-		genesisBlockHeader, err := axm.ViewLedger.ChainLedger.GetBlockHeader(axm.Repo.GenesisConfig.EpochInfo.StartBlock)
-		if err != nil {
-			return nil, fmt.Errorf("get genesis block header failed: %w", err)
-		}
-		// new consensus
-		axm.Consensus, err = consensus.New(
-			rep.Config.Consensus.Type,
-			common.WithTxPool(axm.TxPool),
-			common.WithRepo(rep),
-			common.WithGenesisEpochInfo(rep.GenesisConfig.EpochInfo.Clone()),
-			common.WithChainState(axm.ChainState),
-			common.WithNetwork(axm.Network),
-			common.WithLogger(loggers.Logger(loggers.Consensus)),
-			common.WithApplied(chainMeta.Height),
-			common.WithDigest(chainMeta.BlockHash.String()),
-			common.WithGenesisDigest(genesisBlockHeader.Hash().String()),
-			common.WithGetBlockHeaderFunc(axm.ViewLedger.ChainLedger.GetBlockHeader),
-			common.WithGetAccountBalanceFunc(func(address string) *big.Int {
-				return axm.ViewLedger.NewView().StateLedger.GetBalance(types.NewAddressByStr(address))
-			}),
-			common.WithGetAccountNonceFunc(func(address *types.Address) uint64 {
-				return axm.ViewLedger.NewView().StateLedger.GetNonce(address)
-			}),
-			common.WithBlockSync(axm.Sync),
-			common.WithEpochStore(axm.epochStore),
-			common.WithNotifyStopCh(func(err error) {
-				axm.StopCh <- err
-			}),
-		)
-		if err != nil {
-			return nil, fmt.Errorf("initialize consensus failed: %w", err)
-		}
+		}),
+		common.WithBlockSync(axm.Sync),
+		common.WithEpochStore(axm.epochStore),
+		common.WithNotifyStopCh(func(err error) {
+			axm.StopCh <- err
+		}),
+	)
+	if err != nil {
+		return nil, fmt.Errorf("initialize consensus failed: %w", err)
 	}
 
 	return axm, nil
@@ -232,13 +234,13 @@ func NewAxiomLedgerWithoutConsensus(rep *repo.Repo, ctx context.Context, cancel 
 			return nil, err
 		}
 		syncMgr, err = sync.NewSyncManager(loggers.Logger(loggers.BlockSync), vl.ChainLedger.GetChainMeta, vl.ChainLedger.GetBlock, vl.ChainLedger.GetBlockHeader,
-			vl.ChainLedger.GetBlockReceipts, epochStore.Get, net, rep.Config.Sync)
+			vl.ChainLedger.GetBlockReceipts, epochStore.Get, vl.StateLedger.GetStateJournal, net, rep.Config.Sync)
 		if err != nil {
 			return nil, fmt.Errorf("create block sync: %w", err)
 		}
 	}
 
-	chainState := chainstate.NewChainState(rep.P2PKeystore.P2PID(), rep.P2PKeystore.PublicKey, rep.ConsensusKeystore.PublicKey, func(nodeID uint64) (*node_manager.NodeInfo, error) {
+	chainState := chainstate.NewChainState(rep.StartArgs.ArchiveMode, rep.P2PKeystore.P2PID(), rep.P2PKeystore.PublicKey, rep.ConsensusKeystore.PublicKey, func(nodeID uint64) (*node_manager.NodeInfo, error) {
 		lg := vl.NewView()
 		nodeManagerContract := framework.NodeManagerBuildConfig.Build(syscommon.NewViewVMContext(lg.StateLedger))
 		nodeInfo, err := nodeManagerContract.GetInfo(nodeID)
