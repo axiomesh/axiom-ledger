@@ -26,6 +26,8 @@ import (
 	"github.com/axiomesh/axiom-ledger/internal/consensus/rbft/adaptor"
 )
 
+const InCommitStatus = rbft.StatusType(1024)
+
 type Node[T any, Constraint types.TXConstraint[T]] struct {
 	selfP2PNodeID            string
 	config                   rbft.Config
@@ -218,6 +220,8 @@ func (n *Node[T, Constraint]) Status() (status rbft.NodeStatus) {
 		status.Status = rbft.InSyncState
 	case n.statusMgr.In(Pending):
 		status.Status = rbft.Pending
+	case n.statusMgr.In(InCommit):
+		status.Status = InCommitStatus
 	default:
 		status.Status = rbft.Normal
 	}

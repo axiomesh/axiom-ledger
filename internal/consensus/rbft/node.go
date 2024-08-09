@@ -392,6 +392,11 @@ func (n *Node) Ready() error {
 	status := n.n.Status().Status
 	isNormal := status == rbft.Normal
 	if !isNormal {
+		if n.config.ChainState.IsDataSyncer {
+			if status == data_syncer.InCommitStatus {
+				return fmt.Errorf("system is in committing block")
+			}
+		}
 		return fmt.Errorf("%s", status2String(status))
 	}
 	return nil
