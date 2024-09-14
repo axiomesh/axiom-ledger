@@ -226,13 +226,13 @@ func (ch accessListAddSlotChange) dirtied() *types.Address {
 }
 
 func (ch addLogChange) revert(l *StateLedgerImpl) {
-	logs := l.logs.logs[*ch.txHash]
+	logs := l.logs.Logs[*ch.txHash]
 	if len(logs) == 1 {
-		delete(l.logs.logs, *ch.txHash)
+		delete(l.logs.Logs, *ch.txHash)
 	} else {
-		l.logs.logs[*ch.txHash] = logs[:len(logs)-1]
+		l.logs.Logs[*ch.txHash] = logs[:len(logs)-1]
 	}
-	l.logs.logSize--
+	l.logs.LogSize--
 }
 
 func (ch addLogChange) dirtied() *types.Address {

@@ -19,6 +19,7 @@ import (
 const (
 	BlockChain  = "blockchain"
 	Ledger      = "ledger"
+	Rust_Ledger = "rust_ledger"
 	Indexer     = "indexer"
 	Snapshot    = "snapshot"
 	Blockfile   = "blockfile"

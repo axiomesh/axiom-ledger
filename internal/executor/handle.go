@@ -72,6 +72,9 @@ func (exec *BlockExecutor) rollbackBlocks(newBlock *types.Block) error {
 	return nil
 }
 
+var totalExeTime time.Duration
+var totalTxCount uint64
+
 func (exec *BlockExecutor) processExecuteEvent(commitEvent *consensuscommon.CommitEvent) {
 	var txHashList []*types.Hash
 	current := time.Now()
@@ -187,10 +190,14 @@ func (exec *BlockExecutor) processExecuteEvent(commitEvent *consensuscommon.Comm
 		TxHashList: txHashList,
 	}
 
+	totalExeTime += time.Since(current)
+	totalTxCount += uint64(len(commitEvent.Block.Transactions))
 	exec.logger.WithFields(logrus.Fields{
-		"height": commitEvent.Block.Header.Number,
-		"count":  len(commitEvent.Block.Transactions),
-		"elapse": time.Since(current),
+		"height":       commitEvent.Block.Header.Number,
+		"count":        len(commitEvent.Block.Transactions),
+		"elapse":       time.Since(current),
+		"txCount":      totalTxCount,
+		"totalExeTime": totalExeTime,
 	}).Info("[Execute-Block] Executed block")
 
 	now := time.Now()
@@ -250,6 +257,9 @@ func (exec *BlockExecutor) postLogsEvent(receipts []*types.Receipt) {
 }
 
 func (exec *BlockExecutor) applyTransaction(i int, tx *types.Transaction, height uint64) *types.Receipt {
+
+	exec.ledger.StateLedger.(*ledger.RustStateLedger).PrepareTranct()
+
 	defer func() {
 		exec.ledger.StateLedger.SetNonce(tx.GetFrom(), tx.GetNonce()+1)
 		exec.ledger.StateLedger.Finalise()
@@ -283,6 +293,11 @@ func (exec *BlockExecutor) applyTransaction(i int, tx *types.Transaction, height
 		receipt.Status = types.ReceiptFAILED
 		receipt.Ret = []byte(err.Error())
 		return receipt
+	}
+	if err == nil {
+		exec.ledger.StateLedger.(*ledger.RustStateLedger).FinalizeTransact()
+	} else {
+		exec.ledger.StateLedger.(*ledger.RustStateLedger).RollbackTransact()
 	}
 	if result.Failed() {
 		if len(result.Revert()) > 0 {

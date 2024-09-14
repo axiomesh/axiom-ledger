@@ -66,16 +66,12 @@ func (esa EvmStateDBAdaptor) GetRefund() uint64 {
 }
 
 func (esa EvmStateDBAdaptor) GetCommittedState(addr common.Address, hash common.Hash) common.Hash {
-	ret := esa.StateLedger.GetCommittedState(types.NewAddress(addr.Bytes()), hash.Bytes())
-	return common.BytesToHash(ret)
+	ret := esa.StateLedger.(*RustStateLedger).GetBit256CommittedState(types.NewAddress(addr.Bytes()), hash.Bytes())
+	return ret
 }
 
 func (esa EvmStateDBAdaptor) GetState(addr common.Address, hash common.Hash) common.Hash {
-	ok, ret := esa.StateLedger.GetState(types.NewAddress(addr.Bytes()), hash.Bytes())
-	if !ok {
-		return common.Hash{}
-	}
-	return common.BytesToHash(ret)
+	return esa.StateLedger.(*RustStateLedger).GetBit256State(types.NewAddress(addr.Bytes()), hash.Bytes())
 }
 
 func (esa EvmStateDBAdaptor) SetState(addr common.Address, key, value common.Hash) {
@@ -95,13 +91,8 @@ func (esa EvmStateDBAdaptor) SetTransientState(addr common.Address, key, value c
 	if prev == value {
 		return
 	}
-	if impl := esa.StateLedger.(*StateLedgerImpl); impl != nil {
-		impl.changer.append(transientStorageChange{
-			account:  types.NewAddress(addr.Bytes()),
-			key:      key.Bytes(),
-			prevalue: prev.Bytes(),
-		})
-		impl.setTransientState(*types.NewAddress(addr.Bytes()), key.Bytes(), value.Bytes())
+	if impl := esa.StateLedger.(*RustStateLedger); impl != nil {
+		impl.setTransientState(*types.NewAddress(addr.Bytes()), key, value)
 	}
 }
 
@@ -130,6 +121,7 @@ func (esa EvmStateDBAdaptor) AddSlotToAccessList(addr common.Address, slot commo
 }
 
 func (esa EvmStateDBAdaptor) Prepare(rules params.Rules, sender, coinbase common.Address, dst *common.Address, precompiles []common.Address, list etherTypes.AccessList) {
+	esa.StateLedger.(*RustStateLedger).Prepare(rules, sender, coinbase, dst, precompiles, list)
 	// l.logs.thash = types.NewHash(hash.Bytes())
 	// l.logs.txIndex = index
 	l, ok := esa.StateLedger.(*StateLedgerImpl)
@@ -231,13 +223,13 @@ func (esa EvmStateDBAdaptor) Selfdestruct6780(addr common.Address) {
 }
 
 type evmLogs struct {
-	logs    map[types.Hash][]*types.EvmLog
-	logSize uint
+	Logs    map[types.Hash][]*types.EvmLog
+	LogSize uint
 }
 
 func newEvmLogs() *evmLogs {
 	return &evmLogs{
-		logs: make(map[types.Hash][]*types.EvmLog),
+		Logs: make(map[types.Hash][]*types.EvmLog),
 	}
 }
 

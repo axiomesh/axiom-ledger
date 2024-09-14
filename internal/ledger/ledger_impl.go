@@ -42,19 +42,21 @@ func NewLedgerWithStores(repo *repo.Repo, blockchainStore kv.Storage, ldb, snaps
 			return nil, fmt.Errorf("init chain ledger failed: %w", err)
 		}
 	}
-	if ldb != nil {
-		ledger.StateLedger, err = newStateLedger(repo, ldb, snapshot)
-		if err != nil {
-			return nil, fmt.Errorf("init state ledger failed: %w", err)
-		}
-	} else {
-		ledger.StateLedger, err = NewStateLedger(repo, "")
-		if err != nil {
-			return nil, fmt.Errorf("init state ledger failed: %w", err)
-		}
-	}
-
+	fmt.Println("a")
+	//if ldb != nil {
+	//	ledger.StateLedger, err = newStateLedger(repo, ldb, snapshot)
+	//	if err != nil {
+	//		return nil, fmt.Errorf("init state ledger failed: %w", err)
+	//	}
+	//} else {
+	//	ledger.StateLedger, err = NewStateLedger(repo, "")
+	//	if err != nil {
+	//		return nil, fmt.Errorf("init state ledger failed: %w", err)
+	//	}
+	//}
 	meta := ledger.ChainLedger.GetChainMeta()
+	ledger.StateLedger = NewRustStateLedger(repo, meta.Height)
+
 	if err := ledger.Rollback(meta.Height); err != nil {
 		return nil, fmt.Errorf("rollback ledger to height %d failed: %w", meta.Height, err)
 	}
