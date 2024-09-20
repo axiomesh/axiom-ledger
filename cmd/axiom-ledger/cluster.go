@@ -4,6 +4,7 @@ import (
 	"crypto/ecdsa"
 	_ "embed"
 	"fmt"
+	"github.com/axiomesh/axiom-kit/types"
 	"os"
 
 	ethcrypto "github.com/ethereum/go-ethereum/crypto"
@@ -148,9 +149,13 @@ func generateDefault(ctx *cli.Context) error {
 		EnablePortAutoIncrease:    true,
 		MintForOperatorCoinAmount: repo.GetDefaultAccountBalance(),
 		Accounts: lo.Map(append(defaultCouncilMemberAddrs, repo.MockDefaultAccountAddrs...), func(addr string, idx int) *ClusterAccount {
+			balance := repo.GetDefaultAccountBalance()
+			if addr == "0x70997970C51812dc3A010C7d01b50e0d17dc79C8" {
+				balance = types.CoinNumberByAxc(18446744073709551615)
+			}
 			return &ClusterAccount{
 				Address: addr,
-				Balance: repo.GetDefaultAccountBalance(),
+				Balance: balance,
 			}
 		}),
 		CouncilMembers: lo.Map(defaultCouncilMemberAddrs, func(item string, idx int) *ClusterCouncilMember {

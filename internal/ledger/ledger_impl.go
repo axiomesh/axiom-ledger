@@ -42,7 +42,6 @@ func NewLedgerWithStores(repo *repo.Repo, blockchainStore kv.Storage, ldb, snaps
 			return nil, fmt.Errorf("init chain ledger failed: %w", err)
 		}
 	}
-	fmt.Println("a")
 	//if ldb != nil {
 	//	ledger.StateLedger, err = newStateLedger(repo, ldb, snapshot)
 	//	if err != nil {

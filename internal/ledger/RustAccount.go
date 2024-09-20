@@ -11,6 +11,7 @@ import (
 	"fmt"
 	"github.com/axiomesh/axiom-kit/types"
 	"github.com/ethereum/go-ethereum/common"
+	lru "github.com/hashicorp/golang-lru/v2"
 	"github.com/holiman/uint256"
 	"math/big"
 	"runtime"
@@ -24,15 +25,17 @@ type RustAccount struct {
 	Addr       *types.Address
 	created    bool
 	changer    *RustStateChanger
+	codeCache  *lru.Cache[common.Address, []byte]
 }
 
-func NewRustAccount(stateDBPtr *C.struct_EvmStateDB, address common.Address, changer *RustStateChanger) *RustAccount {
+func NewRustAccount(stateDBPtr *C.struct_EvmStateDB, address common.Address, changer *RustStateChanger, codeCache *lru.Cache[common.Address, []byte]) *RustAccount {
 	return &RustAccount{
 		stateDBPtr: stateDBPtr,
 		ethAddress: address,
 		Addr:       types.NewAddress(address.Bytes()),
 		cAddress:   convertToCAddress(address),
 		changer:    changer,
+		codeCache:  codeCache,
 	}
 }
 
@@ -124,18 +127,23 @@ func (o *RustAccount) SetBit256State(k []byte, value common.Hash) {
 
 // SetCodeAndHash Set the contract code and hash
 func (o *RustAccount) SetCodeAndHash(code []byte) {
+	o.codeCache.Add(o.ethAddress, code)
 	codePtr := (*C.uchar)(unsafe.Pointer(&code[0]))
 	codeLen := C.uintptr_t(len(code))
 	C.set_code(o.stateDBPtr, o.cAddress, codePtr, codeLen)
-	runtime.KeepAlive(code)
 }
 
 // Code return the contract code
 func (o *RustAccount) Code() []byte {
+	if v, ok := o.codeCache.Get(o.ethAddress); ok {
+		return v
+	}
 	var length C.uintptr_t
 	ptr := C.get_code(o.stateDBPtr, o.cAddress, &length)
 	defer C.deallocate_memory(ptr, length)
 	goSlice := C.GoBytes(unsafe.Pointer(ptr), C.int(length))
+
+	o.codeCache.Add(o.ethAddress, goSlice)
 	return goSlice
 }
 
@@ -166,16 +174,19 @@ func (o *RustAccount) GetBalance() *big.Int {
 func (o *RustAccount) SetBalance(balance *big.Int) {
 	u, _ := uint256.FromBig(balance)
 	C.set_balance(o.stateDBPtr, o.cAddress, convertToCU256(u))
+
 }
 
 func (o *RustAccount) SubBalance(amount *big.Int) {
 	u, _ := uint256.FromBig(amount)
 	C.sub_balance(o.stateDBPtr, o.cAddress, convertToCU256(u))
+
 }
 
 func (o *RustAccount) AddBalance(amount *big.Int) {
 	u, _ := uint256.FromBig(amount)
 	C.add_balance(o.stateDBPtr, o.cAddress, convertToCU256(u))
+
 }
 
 // Finalise moves all dirty states into the pending states.

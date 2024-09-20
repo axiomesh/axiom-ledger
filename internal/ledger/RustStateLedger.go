@@ -16,6 +16,7 @@ import (
 	ethcommon "github.com/ethereum/go-ethereum/common"
 	etherTypes "github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/params"
+	lru "github.com/hashicorp/golang-lru/v2"
 	"math/big"
 	"os"
 	"path"
@@ -44,10 +45,10 @@ type RustStateLedger struct {
 
 	transientStorage transientStorage
 	AccessList       *AccessList
+	codeCache        *lru.Cache[ethcommon.Address, []byte]
 } /**/
 
 func NewRustStateLedger(rep *repo.Repo, height uint64) *RustStateLedger {
-	fmt.Println("NewRustStateLedger")
 	dir := path.Join(rep.RepoRoot, storagemgr.Rust_Ledger)
 	log_dir := path.Join(rep.RepoRoot, storagemgr.Rust_Ledger, "logs")
 	err := os.MkdirAll(log_dir, 0755)
@@ -64,8 +65,8 @@ func NewRustStateLedger(rep *repo.Repo, height uint64) *RustStateLedger {
 	C.rollback_evm_state_db(C.CString(dir), C.uint64_t(version))
 
 	stateDbPtr := C.new_evm_state_db(C.CString(dir), C.uint64_t(initialVersion))
-	fmt.Println("stateDbPtr", unsafe.Pointer(stateDbPtr))
 	stateDBViewPtr := C.evm_state_db_view(stateDbPtr)
+	codeCache, _ := lru.New[ethcommon.Address, []byte](1000)
 	return &RustStateLedger{
 		repo:           rep,
 		stateDBPtr:     stateDbPtr,
@@ -78,6 +79,7 @@ func NewRustStateLedger(rep *repo.Repo, height uint64) *RustStateLedger {
 		changer:          NewChanger(),
 
 		AccessList: NewAccessList(),
+		codeCache:  codeCache,
 	}
 }
 
@@ -88,7 +90,7 @@ func (r *RustStateLedger) GetOrCreateAccount(address *types.Address) IAccount {
 	if ok {
 		return value
 	}
-	account := NewRustAccount(r.stateDBPtr, address.ETHAddress(), r.changer)
+	account := NewRustAccount(r.stateDBPtr, address.ETHAddress(), r.changer, r.codeCache)
 	r.Accounts[addr] = account
 	return account
 }
@@ -103,7 +105,7 @@ func (r *RustStateLedger) GetAccount(address *types.Address) IAccount {
 	cAddress := convertToCAddress(address.ETHAddress())
 	exist := bool(C.exist(r.stateDBPtr, cAddress))
 	if exist {
-		account := NewRustAccount(r.stateDBPtr, address.ETHAddress(), r.changer)
+		account := NewRustAccount(r.stateDBPtr, address.ETHAddress(), r.changer, r.codeCache)
 		r.Accounts[addr] = account
 		return account
 	} else {

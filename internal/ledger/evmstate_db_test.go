@@ -1,6 +1,7 @@
 package ledger
 
 import (
+	lru "github.com/hashicorp/golang-lru/v2"
 	"math/big"
 	"testing"
 
@@ -98,4 +99,14 @@ func TestDeleteCreateRevert(t *testing.T) {
 	t.Logf("self-destructed has finished %v", sl.HasSelfDestructed(addr))
 	assert.True(t, sl.GetAccount(addr) == nil)
 	assert.Equal(t, sl.HasSelfDestructed(addr), false)
+}
+func TestName(t *testing.T) {
+	l, err := lru.New[uint64, []byte](1)
+	if err != nil {
+		panic(err)
+	}
+	l.Add(1, []byte("hello"))
+	value, ok := l.Get(1)
+	println(string(value))
+	println(ok)
 }
