@@ -2,7 +2,7 @@ package ledger
 
 /*
 #cgo LDFLAGS: /Users/hanmengwei/forestore/target/release/libforestore.a  -ldl -lm
-#include "/Users/perf_save/forestore/src/c_ffi/forestore.h"
+#include "/Users/hanmengwei/forestore/src/c_ffi/forestore.h"
 #include <stdlib.h>
 */
 import "C"
