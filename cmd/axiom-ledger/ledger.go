@@ -12,6 +12,7 @@ import (
 	"runtime"
 	"strconv"
 	"strings"
+	"time"
 
 	rbft "github.com/axiomesh/axiom-bft"
 	"github.com/axiomesh/axiom-kit/hexutil"
@@ -331,10 +332,29 @@ func importAccountsFromFile(r *repo.Repo, lg *ledger.Ledger, filePath string, ba
 			return err
 		}
 	}
+	if lg.ChainLedger.GetChainMeta().Height >= 10000 {
+		for {
+			if fileExists(repo.GetStoragePath(r.RepoRoot, storagemgr.Rust_Ledger, "snapshot_00000000000000010000", "multi-tree-meta.json")) {
+				fmt.Println("account importing completed ")
+				time.Sleep(1 * time.Second)
+				break
+			} else {
+				fmt.Println("wait...........")
+			}
+
+			time.Sleep(5 * time.Second) // 每隔5秒轮询一次
+		}
+	}
+
 	if err := scanner.Err(); err != nil {
 		return fmt.Errorf("error scanning file: %v", err)
 	}
 	return nil
+}
+
+func fileExists(filename string) bool {
+	_, err := os.Stat(filename)
+	return !os.IsNotExist(err)
 }
 
 func persistBlock4Test(r *repo.Repo, lg *ledger.Ledger, currentHeight uint64, parentBlockHeader *types.BlockHeader) error {

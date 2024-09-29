@@ -1,9 +1,8 @@
 package ledger
 
 /*
-#cgo LDFLAGS: /Users/hanmengwei/forestore/target/release/libforestore.a  -ldl -lm
-#include "/Users/hanmengwei/forestore/src/c_ffi/forestore.h"
-#include <stdlib.h>
+#cgo LDFLAGS: /Users/koi/Documents/dev/project/forestore/target/release/libforestore.a  -ldl -lm
+#include "/Users/koi/Documents/dev/project/forestore/src/c_ffi/forestore.h"
 */
 import "C"
 import (

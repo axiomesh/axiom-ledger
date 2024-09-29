@@ -41,6 +41,11 @@ type Config struct {
 	Monitor        Monitor        `mapstructure:"monitor" toml:"monitor"`
 	Log            Log            `mapstructure:"log" toml:"log"`
 	Access         Access         `mapstructure:"access" toml:"access"`
+	Forestore      Forestore      `mapstructure:"forestore" toml:"forestore"`
+}
+
+type Forestore struct {
+	SnapshotRewriteInterval uint64 `mapstructure:"snapshot_rewrite_interval" toml:"snapshot_rewrite_interval"`
 }
 
 type Port struct {
@@ -372,7 +377,7 @@ func defaultConfig() *Config {
 			RotationTime:     Duration(24 * time.Hour),
 			Module: LogModule{
 				P2P:            "info",
-				Consensus:      "debug",
+				Consensus:      "info",
 				Executor:       "info",
 				Indexer:        "info",
 				API:            "info",
@@ -387,6 +392,9 @@ func defaultConfig() *Config {
 		},
 		Access: Access{
 			EnableWhitelist: false,
+		},
+		Forestore: Forestore{
+			SnapshotRewriteInterval: 10000,
 		},
 	}
 }

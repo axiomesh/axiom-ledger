@@ -1,9 +1,8 @@
 package ledger
 
 /*
-#cgo LDFLAGS: /Users/hanmengwei/forestore/target/release/libforestore.a  -ldl -lm
-#include "/Users/hanmengwei/forestore/src/c_ffi/forestore.h"
-#include <stdlib.h>
+#cgo LDFLAGS: "/Users/koi/Documents/dev/project/forestore/target/release/libforestore.a"  -ldl -lm
+#include "/Users/koi/Documents/dev/project/forestore/src/c_ffi/forestore.h"
 */
 import "C"
 import (
@@ -49,13 +48,13 @@ type RustStateLedger struct {
 } /**/
 
 func NewRustStateLedger(rep *repo.Repo, height uint64) *RustStateLedger {
-	dir := path.Join(rep.RepoRoot, storagemgr.Rust_Ledger)
-	log_dir := path.Join(rep.RepoRoot, storagemgr.Rust_Ledger, "logs")
-	err := os.MkdirAll(log_dir, 0755)
+	dir := repo.GetStoragePath(rep.RepoRoot, storagemgr.Rust_Ledger)
+	logDir := path.Join(dir, "logs")
+	err := os.MkdirAll(logDir, 0755)
 	if err != nil {
 		panic(err)
 	}
-	C.set_up_default_logger(C.CString(log_dir))
+	C.set_up_default_logger(C.CString(logDir))
 
 	version := height
 	initialVersion := rep.GenesisConfig.EpochInfo.StartBlock
@@ -63,8 +62,8 @@ func NewRustStateLedger(rep *repo.Repo, height uint64) *RustStateLedger {
 		panic("Genesis start block num should be 0 or 1")
 	}
 	C.rollback_evm_state_db(C.CString(dir), C.uint64_t(version))
-
-	stateDbPtr := C.new_evm_state_db(C.CString(dir), C.uint64_t(initialVersion))
+	cOpts := C.CEvmStateDBOptions{genesis_version: C.uint64_t(initialVersion), snapshot_rewrite_interval: C.uint64_t(rep.Config.Forestore.SnapshotRewriteInterval)}
+	stateDbPtr := C.new_evm_state_db(C.CString(dir), cOpts)
 	stateDBViewPtr := C.evm_state_db_view(stateDbPtr)
 	codeCache, _ := lru.New[ethcommon.Address, []byte](1000)
 	return &RustStateLedger{
