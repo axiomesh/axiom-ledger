@@ -73,7 +73,6 @@ func (exec *BlockExecutor) rollbackBlocks(newBlock *types.Block) error {
 }
 
 var totalExeTime time.Duration
-var totalTxCount uint64
 
 func (exec *BlockExecutor) processExecuteEvent(commitEvent *consensuscommon.CommitEvent) {
 	var txHashList []*types.Hash
@@ -191,12 +190,10 @@ func (exec *BlockExecutor) processExecuteEvent(commitEvent *consensuscommon.Comm
 	}
 
 	totalExeTime += time.Since(current)
-	totalTxCount += uint64(len(commitEvent.Block.Transactions))
 	exec.logger.WithFields(logrus.Fields{
 		"height":       commitEvent.Block.Header.Number,
 		"count":        len(commitEvent.Block.Transactions),
 		"elapse":       time.Since(current),
-		"txCount":      totalTxCount,
 		"totalExeTime": totalExeTime,
 	}).Info("[Execute-Block] Executed block")
 
