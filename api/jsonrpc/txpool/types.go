@@ -11,15 +11,16 @@ var (
 )
 
 type ContentResponse struct {
-	Pending         map[string]map[string]PoolTxContent `json:"pending"`
-	Queued          map[string]map[string]PoolTxContent `json:"queued"`
-	TxCountLimit    uint64                              `json:"txCountLimit"`
-	TxCount         uint64                              `json:"txCount"`
-	ReadyTxCount    uint64                              `json:"readyTxCount"`
-	NotReadyTxCount uint64                              `json:"notReadyTxCount"`
+	Pending         map[string][]PoolTxContent `json:"pending"`
+	Queued          map[string][]PoolTxContent `json:"queued"`
+	TxCountLimit    uint64                     `json:"txCountLimit"`
+	TxCount         uint64                     `json:"txCount"`
+	ReadyTxCount    uint64                     `json:"readyTxCount"`
+	NotReadyTxCount uint64                     `json:"notReadyTxCount"`
 }
 
 type PoolTxContent struct {
+	Nonce       uint64                   `json:"nonce"`
 	Transaction *rpctypes.RPCTransaction `json:"transaction"`
 	Local       bool                     `json:"local"`
 	LifeTime    int64                    `json:"lifeTime"`
@@ -48,16 +49,16 @@ type TxByNonce struct {
 }
 
 type AccountContentResponse struct {
-	Pending      map[string]PoolTxContent `json:"pending"`
-	Queued       map[string]PoolTxContent `json:"queued"`
-	CommitNonce  uint64                   `json:"commitNonce"`
-	PendingNonce uint64                   `json:"pendingNonce"`
-	TxCount      uint64                   `json:"txCount"`
+	Pending      []PoolTxContent `json:"pending"`
+	Queued       []PoolTxContent `json:"queued"`
+	CommitNonce  uint64          `json:"commitNonce"`
+	PendingNonce uint64          `json:"pendingNonce"`
+	TxCount      uint64          `json:"txCount"`
 }
 
 type InspectResponse struct {
-	Pending map[string]map[string]string `json:"pending"`
-	Queued  map[string]map[string]string `json:"queued"`
+	Pending map[string][]string `json:"pending"`
+	Queued  map[string][]string `json:"queued"`
 }
 
 type StatusResponse struct {

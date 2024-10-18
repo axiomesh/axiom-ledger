@@ -62,5 +62,9 @@ func (n *Node[T, Constraint]) handleTimeout(name timer.TimeoutEvent) {
 		if err := n.timeMgr.RestartTimer(syncStateResp); err != nil {
 			n.logger.Error(err)
 		}
+	case checkTxPool:
+		n.logger.Info("handle checkTxPool timeout")
+		n.timeMgr.StopTimer(checkTxPool)
+		n.postEvent(&localEvent{EventType: eventType_checkTxPool})
 	}
 }

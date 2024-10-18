@@ -24,12 +24,13 @@ var (
 )
 
 var DataSyncerPipeName = []string{
-	"NULL_REQUEST",           // primary heartbeat
-	"PRE_PREPARE",            // get batch
-	"SIGNED_CHECKPOINT",      // get checkpoint
-	"SYNC_STATE_RESPONSE",    // get quorum state
-	"FETCH_MISSING_RESPONSE", // get missing txs in local pool
-	"EPOCH_CHANGE_PROOF",     // get epoch change for state update
+	"NULL_REQUEST",            // primary heartbeat
+	"PRE_PREPARE",             // get batch
+	"SIGNED_CHECKPOINT",       // get checkpoint
+	"SYNC_STATE_RESPONSE",     // get quorum state
+	"FETCH_MISSING_RESPONSE",  // get missing txs in local pool
+	"EPOCH_CHANGE_PROOF",      // get epoch change for state update
+	"REBROADCAST_REQUEST_SET", // get re-broadcast requestSet
 }
 
 var DataSyncerRequestName = []string{

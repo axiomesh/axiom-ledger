@@ -1857,6 +1857,7 @@ func (p *txPoolImpl[T, Constraint]) replaceTx(tx *T, local bool) bool {
 		if p.enablePricePriority {
 			p.txStore.priorityByPrice.replaceTx(newPoolTx)
 		} else {
+			p.logger.WithFields(logrus.Fields{"txNonce": txNonce, "account": account}).Info("replace old tx in priority queue")
 			p.txStore.priorityByTime.insertKey(newPoolTx)
 		}
 		if !replaced {

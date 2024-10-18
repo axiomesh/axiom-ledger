@@ -120,6 +120,10 @@ func (n *Node[T, Constraint]) initTimer() error {
 	if err := n.timeMgr.CreateTimer(fetchMissingTxsResp, waitResponseTimeout, n.handleTimeout); err != nil {
 		return err
 	}
+
+	if err := n.timeMgr.CreateTimer(checkTxPool, n.config.CheckPoolTimeout, n.handleTimeout); err != nil {
+		return err
+	}
 	return nil
 }
 
@@ -378,6 +382,13 @@ func (n *Node[T, Constraint]) dispatchConsensusMsg(msg *consensus.ConsensusMessa
 		}
 		n.timeMgr.StopTimer(fetchMissingTxsResp)
 		return n.recvFetchMissingResponse(resp)
+
+	case consensus.Type_REBROADCAST_REQUEST_SET:
+		req := &consensus.ReBroadcastRequestSet{}
+		if err = req.UnmarshalVT(msg.Payload); err != nil {
+			return nil
+		}
+		n.recvReBroadcastRequestSet(req)
 	}
 	return nil
 }
@@ -528,8 +539,84 @@ func (n *Node[T, Constraint]) processEvent(event *localEvent) []*localEvent {
 		if ev := n.recvStateUpdatedEvent(state); ev != nil {
 			nextEvent = append(nextEvent, ev)
 		}
+	case eventType_checkTxPool:
+		if err := n.processOutOfDateReqs(); err != nil {
+			n.logger.Error(err)
+		}
 	}
 	return nextEvent
+}
+
+func (n *Node[T, Constraint]) processOutOfDateReqs() error {
+	defer func() {
+		if err := n.timeMgr.RestartTimer(checkTxPool); err != nil {
+			n.logger.Error(err)
+		}
+	}()
+	reqs := n.txpool.FilterOutOfDateRequests(true)
+	if len(reqs) == 0 {
+		n.logger.Debugf("Replica %d in normal finds 0 remained reqs, need not broadcast to others", n.chainState.SelfNodeInfo.ID)
+		return nil
+	}
+	reqLen := len(reqs)
+
+	setSize := n.config.SetSize
+	n.logger.Infof("Replica %d in normal finds %d remained reqs, broadcast to others split by setSize %d "+
+		"if needed", n.chainState.SelfNodeInfo.ID, reqLen, setSize)
+
+	// limit TransactionSet size by setSize before re-broadcast reqs
+	for reqLen > 0 {
+		if reqLen <= setSize {
+			set := &rbft.RequestSet[T, Constraint]{Requests: reqs}
+			if err := n.broadcastReqSet(set); err != nil {
+				return err
+			}
+			reqLen = 0
+		} else {
+			bTxs := reqs[0:setSize]
+			set := &rbft.RequestSet[T, Constraint]{Requests: bTxs}
+			if err := n.broadcastReqSet(set); err != nil {
+				return err
+			}
+			reqs = reqs[setSize:]
+			reqLen -= setSize
+		}
+	}
+	return nil
+}
+
+func (n *Node[T, Constraint]) broadcastReqSet(set *rbft.RequestSet[T, Constraint]) error {
+	payload, err := set.Marshal(n.chainState.SelfNodeInfo.ID)
+	if err != nil {
+		n.logger.Errorf("ConsensusMessage_TRANSACTION_SET Marshal Error: %s", err)
+		return err
+	}
+
+	msgNonce := n.getMsgNonce(consensus.Type_REBROADCAST_REQUEST_SET)
+	msg := &consensus.ConsensusMessage{
+		Type:    consensus.Type_REBROADCAST_REQUEST_SET,
+		From:    n.chainState.SelfNodeInfo.ID,
+		Epoch:   n.chainConfig.epochInfo.Epoch,
+		Payload: payload,
+		Nonce:   msgNonce,
+	}
+
+	if err = n.stack.Broadcast(context.TODO(), msg); err != nil {
+		return err
+	}
+	n.updateMsgNonce(consensus.Type_REBROADCAST_REQUEST_SET)
+	return nil
+}
+
+func (n *Node[T, Constraint]) recvReBroadcastRequestSet(e *consensus.ReBroadcastRequestSet) {
+	n.logger.Debugf("Replica %d recv ReBroadcastRequestSet from remote node: %d", n.chainState.SelfNodeInfo.ID, e.GetReplicaId())
+	// handle reBroadcast requestSet
+	var requestSet rbft.RequestSet[T, Constraint]
+	if err := requestSet.FromPB(e); err != nil {
+		n.logger.Errorf("rebroadcast RequestSet unmarshal error: %v", err)
+		return
+	}
+	n.txpool.AddRebroadcastTxs(requestSet.Requests)
 }
 
 func (n *Node[T, Constraint]) recvStateUpdatedEvent(state *rbfttypes.ServiceSyncState) *localEvent {
@@ -848,6 +935,11 @@ func (n *Node[T, Constraint]) finishQuorumStateResp() {
 	n.statusMgr.Off(InSyncState)
 	if err := n.timeMgr.RestartTimer(syncStateRestart); err != nil {
 		n.logger.Errorf("restart sync state timer failed: %s", err)
+	}
+
+	// start check tx pool when status is normal
+	if err := n.timeMgr.StartTimer(checkTxPool); err != nil {
+		n.logger.Error(err)
 	}
 	// clean sync state response
 	n.syncRespStore = make(map[uint64]*consensus.SyncStateResponse)

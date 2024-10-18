@@ -116,6 +116,8 @@ func mockDataSyncerNode(consensusMsgPipes map[int32]p2p.Pipe, conf *common.Confi
 		SelfP2PNodeID:           conf.ChainState.SelfNodeInfo.P2PID,
 		SyncStateTimeout:        1 * time.Minute,
 		SyncStateRestartTimeout: 1 * time.Second,
+		SetSize:                 10,
+		CheckPoolTimeout:        1 * time.Minute,
 	}
 	node, err := NewNode[types.Transaction, *types.Transaction](rbftConfig, rbftAdaptor, conf.ChainState, conf.TxPool, logger)
 	assert.Nil(t, err)

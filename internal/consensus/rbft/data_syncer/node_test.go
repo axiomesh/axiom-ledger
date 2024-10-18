@@ -6,9 +6,11 @@ import (
 	"fmt"
 	"path/filepath"
 	"sync"
+	"sync/atomic"
 	"testing"
 	"time"
 
+	"github.com/axiomesh/axiom-kit/txpool/mock_txpool"
 	"github.com/samber/lo"
 	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
@@ -47,6 +49,7 @@ func TestNewNode(t *testing.T) {
 		SelfP2PNodeID:           "node5",
 		SyncStateTimeout:        1 * time.Minute,
 		SyncStateRestartTimeout: 1 * time.Second,
+		CheckPoolTimeout:        1 * time.Minute,
 	}
 
 	rbftAdaptor, err := adaptor.NewRBFTAdaptor(consensusConf)
@@ -1549,6 +1552,151 @@ func TestNode_FetchMissingTxs(t *testing.T) {
 		assert.Nil(t, err)
 
 		assert.True(t, <-taskDoneCh)
+		node.Stop()
+	}
+}
+
+func TestNode_ProcessOutOfDateReqs(t *testing.T) {
+	s, err := types.GenerateSigner()
+	assert.Nil(t, err)
+	txs := testutil.ConstructTxs(s, 20)
+
+	testCases := []struct {
+		name                 string
+		setMocks             func(ctrl *gomock.Controller, node *Node[types.Transaction, *types.Transaction])
+		expectHandleReqCount int
+	}{
+		{
+			name:                 "empty out of date requests",
+			expectHandleReqCount: 0,
+			setMocks: func(ctrl *gomock.Controller, node *Node[types.Transaction, *types.Transaction]) {
+				mockTxpool := mock_txpool.NewMockTxPool[types.Transaction, *types.Transaction](ctrl)
+				mockTxpool.EXPECT().FilterOutOfDateRequests(gomock.Any()).Return(nil)
+				node.txpool = mockTxpool
+			},
+		},
+		{
+			name:                 "1 set out of date requests",
+			expectHandleReqCount: 4,
+			setMocks: func(ctrl *gomock.Controller, node *Node[types.Transaction, *types.Transaction]) {
+				mockTxpool := mock_txpool.NewMockTxPool[types.Transaction, *types.Transaction](ctrl)
+				mockTxpool.EXPECT().FilterOutOfDateRequests(gomock.Any()).Return(txs[:1])
+				node.txpool = mockTxpool
+			},
+		},
+		{
+			name:                 "2 set out of date requests",
+			expectHandleReqCount: 4 * 2,
+			setMocks: func(ctrl *gomock.Controller, node *Node[types.Transaction, *types.Transaction]) {
+				mockTxpool := mock_txpool.NewMockTxPool[types.Transaction, *types.Transaction](ctrl)
+				mockTxpool.EXPECT().FilterOutOfDateRequests(gomock.Any()).Return(txs)
+				node.txpool = mockTxpool
+			},
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Log(tc.name)
+		ctrl := gomock.NewController(t)
+		consensusMsgPipes, cnf, pipes := mockConfig(t, ctrl)
+		node := mockDataSyncerNode(consensusMsgPipes, cnf, t)
+		tc.setMocks(ctrl, node)
+
+		var actualHandleReqCount atomic.Uint64
+		remoteHandler := func(msg *consensus.ConsensusMessage, pipe p2p.Pipe, to string, id uint64) error {
+			switch msg.Type {
+			case consensus.Type_REBROADCAST_REQUEST_SET:
+				req := &consensus.ReBroadcastRequestSet{}
+				err = req.UnmarshalVT(msg.Payload)
+				assert.Nil(t, err)
+				assert.Equal(t, req.ReplicaId, node.chainState.SelfNodeInfo.ID)
+				actualHandleReqCount.Add(1)
+			default:
+				return nil
+			}
+
+			return nil
+		}
+		// start remote handler
+		for id, pipesM := range pipes {
+			if id != node.chainState.SelfNodeInfo.ID {
+				go receiveMsg(t, pipesM, id, remoteHandler)
+			}
+		}
+
+		// Start node
+		err = node.processOutOfDateReqs()
+		assert.Nil(t, err)
+
+		// wait remote node handle request messages
+		time.Sleep(20 * time.Millisecond)
+		assert.Equal(t, uint64(tc.expectHandleReqCount), actualHandleReqCount.Load())
+
+		node.Stop()
+	}
+}
+func TestNode_HandleRebroadcastTxSet(t *testing.T) {
+	s, err := types.GenerateSigner()
+	assert.Nil(t, err)
+	txs := testutil.ConstructTxs(s, 10)
+
+	testCases := []struct {
+		name      string
+		input     *consensus.ReBroadcastRequestSet
+		expectErr bool
+		setMocks  func(ctrl *gomock.Controller, node *Node[types.Transaction, *types.Transaction], outPut chan<- *types.Transaction)
+	}{
+		{
+			name:      "wrong type",
+			expectErr: true,
+			setMocks: func(ctrl *gomock.Controller, node *Node[types.Transaction, *types.Transaction], outPut chan<- *types.Transaction) {
+			},
+		},
+		{
+			name:      "success receive rebroadcast request set",
+			expectErr: false,
+			setMocks: func(ctrl *gomock.Controller, node *Node[types.Transaction, *types.Transaction], outPut chan<- *types.Transaction) {
+				mockTxpool := mock_txpool.NewMockTxPool[types.Transaction, *types.Transaction](ctrl)
+				mockTxpool.EXPECT().AddRebroadcastTxs(gomock.Any()).Do(func(txs []*types.Transaction) {
+					for _, tx := range txs {
+						outPut <- tx
+					}
+				})
+				node.txpool = mockTxpool
+			},
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Log(tc.name)
+		ctrl := gomock.NewController(t)
+		consensusMsgPipes, cnf, _ := mockConfig(t, ctrl)
+		node := mockDataSyncerNode(consensusMsgPipes, cnf, t)
+		outputCh := make(chan *types.Transaction, 10)
+		tc.setMocks(ctrl, node, outputCh)
+
+		data, err := tc.input.MarshalVT()
+		assert.Nil(t, err)
+
+		event := &localEvent{
+			EventType: eventType_consensusMessage,
+			Event: &consensus.ConsensusMessage{
+				Type:    consensus.Type_REBROADCAST_REQUEST_SET,
+				Epoch:   node.chainState.EpochInfo.Epoch,
+				Payload: data,
+			},
+		}
+		// Start node
+		node.processEvent(event)
+		if !tc.expectErr {
+			close(outputCh)
+			index := 0
+			for actualTx := range outputCh {
+				assert.Equal(t, txs[index], actualTx)
+				index++
+			}
+		}
+
 		node.Stop()
 	}
 }

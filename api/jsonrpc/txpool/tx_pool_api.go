@@ -51,13 +51,14 @@ func (api *TxPoolAPI) PendingTxCountFrom(addr common.Address) (any, error) {
 // convert account's txMeta to <nonce:RPCTransaction>
 // pending: All currently processable transactions, store in txpool with priorityIndex field
 // queued: Queued but non-processable transactions, store in txpool with parkingLotIndex field
-func (api *TxPoolAPI) formatTxMeta(meta *txpool.AccountMeta[types.Transaction, *types.Transaction]) (map[string]PoolTxContent, map[string]PoolTxContent) {
+func (api *TxPoolAPI) formatTxMeta(meta *txpool.AccountMeta[types.Transaction, *types.Transaction]) ([]PoolTxContent, []PoolTxContent) {
 	if len(meta.Txs) == 0 {
-		return make(map[string]PoolTxContent), make(map[string]PoolTxContent)
+		return nil, nil
 	}
 
 	format := func(info *txpool.TxInfo[types.Transaction, *types.Transaction]) PoolTxContent {
 		return PoolTxContent{
+			Nonce:       info.Tx.GetNonce(),
 			Transaction: eth.NewRPCTransaction(info.Tx, common.Hash{}, 0, 0),
 			Local:       info.Local,
 			LifeTime:    info.LifeTime,
@@ -65,14 +66,14 @@ func (api *TxPoolAPI) formatTxMeta(meta *txpool.AccountMeta[types.Transaction, *
 		}
 	}
 
-	pending := make(map[string]PoolTxContent)
-	queued := make(map[string]PoolTxContent)
+	pending := make([]PoolTxContent, 0)
+	queued := make([]PoolTxContent, 0)
 	lo.ForEach(meta.Txs, func(poolTx *txpool.TxInfo[types.Transaction, *types.Transaction], _ int) {
 		nonce := poolTx.Tx.GetNonce()
 		if nonce > meta.PendingNonce {
-			queued[fmt.Sprintf("%d", nonce)] = format(poolTx)
+			queued = append(queued, format(poolTx))
 		} else {
-			pending[fmt.Sprintf("%d", nonce)] = format(poolTx)
+			pending = append(pending, format(poolTx))
 		}
 	})
 
@@ -107,8 +108,8 @@ func (api *TxPoolAPI) getContent() ContentResponse {
 		return ContentResponse{}
 	}
 
-	pendingTxsM := make(map[string]map[string]PoolTxContent)
-	queuedTxsM := make(map[string]map[string]PoolTxContent)
+	pendingTxsM := make(map[string][]PoolTxContent)
+	queuedTxsM := make(map[string][]PoolTxContent)
 	for account, accMeta := range txpoolMeta.Accounts {
 		pending, queue := api.formatTxMeta(accMeta)
 		if len(pending) != 0 {
@@ -208,12 +209,12 @@ func (api *TxPoolAPI) Inspect() (any, error) {
 	}
 
 	// Define to flatten pending and queued transactions
-	var flatten = func(rawCt map[string]map[string]PoolTxContent) map[string]map[string]string {
-		flattenContent := make(map[string]map[string]string)
+	var flatten = func(rawCt map[string][]PoolTxContent) map[string][]string {
+		flattenContent := make(map[string][]string)
 		for account, txs := range rawCt {
-			dump := make(map[string]string)
-			for nonce, tx := range txs {
-				dump[nonce] = format(tx.Transaction)
+			dump := make([]string, 0)
+			for _, tx := range txs {
+				dump = append(dump, format(tx.Transaction))
 			}
 			flattenContent[account] = dump
 		}

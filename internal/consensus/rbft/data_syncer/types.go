@@ -14,6 +14,7 @@ import (
 const (
 	syncStateRestart    timer.TimeoutEvent = "syncStateRestart"
 	fetchMissingTxsResp timer.TimeoutEvent = "fetchMissingTxsResp"
+	checkTxPool         timer.TimeoutEvent = "checkTxPool"
 	syncStateResp       timer.TimeoutEvent = "syncStateResp"
 )
 
@@ -52,6 +53,7 @@ const (
 	eventType_epochSync
 	eventType_syncState
 	eventType_consensusMessage
+	eventType_checkTxPool
 )
 
 var eventTypes = map[int]string{
@@ -62,6 +64,7 @@ var eventTypes = map[int]string{
 	eventType_epochSync:        "epochSync",
 	eventType_syncState:        "syncState",
 	eventType_consensusMessage: "consensusMessage",
+	eventType_checkTxPool:      "checkTxPool",
 }
 
 type localEvent struct {
