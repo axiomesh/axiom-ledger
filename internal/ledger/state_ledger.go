@@ -78,20 +78,8 @@ func (l *StateLedgerImpl) NewView(blockHeader *types.BlockHeader, enableSnapshot
 
 	// if current node is an archive node, and request query historical state, then use archived history ledger as backend.
 	if l.chainState != nil && (!enableSnapshot && l.chainState.IsDataSyncer) {
-		lg := &StateLedgerImpl{
-			repo:        l.repo,
-			logger:      l.logger,
-			backend:     l.archiver.GetHistoryBackend(),
-			archiver:    l.archiver,
-			accounts:    make(map[string]IAccount),
-			preimages:   make(map[types.Hash][]byte),
-			changer:     newChanger(),
-			accessList:  NewAccessList(),
-			logs:        newEvmLogs(),
-			blockHeight: blockHeader.Number,
-		}
-		lg.refreshAccountTrie(blockHeader.StateRoot)
-		return lg, nil
+		// todo use pure rust instance instead
+		return NewArchiveStateLedger(l.repo, blockHeader.Number), nil
 	}
 
 	minHeight, maxHeight := l.GetHistoryRange()

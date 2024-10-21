@@ -37,7 +37,7 @@ func (l *StateLedgerImpl) GetOrCreateAccount(addr *types.Address) IAccount {
 	return account
 }
 
-// GetAccount get account info using account Address
+// GetAccount get account info using account address
 func (l *StateLedgerImpl) GetAccount(address *types.Address) IAccount {
 	addr := address.String()
 
@@ -97,7 +97,7 @@ func (l *StateLedgerImpl) setAccount(account IAccount) {
 	l.logger.Debugf("[Revert setAccount] addr: %v, account: %v", account.GetAddress(), account)
 }
 
-// GetBalance get account balance using account Address
+// GetBalance get account balance using account address
 func (l *StateLedgerImpl) GetBalance(addr *types.Address) *big.Int {
 	account := l.GetOrCreateAccount(addr)
 	return account.GetBalance()
@@ -121,7 +121,7 @@ func (l *StateLedgerImpl) AddBalance(addr *types.Address, value *big.Int) {
 	account.AddBalance(value)
 }
 
-// GetState get account state value using account Address and key
+// GetState get account state value using account address and key
 func (l *StateLedgerImpl) GetState(addr *types.Address, key []byte) (bool, []byte) {
 	account := l.GetOrCreateAccount(addr)
 	return account.GetState(key)
@@ -139,7 +139,7 @@ func (l *StateLedgerImpl) GetCommittedState(addr *types.Address, key []byte) []b
 	return account.GetCommittedState(key)
 }
 
-// SetState set account state value using account Address and key
+// SetState set account state value using account address and key
 func (l *StateLedgerImpl) SetState(addr *types.Address, key []byte, v []byte) {
 	account := l.GetOrCreateAccount(addr)
 	account.SetState(key, v)

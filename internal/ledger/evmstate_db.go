@@ -130,6 +130,7 @@ func (esa EvmStateDBAdaptor) AddSlotToAccessList(addr common.Address, slot commo
 }
 
 func (esa EvmStateDBAdaptor) Prepare(rules params.Rules, sender, coinbase common.Address, dst *common.Address, precompiles []common.Address, list etherTypes.AccessList) {
+	esa.StateLedger.(*ArchiveStateLedger).Prepare(rules, sender, coinbase, dst, precompiles, list)
 	// l.logs.thash = types.NewHash(hash.Bytes())
 	// l.logs.txIndex = index
 	l, ok := esa.StateLedger.(*StateLedgerImpl)

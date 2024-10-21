@@ -18,18 +18,19 @@ import (
 )
 
 const (
-	BlockChain      = "blockchain"
-	Ledger          = "ledger"
-	Indexer         = "indexer"
-	Snapshot        = "snapshot"
-	Blockfile       = "blockfile"
-	Consensus       = "consensus"
-	Epoch           = "epoch"
-	TxPool          = "txpool"
-	TrieIndexer     = "trie_indexer"
-	ArchiveHistory  = "archive_history"
-	ArchiveSnapshot = "archive_snapshot"
-	ArchiveJournal  = "archive_journal"
+	BlockChain        = "blockchain"
+	Ledger            = "ledger"
+	Indexer           = "indexer"
+	Snapshot          = "snapshot"
+	Blockfile         = "blockfile"
+	Consensus         = "consensus"
+	Epoch             = "epoch"
+	TxPool            = "txpool"
+	TrieIndexer       = "trie_indexer"
+	ArchiveHistory    = "archive_history"
+	ArchiveSnapshot   = "archive_snapshot"
+	ArchiveJournal    = "archive_journal"
+	ArchiveRustLedger = "archive_rust_ledger"
 )
 
 var globalStorageMgr = &storageMgr{
