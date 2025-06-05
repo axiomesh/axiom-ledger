@@ -1,7 +1,6 @@
 [
   {
-    "inputs":
-    [
+    "inputs": [
       {
         "internalType": "address",
         "name": "owner",
@@ -12,8 +11,7 @@
     "type": "error"
   },
   {
-    "inputs":
-    [
+    "inputs": [
       {
         "internalType": "address",
         "name": "account",
@@ -25,8 +23,7 @@
   },
   {
     "anonymous": false,
-    "inputs":
-    [
+    "inputs": [
       {
         "indexed": true,
         "internalType": "address",
@@ -44,8 +41,7 @@
     "type": "event"
   },
   {
-    "inputs":
-    [
+    "inputs": [
       {
         "internalType": "address",
         "name": "owner",
@@ -58,8 +54,7 @@
       }
     ],
     "name": "createAccount",
-    "outputs":
-    [
+    "outputs": [
       {
         "internalType": "contract SmartAccount",
         "name": "ret",
@@ -72,8 +67,7 @@
   {
     "inputs": [],
     "name": "getAccountFactory",
-    "outputs":
-    [
+    "outputs": [
       {
         "internalType": "address",
         "name": "",
@@ -84,8 +78,7 @@
     "type": "function"
   },
   {
-    "inputs":
-    [
+    "inputs": [
       {
         "internalType": "address",
         "name": "owner",
@@ -98,8 +91,7 @@
       }
     ],
     "name": "getAddress",
-    "outputs":
-    [
+    "outputs": [
       {
         "internalType": "address",
         "name": "",
@@ -112,8 +104,7 @@
   {
     "inputs": [],
     "name": "owner",
-    "outputs":
-    [
+    "outputs": [
       {
         "internalType": "address",
         "name": "",
@@ -124,8 +115,7 @@
     "type": "function"
   },
   {
-    "inputs":
-    [
+    "inputs": [
       {
         "internalType": "address",
         "name": "_factory",
@@ -138,8 +128,7 @@
     "type": "function"
   },
   {
-    "inputs":
-    [
+    "inputs": [
       {
         "internalType": "address",
         "name": "newOwner",

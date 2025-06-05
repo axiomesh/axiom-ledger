@@ -1,8 +1,7 @@
 [
   {
     "anonymous": false,
-    "inputs":
-    [
+    "inputs": [
       {
         "indexed": true,
         "internalType": "address",
@@ -21,8 +20,7 @@
   },
   {
     "anonymous": false,
-    "inputs":
-    [
+    "inputs": [
       {
         "indexed": true,
         "internalType": "address",
@@ -47,8 +45,7 @@
   },
   {
     "anonymous": false,
-    "inputs":
-    [
+    "inputs": [
       {
         "indexed": true,
         "internalType": "address",
@@ -67,8 +64,7 @@
   },
   {
     "anonymous": false,
-    "inputs":
-    [
+    "inputs": [
       {
         "indexed": true,
         "internalType": "address",
@@ -93,8 +89,7 @@
   },
   {
     "anonymous": false,
-    "inputs":
-    [
+    "inputs": [
       {
         "indexed": true,
         "internalType": "address",
@@ -118,8 +113,7 @@
     "type": "event"
   },
   {
-    "inputs":
-    [
+    "inputs": [
       {
         "internalType": "uint32",
         "name": "_unstakeDelaySec",
@@ -132,8 +126,7 @@
     "type": "function"
   },
   {
-    "inputs":
-    [
+    "inputs": [
       {
         "internalType": "address",
         "name": "account",
@@ -141,8 +134,7 @@
       }
     ],
     "name": "balanceOf",
-    "outputs":
-    [
+    "outputs": [
       {
         "internalType": "uint256",
         "name": "",
@@ -153,8 +145,7 @@
     "type": "function"
   },
   {
-    "inputs":
-    [
+    "inputs": [
       {
         "internalType": "address",
         "name": "account",
@@ -167,8 +158,7 @@
     "type": "function"
   },
   {
-    "inputs":
-    [
+    "inputs": [
       {
         "internalType": "address",
         "name": "account",
@@ -176,11 +166,9 @@
       }
     ],
     "name": "getDepositInfo",
-    "outputs":
-    [
+    "outputs": [
       {
-        "components":
-        [
+        "components": [
           {
             "internalType": "uint112",
             "name": "deposit",
@@ -223,8 +211,7 @@
     "type": "function"
   },
   {
-    "inputs":
-    [
+    "inputs": [
       {
         "internalType": "address payable",
         "name": "withdrawAddress",
@@ -237,8 +224,7 @@
     "type": "function"
   },
   {
-    "inputs":
-    [
+    "inputs": [
       {
         "internalType": "address payable",
         "name": "withdrawAddress",

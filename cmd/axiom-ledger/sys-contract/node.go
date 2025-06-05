@@ -58,7 +58,8 @@ var NodeCMD = &cli.Command{
 		{
 			Name:   "register",
 			Usage:  "Propose a register node proposal",
-			Action: GovernanceActions{}.proposeNodeRegister,
+			Action: NodeActions{}.register,
+			//Action: GovernanceActions{}.proposeNodeRegister,
 			Flags: []cli.Flag{
 				&cli.StringFlag{
 					Name:        "title",
@@ -319,6 +320,36 @@ func (_ NodeActions) bindContract(ctx *cli.Context) (*node_manager_client.Bindin
 		return nil, nil, errors.Wrap(err, "bind node contract failed")
 	}
 	return contract, client, nil
+}
+
+// function register(NodeInfo memory info) external;
+func (a NodeActions) register(ctx *cli.Context) error {
+	nodeManager, client, err := a.bindContract(ctx)
+	if err != nil {
+		return err
+	}
+
+	r, err := common.PrepareRepoWithKeystore(ctx)
+	if err != nil {
+		return err
+	}
+
+	opa, err := GetSenderAddress()
+	if err != nil {
+		return errors.Wrap(err, "get operator address failed")
+	}
+
+	infoArgs := node_manager_client.NodeInfo{
+		ConsensusPubKey: r.ConsensusKeystore.PublicKey.String(),
+		P2PPubKey:       r.P2PKeystore.PublicKey.String(),
+		P2PID:           r.P2PKeystore.P2PID(),
+		Operator:        opa,
+		MetaData:        NodeCMDProposeNodeRegisterArgs,
+	}
+
+	return SendAndWaitTx(ctx, client, func(client *ethclient.Client, opts *bind.TransactOpts) (*types.Transaction, error) {
+		return nodeManager.Register(opts, infoArgs)
+	}, nil)
 }
 
 // function joinCandidateSet(uint64 nodeID, uint64 commissionRate) external;

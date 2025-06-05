@@ -1,7 +1,6 @@
 [
   {
-    "inputs":
-    [
+    "inputs": [
       {
         "internalType": "uint256",
         "name": "preOpGas",
@@ -37,8 +36,7 @@
     "type": "error"
   },
   {
-    "inputs":
-    [
+    "inputs": [
       {
         "internalType": "uint256",
         "name": "opIndex",
@@ -54,8 +52,7 @@
     "type": "error"
   },
   {
-    "inputs":
-    [
+    "inputs": [
       {
         "internalType": "address",
         "name": "owner",
@@ -66,8 +63,7 @@
     "type": "error"
   },
   {
-    "inputs":
-    [
+    "inputs": [
       {
         "internalType": "address",
         "name": "account",
@@ -78,8 +74,7 @@
     "type": "error"
   },
   {
-    "inputs":
-    [
+    "inputs": [
       {
         "internalType": "address",
         "name": "sender",
@@ -90,8 +85,7 @@
     "type": "error"
   },
   {
-    "inputs":
-    [
+    "inputs": [
       {
         "internalType": "address",
         "name": "aggregator",
@@ -102,11 +96,9 @@
     "type": "error"
   },
   {
-    "inputs":
-    [
+    "inputs": [
       {
-        "components":
-        [
+        "components": [
           {
             "internalType": "uint256",
             "name": "preOpGas",
@@ -143,8 +135,7 @@
         "type": "tuple"
       },
       {
-        "components":
-        [
+        "components": [
           {
             "internalType": "uint256",
             "name": "stake",
@@ -161,8 +152,7 @@
         "type": "tuple"
       },
       {
-        "components":
-        [
+        "components": [
           {
             "internalType": "uint256",
             "name": "stake",
@@ -179,8 +169,7 @@
         "type": "tuple"
       },
       {
-        "components":
-        [
+        "components": [
           {
             "internalType": "uint256",
             "name": "stake",
@@ -201,11 +190,9 @@
     "type": "error"
   },
   {
-    "inputs":
-    [
+    "inputs": [
       {
-        "components":
-        [
+        "components": [
           {
             "internalType": "uint256",
             "name": "preOpGas",
@@ -242,8 +229,7 @@
         "type": "tuple"
       },
       {
-        "components":
-        [
+        "components": [
           {
             "internalType": "uint256",
             "name": "stake",
@@ -260,8 +246,7 @@
         "type": "tuple"
       },
       {
-        "components":
-        [
+        "components": [
           {
             "internalType": "uint256",
             "name": "stake",
@@ -278,8 +263,7 @@
         "type": "tuple"
       },
       {
-        "components":
-        [
+        "components": [
           {
             "internalType": "uint256",
             "name": "stake",
@@ -296,16 +280,14 @@
         "type": "tuple"
       },
       {
-        "components":
-        [
+        "components": [
           {
             "internalType": "address",
             "name": "aggregator",
             "type": "address"
           },
           {
-            "components":
-            [
+            "components": [
               {
                 "internalType": "uint256",
                 "name": "stake",
@@ -332,8 +314,7 @@
   },
   {
     "anonymous": false,
-    "inputs":
-    [
+    "inputs": [
       {
         "indexed": true,
         "internalType": "bytes32",
@@ -370,8 +351,7 @@
   },
   {
     "anonymous": false,
-    "inputs":
-    [
+    "inputs": [
       {
         "indexed": true,
         "internalType": "address",
@@ -390,8 +370,7 @@
   },
   {
     "anonymous": false,
-    "inputs":
-    [
+    "inputs": [
       {
         "indexed": true,
         "internalType": "address",
@@ -410,8 +389,7 @@
   },
   {
     "anonymous": false,
-    "inputs":
-    [
+    "inputs": [
       {
         "indexed": true,
         "internalType": "address",
@@ -424,8 +402,7 @@
   },
   {
     "anonymous": false,
-    "inputs":
-    [
+    "inputs": [
       {
         "indexed": true,
         "internalType": "address",
@@ -450,8 +427,7 @@
   },
   {
     "anonymous": false,
-    "inputs":
-    [
+    "inputs": [
       {
         "indexed": true,
         "internalType": "address",
@@ -470,8 +446,7 @@
   },
   {
     "anonymous": false,
-    "inputs":
-    [
+    "inputs": [
       {
         "indexed": true,
         "internalType": "address",
@@ -496,8 +471,7 @@
   },
   {
     "anonymous": false,
-    "inputs":
-    [
+    "inputs": [
       {
         "indexed": true,
         "internalType": "bytes32",
@@ -546,8 +520,7 @@
   },
   {
     "anonymous": false,
-    "inputs":
-    [
+    "inputs": [
       {
         "indexed": true,
         "internalType": "bytes32",
@@ -578,8 +551,7 @@
   },
   {
     "anonymous": false,
-    "inputs":
-    [
+    "inputs": [
       {
         "indexed": true,
         "internalType": "address",
@@ -603,8 +575,7 @@
     "type": "event"
   },
   {
-    "inputs":
-    [
+    "inputs": [
       {
         "internalType": "uint32",
         "name": "_unstakeDelaySec",
@@ -617,8 +588,7 @@
     "type": "function"
   },
   {
-    "inputs":
-    [
+    "inputs": [
       {
         "internalType": "address",
         "name": "account",
@@ -626,8 +596,7 @@
       }
     ],
     "name": "balanceOf",
-    "outputs":
-    [
+    "outputs": [
       {
         "internalType": "uint256",
         "name": "",
@@ -638,8 +607,7 @@
     "type": "function"
   },
   {
-    "inputs":
-    [
+    "inputs": [
       {
         "internalType": "address",
         "name": "account",
@@ -652,8 +620,7 @@
     "type": "function"
   },
   {
-    "inputs":
-    [
+    "inputs": [
       {
         "internalType": "address",
         "name": "account",
@@ -661,11 +628,9 @@
       }
     ],
     "name": "getDepositInfo",
-    "outputs":
-    [
+    "outputs": [
       {
-        "components":
-        [
+        "components": [
           {
             "internalType": "uint112",
             "name": "deposit",
@@ -703,8 +668,7 @@
   {
     "inputs": [],
     "name": "getNoGasCalls",
-    "outputs":
-    [
+    "outputs": [
       {
         "internalType": "bytes",
         "name": "",
@@ -715,8 +679,7 @@
     "type": "function"
   },
   {
-    "inputs":
-    [
+    "inputs": [
       {
         "internalType": "address",
         "name": "sender",
@@ -729,8 +692,7 @@
       }
     ],
     "name": "getNonce",
-    "outputs":
-    [
+    "outputs": [
       {
         "internalType": "uint256",
         "name": "nonce",
@@ -741,8 +703,7 @@
     "type": "function"
   },
   {
-    "inputs":
-    [
+    "inputs": [
       {
         "internalType": "bytes",
         "name": "initCode",
@@ -755,11 +716,9 @@
     "type": "function"
   },
   {
-    "inputs":
-    [
+    "inputs": [
       {
-        "components":
-        [
+        "components": [
           {
             "internalType": "address",
             "name": "sender",
@@ -832,8 +791,7 @@
       }
     ],
     "name": "getUserOpHash",
-    "outputs":
-    [
+    "outputs": [
       {
         "internalType": "bytes32",
         "name": "",
@@ -844,11 +802,9 @@
     "type": "function"
   },
   {
-    "inputs":
-    [
+    "inputs": [
       {
-        "components":
-        [
+        "components": [
           {
             "internalType": "address",
             "name": "sender",
@@ -931,14 +887,11 @@
     "type": "function"
   },
   {
-    "inputs":
-    [
+    "inputs": [
       {
-        "components":
-        [
+        "components": [
           {
-            "components":
-            [
+            "components": [
               {
                 "internalType": "address",
                 "name": "sender",
@@ -1036,11 +989,9 @@
     "type": "function"
   },
   {
-    "inputs":
-    [
+    "inputs": [
       {
-        "components":
-        [
+        "components": [
           {
             "internalType": "address",
             "name": "sender",
@@ -1123,8 +1074,7 @@
     "type": "function"
   },
   {
-    "inputs":
-    [
+    "inputs": [
       {
         "internalType": "uint192",
         "name": "key",
@@ -1139,8 +1089,7 @@
   {
     "inputs": [],
     "name": "owner",
-    "outputs":
-    [
+    "outputs": [
       {
         "internalType": "address",
         "name": "",
@@ -1151,8 +1100,7 @@
     "type": "function"
   },
   {
-    "inputs":
-    [
+    "inputs": [
       {
         "internalType": "bytes",
         "name": "calls",
@@ -1165,11 +1113,9 @@
     "type": "function"
   },
   {
-    "inputs":
-    [
+    "inputs": [
       {
-        "components":
-        [
+        "components": [
           {
             "internalType": "address",
             "name": "sender",
@@ -1257,11 +1203,9 @@
     "type": "function"
   },
   {
-    "inputs":
-    [
+    "inputs": [
       {
-        "components":
-        [
+        "components": [
           {
             "internalType": "address",
             "name": "sender",
@@ -1339,8 +1283,7 @@
     "type": "function"
   },
   {
-    "inputs":
-    [
+    "inputs": [
       {
         "internalType": "address",
         "name": "newOwner",
@@ -1360,8 +1303,7 @@
     "type": "function"
   },
   {
-    "inputs":
-    [
+    "inputs": [
       {
         "internalType": "address payable",
         "name": "withdrawAddress",
@@ -1374,8 +1316,7 @@
     "type": "function"
   },
   {
-    "inputs":
-    [
+    "inputs": [
       {
         "internalType": "address payable",
         "name": "withdrawAddress",

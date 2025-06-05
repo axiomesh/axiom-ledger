@@ -1,8 +1,7 @@
 [
   {
     "anonymous": false,
-    "inputs":
-    [
+    "inputs": [
       {
         "indexed": true,
         "internalType": "uint64",
@@ -33,8 +32,7 @@
   },
   {
     "anonymous": false,
-    "inputs":
-    [
+    "inputs": [
       {
         "indexed": true,
         "internalType": "uint64",
@@ -66,11 +64,9 @@
   {
     "inputs": [],
     "name": "getCouncilMembers",
-    "outputs":
-    [
+    "outputs": [
       {
-        "components":
-        [
+        "components": [
           {
             "internalType": "address",
             "name": "addr",
@@ -98,8 +94,7 @@
   {
     "inputs": [],
     "name": "getLatestProposalID",
-    "outputs":
-    [
+    "outputs": [
       {
         "internalType": "uint64",
         "name": "",
@@ -112,8 +107,7 @@
   {
     "inputs": [],
     "name": "getNotFinishedProposalIDs",
-    "outputs":
-    [
+    "outputs": [
       {
         "internalType": "uint64[]",
         "name": "ids",
@@ -124,8 +118,7 @@
     "type": "function"
   },
   {
-    "inputs":
-    [
+    "inputs": [
       {
         "internalType": "uint64",
         "name": "proposalID",
@@ -133,11 +126,9 @@
       }
     ],
     "name": "proposal",
-    "outputs":
-    [
+    "outputs": [
       {
-        "components":
-        [
+        "components": [
           {
             "internalType": "uint64",
             "name": "ID",
@@ -228,8 +219,7 @@
     "type": "function"
   },
   {
-    "inputs":
-    [
+    "inputs": [
       {
         "internalType": "enum ProposalType",
         "name": "proposalType",
@@ -262,8 +252,7 @@
     "type": "function"
   },
   {
-    "inputs":
-    [
+    "inputs": [
       {
         "internalType": "uint64",
         "name": "proposalID",

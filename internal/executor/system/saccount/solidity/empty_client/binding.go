@@ -32,7 +32,7 @@ var (
 // BindingContractMetaData contains all meta data concerning the BindingContract contract.
 var BindingContractMetaData = &bind.MetaData{
 	ABI: "[{\"stateMutability\":\"payable\",\"type\":\"receive\"}]",
-	Bin: "0x6080604052348015600e575f80fd5b50604480601a5f395ff3fe608060405236600a57005b5f80fdfea2646970667358221220d49b90ebb4024cc4a8e9a140d2e40ae1cf106b430b434bbe124778643616875564736f6c63430008170033",
+	Bin: "0x6080604052348015600e575f5ffd5b50604480601a5f395ff3fe608060405236600a57005b5f5ffdfea26469706673582212209835b027364ba00a4aceb956e378a63950f5d0989e439e9bb6b474baa709cd5764736f6c634300081e0033",
 }
 
 // BindingContractABI is the input ABI used to generate the binding from.

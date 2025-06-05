@@ -58,6 +58,11 @@ type NodeManager interface {
 	// Solidity: function joinCandidateSet(uint64 nodeID, uint64 commissionRate) returns()
 	JoinCandidateSet(nodeID uint64, commissionRate uint64) error
 
+	// Register is a paid mutator transaction binding the contract method 0x49514a6b.
+	//
+	// Solidity: function register((uint64,string,string,string,address,(string,string,string,string),uint8) info) returns(uint64 nodeID)
+	Register(info NodeInfo) (uint64, error)
+
 	// UpdateMetaData is a paid mutator transaction binding the contract method 0x37aa97c4.
 	//
 	// Solidity: function updateMetaData(uint64 nodeID, string name, string desc, string imageURL, string websiteURL) returns()

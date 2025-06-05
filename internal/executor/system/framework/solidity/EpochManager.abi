@@ -2,11 +2,9 @@
   {
     "inputs": [],
     "name": "currentEpoch",
-    "outputs":
-    [
+    "outputs": [
       {
-        "components":
-        [
+        "components": [
           {
             "internalType": "uint64",
             "name": "Epoch",
@@ -23,8 +21,7 @@
             "type": "uint64"
           },
           {
-            "components":
-            [
+            "components": [
               {
                 "internalType": "string",
                 "name": "ProposerElectionType",
@@ -91,8 +88,7 @@
             "type": "tuple"
           },
           {
-            "components":
-            [
+            "components": [
               {
                 "internalType": "uint64",
                 "name": "GasLimit",
@@ -109,8 +105,7 @@
             "type": "tuple"
           },
           {
-            "components":
-            [
+            "components": [
               {
                 "internalType": "uint64",
                 "name": "TxMaxSize",
@@ -122,8 +117,7 @@
             "type": "tuple"
           },
           {
-            "components":
-            [
+            "components": [
               {
                 "internalType": "bool",
                 "name": "StakeEnable",
@@ -189,8 +183,7 @@
     "type": "function"
   },
   {
-    "inputs":
-    [
+    "inputs": [
       {
         "internalType": "uint64",
         "name": "epochID",
@@ -198,11 +191,9 @@
       }
     ],
     "name": "historyEpoch",
-    "outputs":
-    [
+    "outputs": [
       {
-        "components":
-        [
+        "components": [
           {
             "internalType": "uint64",
             "name": "Epoch",
@@ -219,8 +210,7 @@
             "type": "uint64"
           },
           {
-            "components":
-            [
+            "components": [
               {
                 "internalType": "string",
                 "name": "ProposerElectionType",
@@ -287,8 +277,7 @@
             "type": "tuple"
           },
           {
-            "components":
-            [
+            "components": [
               {
                 "internalType": "uint64",
                 "name": "GasLimit",
@@ -305,8 +294,7 @@
             "type": "tuple"
           },
           {
-            "components":
-            [
+            "components": [
               {
                 "internalType": "uint64",
                 "name": "TxMaxSize",
@@ -318,8 +306,7 @@
             "type": "tuple"
           },
           {
-            "components":
-            [
+            "components": [
               {
                 "internalType": "bool",
                 "name": "StakeEnable",
@@ -387,11 +374,9 @@
   {
     "inputs": [],
     "name": "nextEpoch",
-    "outputs":
-    [
+    "outputs": [
       {
-        "components":
-        [
+        "components": [
           {
             "internalType": "uint64",
             "name": "Epoch",
@@ -408,8 +393,7 @@
             "type": "uint64"
           },
           {
-            "components":
-            [
+            "components": [
               {
                 "internalType": "string",
                 "name": "ProposerElectionType",
@@ -476,8 +460,7 @@
             "type": "tuple"
           },
           {
-            "components":
-            [
+            "components": [
               {
                 "internalType": "uint64",
                 "name": "GasLimit",
@@ -494,8 +477,7 @@
             "type": "tuple"
           },
           {
-            "components":
-            [
+            "components": [
               {
                 "internalType": "uint64",
                 "name": "TxMaxSize",
@@ -507,8 +489,7 @@
             "type": "tuple"
           },
           {
-            "components":
-            [
+            "components": [
               {
                 "internalType": "bool",
                 "name": "StakeEnable",

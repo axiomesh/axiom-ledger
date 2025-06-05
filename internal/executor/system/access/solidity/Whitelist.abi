@@ -1,8 +1,7 @@
 [
   {
     "anonymous": false,
-    "inputs":
-    [
+    "inputs": [
       {
         "indexed": true,
         "internalType": "address",
@@ -21,8 +20,7 @@
   },
   {
     "anonymous": false,
-    "inputs":
-    [
+    "inputs": [
       {
         "indexed": true,
         "internalType": "address",
@@ -41,8 +39,7 @@
   },
   {
     "anonymous": false,
-    "inputs":
-    [
+    "inputs": [
       {
         "indexed": false,
         "internalType": "bool",
@@ -50,8 +47,7 @@
         "type": "bool"
       },
       {
-        "components":
-        [
+        "components": [
           {
             "internalType": "address",
             "name": "addr",
@@ -68,8 +64,7 @@
     "type": "event"
   },
   {
-    "inputs":
-    [
+    "inputs": [
       {
         "internalType": "address",
         "name": "addr",
@@ -77,11 +72,9 @@
       }
     ],
     "name": "queryAuthInfo",
-    "outputs":
-    [
+    "outputs": [
       {
-        "components":
-        [
+        "components": [
           {
             "internalType": "address",
             "name": "addr",
@@ -107,8 +100,7 @@
     "type": "function"
   },
   {
-    "inputs":
-    [
+    "inputs": [
       {
         "internalType": "address",
         "name": "addr",
@@ -116,11 +108,9 @@
       }
     ],
     "name": "queryProviderInfo",
-    "outputs":
-    [
+    "outputs": [
       {
-        "components":
-        [
+        "components": [
           {
             "internalType": "address",
             "name": "addr",
@@ -136,8 +126,7 @@
     "type": "function"
   },
   {
-    "inputs":
-    [
+    "inputs": [
       {
         "internalType": "address[]",
         "name": "addresses",
@@ -150,8 +139,7 @@
     "type": "function"
   },
   {
-    "inputs":
-    [
+    "inputs": [
       {
         "internalType": "address[]",
         "name": "addresses",

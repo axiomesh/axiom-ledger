@@ -1,10 +1,8 @@
 [
   {
-    "inputs":
-    [
+    "inputs": [
       {
-        "components":
-        [
+        "components": [
           {
             "internalType": "address",
             "name": "sender",
@@ -77,8 +75,7 @@
       }
     ],
     "name": "aggregateSignatures",
-    "outputs":
-    [
+    "outputs": [
       {
         "internalType": "bytes",
         "name": "aggregatedSignature",
@@ -89,11 +86,9 @@
     "type": "function"
   },
   {
-    "inputs":
-    [
+    "inputs": [
       {
-        "components":
-        [
+        "components": [
           {
             "internalType": "address",
             "name": "sender",
@@ -176,11 +171,9 @@
     "type": "function"
   },
   {
-    "inputs":
-    [
+    "inputs": [
       {
-        "components":
-        [
+        "components": [
           {
             "internalType": "address",
             "name": "sender",
@@ -253,8 +246,7 @@
       }
     ],
     "name": "validateUserOpSignature",
-    "outputs":
-    [
+    "outputs": [
       {
         "internalType": "bytes",
         "name": "sigForUserOp",

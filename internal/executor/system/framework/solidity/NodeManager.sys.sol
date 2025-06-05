@@ -43,6 +43,8 @@ interface NodeManager {
     event UpdateMetaData(uint64 indexed nodeID, NodeMetaData metaData);
     event UpdateOperator(uint64 indexed nodeID, address newOperator);
 
+    function register(NodeInfo memory info) external returns (uint64 nodeID);
+
     function joinCandidateSet(uint64 nodeID, uint64 commissionRate) external;
 
     function exit(uint64 nodeID) external;

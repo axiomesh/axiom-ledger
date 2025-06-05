@@ -39,7 +39,7 @@ require (
 	github.com/sirupsen/logrus v1.9.3
 	github.com/spf13/viper v1.18.1
 	github.com/stretchr/testify v1.9.0
-	github.com/supranational/blst v0.3.11
+	github.com/supranational/blst v0.3.14
 	github.com/urfave/cli/v2 v2.25.7
 	github.com/wealdtech/go-eth2-wallet-encryptor-keystorev4 v1.4.1
 	go.opentelemetry.io/otel/trace v1.16.0

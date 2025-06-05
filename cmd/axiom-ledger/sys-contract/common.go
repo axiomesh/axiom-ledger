@@ -99,3 +99,12 @@ func WaitTxConfirmed(ctx context.Context, client *ethclient.Client, txHash ethco
 		}
 	}
 }
+
+// GetSenderAddress returns the sender address from the private key.
+func GetSenderAddress() (ethcommon.Address, error) {
+	sk, err := ethcrypto.HexToECDSA(strings.TrimPrefix(sender, "0x"))
+	if err != nil {
+		return ethcommon.Address{}, errors.Wrap(err, "decode sender private key error")
+	}
+	return ethcrypto.PubkeyToAddress(sk.PublicKey), nil
+}

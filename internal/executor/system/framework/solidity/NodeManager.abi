@@ -1,7 +1,6 @@
 [
   {
-    "inputs":
-    [
+    "inputs": [
       {
         "internalType": "uint8",
         "name": "status",
@@ -12,8 +11,7 @@
     "type": "error"
   },
   {
-    "inputs":
-    [
+    "inputs": [
       {
         "internalType": "uint256",
         "name": "curNum",
@@ -35,8 +33,7 @@
   },
   {
     "anonymous": false,
-    "inputs":
-    [
+    "inputs": [
       {
         "indexed": true,
         "internalType": "uint64",
@@ -49,8 +46,7 @@
   },
   {
     "anonymous": false,
-    "inputs":
-    [
+    "inputs": [
       {
         "indexed": true,
         "internalType": "uint64",
@@ -75,8 +71,7 @@
   },
   {
     "anonymous": false,
-    "inputs":
-    [
+    "inputs": [
       {
         "indexed": true,
         "internalType": "uint64",
@@ -84,8 +79,7 @@
         "type": "uint64"
       },
       {
-        "components":
-        [
+        "components": [
           {
             "internalType": "uint64",
             "name": "ID",
@@ -112,8 +106,7 @@
             "type": "address"
           },
           {
-            "components":
-            [
+            "components": [
               {
                 "internalType": "string",
                 "name": "name",
@@ -156,8 +149,7 @@
   },
   {
     "anonymous": false,
-    "inputs":
-    [
+    "inputs": [
       {
         "indexed": true,
         "internalType": "uint64",
@@ -165,8 +157,7 @@
         "type": "uint64"
       },
       {
-        "components":
-        [
+        "components": [
           {
             "internalType": "string",
             "name": "name",
@@ -199,8 +190,7 @@
   },
   {
     "anonymous": false,
-    "inputs":
-    [
+    "inputs": [
       {
         "indexed": true,
         "internalType": "uint64",
@@ -218,8 +208,7 @@
     "type": "event"
   },
   {
-    "inputs":
-    [
+    "inputs": [
       {
         "internalType": "uint64",
         "name": "nodeID",
@@ -234,8 +223,7 @@
   {
     "inputs": [],
     "name": "getActiveValidatorIDSet",
-    "outputs":
-    [
+    "outputs": [
       {
         "internalType": "uint64[]",
         "name": "ids",
@@ -248,11 +236,9 @@
   {
     "inputs": [],
     "name": "getActiveValidatorSet",
-    "outputs":
-    [
+    "outputs": [
       {
-        "components":
-        [
+        "components": [
           {
             "internalType": "uint64",
             "name": "ID",
@@ -279,8 +265,7 @@
             "type": "address"
           },
           {
-            "components":
-            [
+            "components": [
               {
                 "internalType": "string",
                 "name": "name",
@@ -317,8 +302,7 @@
         "type": "tuple[]"
       },
       {
-        "components":
-        [
+        "components": [
           {
             "internalType": "uint64",
             "name": "NodeID",
@@ -341,8 +325,7 @@
   {
     "inputs": [],
     "name": "getCandidateIDSet",
-    "outputs":
-    [
+    "outputs": [
       {
         "internalType": "uint64[]",
         "name": "ids",
@@ -355,11 +338,9 @@
   {
     "inputs": [],
     "name": "getCandidateSet",
-    "outputs":
-    [
+    "outputs": [
       {
-        "components":
-        [
+        "components": [
           {
             "internalType": "uint64",
             "name": "ID",
@@ -386,8 +367,7 @@
             "type": "address"
           },
           {
-            "components":
-            [
+            "components": [
               {
                 "internalType": "string",
                 "name": "name",
@@ -430,8 +410,7 @@
   {
     "inputs": [],
     "name": "getDataSyncerIDSet",
-    "outputs":
-    [
+    "outputs": [
       {
         "internalType": "uint64[]",
         "name": "ids",
@@ -444,11 +423,9 @@
   {
     "inputs": [],
     "name": "getDataSyncerSet",
-    "outputs":
-    [
+    "outputs": [
       {
-        "components":
-        [
+        "components": [
           {
             "internalType": "uint64",
             "name": "ID",
@@ -475,8 +452,7 @@
             "type": "address"
           },
           {
-            "components":
-            [
+            "components": [
               {
                 "internalType": "string",
                 "name": "name",
@@ -519,8 +495,7 @@
   {
     "inputs": [],
     "name": "getExitedIDSet",
-    "outputs":
-    [
+    "outputs": [
       {
         "internalType": "uint64[]",
         "name": "ids",
@@ -533,11 +508,9 @@
   {
     "inputs": [],
     "name": "getExitedSet",
-    "outputs":
-    [
+    "outputs": [
       {
-        "components":
-        [
+        "components": [
           {
             "internalType": "uint64",
             "name": "ID",
@@ -564,8 +537,7 @@
             "type": "address"
           },
           {
-            "components":
-            [
+            "components": [
               {
                 "internalType": "string",
                 "name": "name",
@@ -606,8 +578,7 @@
     "type": "function"
   },
   {
-    "inputs":
-    [
+    "inputs": [
       {
         "internalType": "uint64",
         "name": "nodeID",
@@ -615,11 +586,9 @@
       }
     ],
     "name": "getInfo",
-    "outputs":
-    [
+    "outputs": [
       {
-        "components":
-        [
+        "components": [
           {
             "internalType": "uint64",
             "name": "ID",
@@ -646,8 +615,7 @@
             "type": "address"
           },
           {
-            "components":
-            [
+            "components": [
               {
                 "internalType": "string",
                 "name": "name",
@@ -688,8 +656,7 @@
     "type": "function"
   },
   {
-    "inputs":
-    [
+    "inputs": [
       {
         "internalType": "string",
         "name": "consensusPubKey",
@@ -697,11 +664,9 @@
       }
     ],
     "name": "getInfoByConsensusPubKey",
-    "outputs":
-    [
+    "outputs": [
       {
-        "components":
-        [
+        "components": [
           {
             "internalType": "uint64",
             "name": "ID",
@@ -728,8 +693,7 @@
             "type": "address"
           },
           {
-            "components":
-            [
+            "components": [
               {
                 "internalType": "string",
                 "name": "name",
@@ -770,8 +734,7 @@
     "type": "function"
   },
   {
-    "inputs":
-    [
+    "inputs": [
       {
         "internalType": "uint64[]",
         "name": "nodeIDs",
@@ -779,11 +742,9 @@
       }
     ],
     "name": "getInfos",
-    "outputs":
-    [
+    "outputs": [
       {
-        "components":
-        [
+        "components": [
           {
             "internalType": "uint64",
             "name": "ID",
@@ -810,8 +771,7 @@
             "type": "address"
           },
           {
-            "components":
-            [
+            "components": [
               {
                 "internalType": "string",
                 "name": "name",
@@ -854,8 +814,7 @@
   {
     "inputs": [],
     "name": "getPendingInactiveIDSet",
-    "outputs":
-    [
+    "outputs": [
       {
         "internalType": "uint64[]",
         "name": "ids",
@@ -868,11 +827,9 @@
   {
     "inputs": [],
     "name": "getPendingInactiveSet",
-    "outputs":
-    [
+    "outputs": [
       {
-        "components":
-        [
+        "components": [
           {
             "internalType": "uint64",
             "name": "ID",
@@ -899,8 +856,7 @@
             "type": "address"
           },
           {
-            "components":
-            [
+            "components": [
               {
                 "internalType": "string",
                 "name": "name",
@@ -943,8 +899,7 @@
   {
     "inputs": [],
     "name": "getTotalCount",
-    "outputs":
-    [
+    "outputs": [
       {
         "internalType": "uint64",
         "name": "",
@@ -955,8 +910,7 @@
     "type": "function"
   },
   {
-    "inputs":
-    [
+    "inputs": [
       {
         "internalType": "uint64",
         "name": "nodeID",
@@ -974,8 +928,85 @@
     "type": "function"
   },
   {
-    "inputs":
-    [
+    "inputs": [
+      {
+        "components": [
+          {
+            "internalType": "uint64",
+            "name": "ID",
+            "type": "uint64"
+          },
+          {
+            "internalType": "string",
+            "name": "ConsensusPubKey",
+            "type": "string"
+          },
+          {
+            "internalType": "string",
+            "name": "P2PPubKey",
+            "type": "string"
+          },
+          {
+            "internalType": "string",
+            "name": "P2PID",
+            "type": "string"
+          },
+          {
+            "internalType": "address",
+            "name": "Operator",
+            "type": "address"
+          },
+          {
+            "components": [
+              {
+                "internalType": "string",
+                "name": "name",
+                "type": "string"
+              },
+              {
+                "internalType": "string",
+                "name": "desc",
+                "type": "string"
+              },
+              {
+                "internalType": "string",
+                "name": "imageURL",
+                "type": "string"
+              },
+              {
+                "internalType": "string",
+                "name": "websiteURL",
+                "type": "string"
+              }
+            ],
+            "internalType": "struct NodeMetaData",
+            "name": "MetaData",
+            "type": "tuple"
+          },
+          {
+            "internalType": "enum Status",
+            "name": "Status",
+            "type": "uint8"
+          }
+        ],
+        "internalType": "struct NodeInfo",
+        "name": "info",
+        "type": "tuple"
+      }
+    ],
+    "name": "register",
+    "outputs": [
+      {
+        "internalType": "uint64",
+        "name": "nodeID",
+        "type": "uint64"
+      }
+    ],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
       {
         "internalType": "uint64",
         "name": "nodeID",
@@ -1008,8 +1039,7 @@
     "type": "function"
   },
   {
-    "inputs":
-    [
+    "inputs": [
       {
         "internalType": "uint64",
         "name": "nodeID",

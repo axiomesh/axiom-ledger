@@ -1,8 +1,7 @@
 [
   {
     "anonymous": false,
-    "inputs":
-    [
+    "inputs": [
       {
         "indexed": true,
         "internalType": "address",
@@ -27,8 +26,7 @@
   },
   {
     "anonymous": false,
-    "inputs":
-    [
+    "inputs": [
       {
         "indexed": true,
         "internalType": "address",
@@ -53,8 +51,7 @@
   },
   {
     "anonymous": false,
-    "inputs":
-    [
+    "inputs": [
       {
         "indexed": true,
         "internalType": "address",
@@ -79,8 +76,7 @@
   },
   {
     "anonymous": false,
-    "inputs":
-    [
+    "inputs": [
       {
         "indexed": true,
         "internalType": "uint256",
@@ -110,8 +106,7 @@
     "type": "event"
   },
   {
-    "inputs":
-    [
+    "inputs": [
       {
         "internalType": "address",
         "name": "_to",
@@ -129,8 +124,7 @@
     "type": "function"
   },
   {
-    "inputs":
-    [
+    "inputs": [
       {
         "internalType": "address",
         "name": "_owner",
@@ -138,8 +132,7 @@
       }
     ],
     "name": "balanceOf",
-    "outputs":
-    [
+    "outputs": [
       {
         "internalType": "uint256",
         "name": "",
@@ -150,8 +143,7 @@
     "type": "function"
   },
   {
-    "inputs":
-    [
+    "inputs": [
       {
         "internalType": "uint256",
         "name": "_tokenId",
@@ -159,8 +151,7 @@
       }
     ],
     "name": "getApproved",
-    "outputs":
-    [
+    "outputs": [
       {
         "internalType": "address",
         "name": "",
@@ -171,8 +162,7 @@
     "type": "function"
   },
   {
-    "inputs":
-    [
+    "inputs": [
       {
         "internalType": "uint256",
         "name": "_tokenId",
@@ -180,11 +170,9 @@
       }
     ],
     "name": "getInfo",
-    "outputs":
-    [
+    "outputs": [
       {
-        "components":
-        [
+        "components": [
           {
             "internalType": "uint64",
             "name": "PoolID",
@@ -206,8 +194,7 @@
             "type": "uint64"
           },
           {
-            "components":
-            [
+            "components": [
               {
                 "internalType": "uint256",
                 "name": "Amount",
@@ -233,8 +220,7 @@
     "type": "function"
   },
   {
-    "inputs":
-    [
+    "inputs": [
       {
         "internalType": "uint256[]",
         "name": "_tokenIds",
@@ -242,11 +228,9 @@
       }
     ],
     "name": "getInfos",
-    "outputs":
-    [
+    "outputs": [
       {
-        "components":
-        [
+        "components": [
           {
             "internalType": "uint64",
             "name": "PoolID",
@@ -268,8 +252,7 @@
             "type": "uint64"
           },
           {
-            "components":
-            [
+            "components": [
               {
                 "internalType": "uint256",
                 "name": "Amount",
@@ -295,8 +278,7 @@
     "type": "function"
   },
   {
-    "inputs":
-    [
+    "inputs": [
       {
         "internalType": "uint256",
         "name": "_tokenId",
@@ -304,8 +286,7 @@
       }
     ],
     "name": "getLockedCoin",
-    "outputs":
-    [
+    "outputs": [
       {
         "internalType": "uint256",
         "name": "",
@@ -316,8 +297,7 @@
     "type": "function"
   },
   {
-    "inputs":
-    [
+    "inputs": [
       {
         "internalType": "uint256",
         "name": "_tokenId",
@@ -325,8 +305,7 @@
       }
     ],
     "name": "getLockedReward",
-    "outputs":
-    [
+    "outputs": [
       {
         "internalType": "uint256",
         "name": "",
@@ -337,8 +316,7 @@
     "type": "function"
   },
   {
-    "inputs":
-    [
+    "inputs": [
       {
         "internalType": "uint256",
         "name": "_tokenId",
@@ -346,8 +324,7 @@
       }
     ],
     "name": "getTotalCoin",
-    "outputs":
-    [
+    "outputs": [
       {
         "internalType": "uint256",
         "name": "",
@@ -358,8 +335,7 @@
     "type": "function"
   },
   {
-    "inputs":
-    [
+    "inputs": [
       {
         "internalType": "uint256",
         "name": "_tokenId",
@@ -367,8 +343,7 @@
       }
     ],
     "name": "getUnlockedCoin",
-    "outputs":
-    [
+    "outputs": [
       {
         "internalType": "uint256",
         "name": "",
@@ -379,8 +354,7 @@
     "type": "function"
   },
   {
-    "inputs":
-    [
+    "inputs": [
       {
         "internalType": "uint256",
         "name": "_tokenId",
@@ -388,8 +362,7 @@
       }
     ],
     "name": "getUnlockingCoin",
-    "outputs":
-    [
+    "outputs": [
       {
         "internalType": "uint256",
         "name": "",
@@ -400,8 +373,7 @@
     "type": "function"
   },
   {
-    "inputs":
-    [
+    "inputs": [
       {
         "internalType": "address",
         "name": "_owner",
@@ -414,8 +386,7 @@
       }
     ],
     "name": "isApprovedForAll",
-    "outputs":
-    [
+    "outputs": [
       {
         "internalType": "bool",
         "name": "",
@@ -426,8 +397,7 @@
     "type": "function"
   },
   {
-    "inputs":
-    [
+    "inputs": [
       {
         "internalType": "uint256",
         "name": "_tokenId",
@@ -435,8 +405,7 @@
       }
     ],
     "name": "ownerOf",
-    "outputs":
-    [
+    "outputs": [
       {
         "internalType": "address",
         "name": "",
@@ -447,8 +416,7 @@
     "type": "function"
   },
   {
-    "inputs":
-    [
+    "inputs": [
       {
         "internalType": "address",
         "name": "_from",
@@ -471,8 +439,7 @@
     "type": "function"
   },
   {
-    "inputs":
-    [
+    "inputs": [
       {
         "internalType": "address",
         "name": "_from",
@@ -500,8 +467,7 @@
     "type": "function"
   },
   {
-    "inputs":
-    [
+    "inputs": [
       {
         "internalType": "address",
         "name": "_operator",
@@ -519,8 +485,7 @@
     "type": "function"
   },
   {
-    "inputs":
-    [
+    "inputs": [
       {
         "internalType": "address",
         "name": "_from",

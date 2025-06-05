@@ -1,7 +1,6 @@
 [
   {
-    "inputs":
-    [
+    "inputs": [
       {
         "internalType": "address",
         "name": "owner",
@@ -12,8 +11,7 @@
     "type": "error"
   },
   {
-    "inputs":
-    [
+    "inputs": [
       {
         "internalType": "address",
         "name": "account",
@@ -25,8 +23,7 @@
   },
   {
     "anonymous": false,
-    "inputs":
-    [
+    "inputs": [
       {
         "indexed": true,
         "internalType": "address",
@@ -46,8 +43,7 @@
   {
     "inputs": [],
     "name": "owner",
-    "outputs":
-    [
+    "outputs": [
       {
         "internalType": "address",
         "name": "",
@@ -58,8 +54,7 @@
     "type": "function"
   },
   {
-    "inputs":
-    [
+    "inputs": [
       {
         "internalType": "address",
         "name": "newOwner",

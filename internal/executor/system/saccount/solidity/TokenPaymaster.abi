@@ -1,7 +1,6 @@
 [
   {
-    "inputs":
-    [
+    "inputs": [
       {
         "internalType": "address",
         "name": "owner",
@@ -12,8 +11,7 @@
     "type": "error"
   },
   {
-    "inputs":
-    [
+    "inputs": [
       {
         "internalType": "address",
         "name": "account",
@@ -25,8 +23,7 @@
   },
   {
     "anonymous": false,
-    "inputs":
-    [
+    "inputs": [
       {
         "indexed": true,
         "internalType": "address",
@@ -44,8 +41,7 @@
     "type": "event"
   },
   {
-    "inputs":
-    [
+    "inputs": [
       {
         "internalType": "address",
         "name": "token",
@@ -63,8 +59,7 @@
     "type": "function"
   },
   {
-    "inputs":
-    [
+    "inputs": [
       {
         "internalType": "address",
         "name": "token",
@@ -72,8 +67,7 @@
       }
     ],
     "name": "getToken",
-    "outputs":
-    [
+    "outputs": [
       {
         "internalType": "address",
         "name": "",
@@ -86,8 +80,7 @@
   {
     "inputs": [],
     "name": "owner",
-    "outputs":
-    [
+    "outputs": [
       {
         "internalType": "address",
         "name": "",
@@ -98,8 +91,7 @@
     "type": "function"
   },
   {
-    "inputs":
-    [
+    "inputs": [
       {
         "internalType": "enum IPaymaster.PostOpMode",
         "name": "mode",
@@ -122,8 +114,7 @@
     "type": "function"
   },
   {
-    "inputs":
-    [
+    "inputs": [
       {
         "internalType": "address",
         "name": "newOwner",
@@ -136,11 +127,9 @@
     "type": "function"
   },
   {
-    "inputs":
-    [
+    "inputs": [
       {
-        "components":
-        [
+        "components": [
           {
             "internalType": "address",
             "name": "sender",
@@ -223,8 +212,7 @@
       }
     ],
     "name": "validatePaymasterUserOp",
-    "outputs":
-    [
+    "outputs": [
       {
         "internalType": "bytes",
         "name": "context",

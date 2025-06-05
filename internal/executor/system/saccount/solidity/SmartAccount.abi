@@ -1,7 +1,6 @@
 [
   {
-    "inputs":
-    [
+    "inputs": [
       {
         "internalType": "contract IEntryPoint",
         "name": "anEntryPoint",
@@ -13,8 +12,7 @@
   },
   {
     "anonymous": false,
-    "inputs":
-    [
+    "inputs": [
       {
         "indexed": true,
         "internalType": "contract IEntryPoint",
@@ -33,8 +31,7 @@
   },
   {
     "anonymous": false,
-    "inputs":
-    [
+    "inputs": [
       {
         "indexed": true,
         "internalType": "address",
@@ -60,8 +57,7 @@
   {
     "inputs": [],
     "name": "entryPoint",
-    "outputs":
-    [
+    "outputs": [
       {
         "internalType": "contract IEntryPoint",
         "name": "",
@@ -72,8 +68,7 @@
     "type": "function"
   },
   {
-    "inputs":
-    [
+    "inputs": [
       {
         "internalType": "address",
         "name": "dest",
@@ -96,8 +91,7 @@
     "type": "function"
   },
   {
-    "inputs":
-    [
+    "inputs": [
       {
         "internalType": "address[]",
         "name": "dest",
@@ -115,8 +109,7 @@
     "type": "function"
   },
   {
-    "inputs":
-    [
+    "inputs": [
       {
         "internalType": "address[]",
         "name": "dest",
@@ -141,8 +134,7 @@
   {
     "inputs": [],
     "name": "getGuardian",
-    "outputs":
-    [
+    "outputs": [
       {
         "internalType": "address",
         "name": "",
@@ -155,8 +147,7 @@
   {
     "inputs": [],
     "name": "getNonce",
-    "outputs":
-    [
+    "outputs": [
       {
         "internalType": "uint256",
         "name": "",
@@ -169,8 +160,7 @@
   {
     "inputs": [],
     "name": "getOwner",
-    "outputs":
-    [
+    "outputs": [
       {
         "internalType": "address",
         "name": "",
@@ -183,11 +173,9 @@
   {
     "inputs": [],
     "name": "getPasskeys",
-    "outputs":
-    [
+    "outputs": [
       {
-        "components":
-        [
+        "components": [
           {
             "internalType": "bytes",
             "name": "publicKey",
@@ -210,11 +198,9 @@
   {
     "inputs": [],
     "name": "getSessions",
-    "outputs":
-    [
+    "outputs": [
       {
-        "components":
-        [
+        "components": [
           {
             "internalType": "address",
             "name": "addr",
@@ -252,8 +238,7 @@
   {
     "inputs": [],
     "name": "getStatus",
-    "outputs":
-    [
+    "outputs": [
       {
         "internalType": "uint64",
         "name": "",
@@ -264,8 +249,7 @@
     "type": "function"
   },
   {
-    "inputs":
-    [
+    "inputs": [
       {
         "internalType": "address",
         "name": "anOwner",
@@ -280,8 +264,7 @@
   {
     "inputs": [],
     "name": "owner",
-    "outputs":
-    [
+    "outputs": [
       {
         "internalType": "address",
         "name": "",
@@ -292,8 +275,7 @@
     "type": "function"
   },
   {
-    "inputs":
-    [
+    "inputs": [
       {
         "internalType": "address",
         "name": "",
@@ -306,8 +288,7 @@
     "type": "function"
   },
   {
-    "inputs":
-    [
+    "inputs": [
       {
         "internalType": "address",
         "name": "",
@@ -320,8 +301,7 @@
     "type": "function"
   },
   {
-    "inputs":
-    [
+    "inputs": [
       {
         "internalType": "bytes",
         "name": "",
@@ -339,8 +319,7 @@
     "type": "function"
   },
   {
-    "inputs":
-    [
+    "inputs": [
       {
         "internalType": "address",
         "name": "",
@@ -368,11 +347,9 @@
     "type": "function"
   },
   {
-    "inputs":
-    [
+    "inputs": [
       {
-        "components":
-        [
+        "components": [
           {
             "internalType": "address",
             "name": "sender",
@@ -455,8 +432,7 @@
       }
     ],
     "name": "validateUserOp",
-    "outputs":
-    [
+    "outputs": [
       {
         "internalType": "uint256",
         "name": "validationData",

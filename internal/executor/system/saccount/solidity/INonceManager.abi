@@ -1,7 +1,6 @@
 [
   {
-    "inputs":
-    [
+    "inputs": [
       {
         "internalType": "address",
         "name": "sender",
@@ -14,8 +13,7 @@
       }
     ],
     "name": "getNonce",
-    "outputs":
-    [
+    "outputs": [
       {
         "internalType": "uint256",
         "name": "nonce",
@@ -26,8 +24,7 @@
     "type": "function"
   },
   {
-    "inputs":
-    [
+    "inputs": [
       {
         "internalType": "uint192",
         "name": "key",

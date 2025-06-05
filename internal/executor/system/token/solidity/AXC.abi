@@ -2,8 +2,7 @@
   {
     "inputs": [],
     "name": "totalSupply",
-    "outputs":
-    [
+    "outputs": [
       {
         "internalType": "uint256",
         "name": "",

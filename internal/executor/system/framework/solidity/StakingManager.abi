@@ -1,7 +1,6 @@
 [
   {
-    "inputs":
-    [
+    "inputs": [
       {
         "internalType": "uint256",
         "name": "remain",
@@ -12,8 +11,7 @@
     "type": "error"
   },
   {
-    "inputs":
-    [
+    "inputs": [
       {
         "internalType": "uint256",
         "name": "remain",
@@ -25,8 +23,7 @@
   },
   {
     "anonymous": false,
-    "inputs":
-    [
+    "inputs": [
       {
         "indexed": true,
         "internalType": "uint64",
@@ -57,8 +54,7 @@
   },
   {
     "anonymous": false,
-    "inputs":
-    [
+    "inputs": [
       {
         "indexed": false,
         "internalType": "uint256",
@@ -83,8 +79,7 @@
   },
   {
     "anonymous": false,
-    "inputs":
-    [
+    "inputs": [
       {
         "indexed": false,
         "internalType": "uint256",
@@ -108,8 +103,7 @@
     "type": "event"
   },
   {
-    "inputs":
-    [
+    "inputs": [
       {
         "internalType": "uint64",
         "name": "poolID",
@@ -132,8 +126,7 @@
     "type": "function"
   },
   {
-    "inputs":
-    [
+    "inputs": [
       {
         "internalType": "uint256[]",
         "name": "liquidStakingTokenIDs",
@@ -151,8 +144,7 @@
     "type": "function"
   },
   {
-    "inputs":
-    [
+    "inputs": [
       {
         "internalType": "uint256[]",
         "name": "liquidStakingTokenIDs",
@@ -177,8 +169,7 @@
   {
     "inputs": [],
     "name": "getCurrentEpochTotalAddStake",
-    "outputs":
-    [
+    "outputs": [
       {
         "internalType": "uint256",
         "name": "currentEpochTotalAddStake",
@@ -191,8 +182,7 @@
   {
     "inputs": [],
     "name": "getCurrentEpochTotalStakeNotEnoughValidators",
-    "outputs":
-    [
+    "outputs": [
       {
         "internalType": "uint64[]",
         "name": "currentEpochTotalStakeNotEnoughValidators",
@@ -205,8 +195,7 @@
   {
     "inputs": [],
     "name": "getCurrentEpochTotalUnlockStake",
-    "outputs":
-    [
+    "outputs": [
       {
         "internalType": "uint256",
         "name": "currentEpochTotalUnlockStake",
@@ -219,8 +208,7 @@
   {
     "inputs": [],
     "name": "getLastEpochTotalStake",
-    "outputs":
-    [
+    "outputs": [
       {
         "internalType": "uint256",
         "name": "lastEpochTotalStake",
@@ -231,8 +219,7 @@
     "type": "function"
   },
   {
-    "inputs":
-    [
+    "inputs": [
       {
         "internalType": "uint64",
         "name": "poolID",
@@ -245,11 +232,9 @@
       }
     ],
     "name": "getPoolHistoryLiquidStakingTokenRate",
-    "outputs":
-    [
+    "outputs": [
       {
-        "components":
-        [
+        "components": [
           {
             "internalType": "uint256",
             "name": "StakeAmount",
@@ -270,8 +255,7 @@
     "type": "function"
   },
   {
-    "inputs":
-    [
+    "inputs": [
       {
         "internalType": "uint64[]",
         "name": "poolIDs",
@@ -284,11 +268,9 @@
       }
     ],
     "name": "getPoolHistoryLiquidStakingTokenRates",
-    "outputs":
-    [
+    "outputs": [
       {
-        "components":
-        [
+        "components": [
           {
             "internalType": "uint256",
             "name": "StakeAmount",
@@ -309,8 +291,7 @@
     "type": "function"
   },
   {
-    "inputs":
-    [
+    "inputs": [
       {
         "internalType": "uint64",
         "name": "poolID",
@@ -318,11 +299,9 @@
       }
     ],
     "name": "getPoolInfo",
-    "outputs":
-    [
+    "outputs": [
       {
-        "components":
-        [
+        "components": [
           {
             "internalType": "uint64",
             "name": "ID",
@@ -408,8 +387,7 @@
     "type": "function"
   },
   {
-    "inputs":
-    [
+    "inputs": [
       {
         "internalType": "uint64[]",
         "name": "poolIDs",
@@ -417,11 +395,9 @@
       }
     ],
     "name": "getPoolInfos",
-    "outputs":
-    [
+    "outputs": [
       {
-        "components":
-        [
+        "components": [
           {
             "internalType": "uint64",
             "name": "ID",
@@ -509,8 +485,7 @@
   {
     "inputs": [],
     "name": "getTotalStake",
-    "outputs":
-    [
+    "outputs": [
       {
         "internalType": "uint256",
         "name": "totalStake",
@@ -521,8 +496,7 @@
     "type": "function"
   },
   {
-    "inputs":
-    [
+    "inputs": [
       {
         "internalType": "uint256",
         "name": "liquidStakingTokenID",
@@ -540,8 +514,7 @@
     "type": "function"
   },
   {
-    "inputs":
-    [
+    "inputs": [
       {
         "internalType": "uint64",
         "name": "poolID",
@@ -559,8 +532,7 @@
     "type": "function"
   },
   {
-    "inputs":
-    [
+    "inputs": [
       {
         "internalType": "uint256",
         "name": "liquidStakingTokenID",

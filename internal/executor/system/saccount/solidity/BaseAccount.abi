@@ -2,8 +2,7 @@
   {
     "inputs": [],
     "name": "entryPoint",
-    "outputs":
-    [
+    "outputs": [
       {
         "internalType": "contract IEntryPoint",
         "name": "",
@@ -16,8 +15,7 @@
   {
     "inputs": [],
     "name": "getNonce",
-    "outputs":
-    [
+    "outputs": [
       {
         "internalType": "uint256",
         "name": "",
@@ -28,11 +26,9 @@
     "type": "function"
   },
   {
-    "inputs":
-    [
+    "inputs": [
       {
-        "components":
-        [
+        "components": [
           {
             "internalType": "address",
             "name": "sender",
@@ -115,8 +111,7 @@
       }
     ],
     "name": "validateUserOp",
-    "outputs":
-    [
+    "outputs": [
       {
         "internalType": "uint256",
         "name": "validationData",

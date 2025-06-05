@@ -1,10 +1,8 @@
 [
   {
-    "inputs":
-    [
+    "inputs": [
       {
-        "components":
-        [
+        "components": [
           {
             "internalType": "address",
             "name": "sender",
@@ -87,8 +85,7 @@
       }
     ],
     "name": "validateUserOp",
-    "outputs":
-    [
+    "outputs": [
       {
         "internalType": "uint256",
         "name": "validationData",
