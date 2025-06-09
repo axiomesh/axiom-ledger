@@ -5,6 +5,7 @@ set -e
 CURRENT_PATH=$(cd $(dirname ${BASH_SOURCE[0]}); pwd)
 source ${CURRENT_PATH}/x.sh
 PROJECT_PATH=$(dirname "${CURRENT_PATH}")
+APP_NAME=dragon-coins
 BUILD_PATH=${CURRENT_PATH}/build
 N=4
 
@@ -65,11 +66,11 @@ function prepare() {
   print_blue "===> Generating $N nodes configuration"
   rm -rf "${BUILD_PATH}"
   mkdir "${BUILD_PATH}"
-  ${PROJECT_PATH}/bin/axiom-ledger cluster generate-default --target ${BUILD_PATH} --force
+  ${PROJECT_PATH}/bin/$APP_NAME cluster generate-default --target ${BUILD_PATH} --force
   for ((i = 1; i < N + 1; i = i + 1)); do
     root=${BUILD_PATH}/node${i}
     cp -r ${CURRENT_PATH}/package/* ${root}/
-    cp -f ${PROJECT_PATH}/bin/axiom-ledger ${root}/tools/bin/
+    cp -f ${PROJECT_PATH}/bin/$APP_NAME ${root}/tools/bin/
     cat "${CURRENT_PATH}/package/.env" >> ${root}/.env
   done
 }
@@ -83,7 +84,7 @@ function splitWindow() {
 
 function start_by_tmux() {
   print_blue "===> Staring cluster"
-  tmux new -d -s axiom-ledger || (tmux kill-session -t axiom-ledger && tmux new -d -s axiom-ledger)
+  tmux new -d -s $APP_NAME || (tmux kill-session -t $APP_NAME && tmux new -d -s $APP_NAME)
   for ((i = 0; i < N / 4; i = i + 1)); do
     splitWindow
     tmux new-window
@@ -92,10 +93,10 @@ function start_by_tmux() {
   for ((i = 0; i < N; i = i + 1)); do
     tmux selectw -t $(($i / 4))
     tmux selectp -t $(($i % 4))
-    tmux send-keys "${BUILD_PATH}/node$(($i + 1))/axiom-ledger start" C-m
+    tmux send-keys "${BUILD_PATH}/node$(($i + 1))/$APP_NAME start" C-m
   done
   tmux selectw -t 0
-  tmux attach-session -t axiom-ledger
+  tmux attach-session -t $APP_NAME
 }
 
 function start_by_nohup() {

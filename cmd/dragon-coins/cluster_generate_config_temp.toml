@@ -1,7 +1,7 @@
 # if true, node port will be auto increased based on the `default_port`
 enable_port_auto_increase = true
-# if not empty, will mint coins to the operator address(e.g. 10000000axc; 1000gmol; 1000mol; 1000)
-mint_for_operator_coin_amount = '10000000axc'
+# if not empty, will mint coins to the operator address(e.g. 10000000sch; 1000gwei; 1000wei; 1000)
+mint_for_operator_coin_amount = '10000000sch'
 
 # if node port is not set, use default port
 [default_port]
@@ -45,10 +45,10 @@ consensus_private_key = '0x099383c2b41a282936fe9e656467b2ad6ecafd38753eefa080b5a
 operator_address = '0xc7F999b83Af6DF9e67d0a37Ee7e900bF38b3D013'
 is_data_syncer = false
 # (e.g. 10000000axc; 1000gmol; 1000mol; 1000)
-stake_number = '10000000axc'
+stake_number = '10000000sch'
 commission_rate = 0
 # deploy ip
-ip = '127.0.0.1'
+ip = '13.218.12.121'
 
 [nodes.port]
 # if zero, use default port
@@ -69,9 +69,9 @@ p2p_private_key = '0x43dd946ade57013fd4e7d0f11d84b94e2fda4336829f154ae345be94b0b
 consensus_private_key = '0x5d21b741bd16e05c3a883b09613d36ad152f1586393121d247bdcfef908cce8f'
 operator_address = '0x79a1215469FaB6f9c63c1816b45183AD3624bE34'
 is_data_syncer = false
-stake_number = '10000000axc'
+stake_number = '10000000sch'
 commission_rate = 0
-ip = '127.0.0.1'
+ip = '44.201.186.3'
 
 [nodes.port]
 jsonrpc = 0
@@ -87,9 +87,9 @@ p2p_private_key = '0x875e5ef34c34e49d35ff5a0f8a53003d8848fc6edd423582c00edc609a1
 consensus_private_key = '0x42cc8e862b51a1c21a240bb2ae6f2dbad59668d86fe3c45b2e4710eebd2a63fd'
 operator_address = '0x97c8B516D19edBf575D72a172Af7F418BE498C37'
 is_data_syncer = false
-stake_number = '10000000axc'
+stake_number = '10000000sch'
 commission_rate = 0
-ip = '127.0.0.1'
+ip = '3.80.140.180'
 
 [nodes.port]
 jsonrpc = 0
@@ -105,9 +105,9 @@ p2p_private_key = '0xf0aac0c25791d0bd1b96b2ec3c9c25539045cf6cc5cc9ad0f3cb64453d1
 consensus_private_key = '0x6e327c2d5a284b89f9c312a02b2714a90b38e721256f9a157f03ec15c1a386a6'
 operator_address = '0xc0Ff2e0b3189132D815b8eb325bE17285AC898f8'
 is_data_syncer = false
-stake_number = '10000000axc'
+stake_number = '10000000sch'
 commission_rate = 0
-ip = '127.0.0.1'
+ip = '3.82.106.94'
 
 [nodes.port]
 jsonrpc = 0
@@ -118,96 +118,96 @@ monitor = 0
 
 [[accounts]]
 address = '0xc7F999b83Af6DF9e67d0a37Ee7e900bF38b3D013'
-balance = '10000000axc'
+balance = '10000000sch'
 
 [[accounts]]
 address = '0x79a1215469FaB6f9c63c1816b45183AD3624bE34'
-balance = '10000000axc'
+balance = '10000000sch'
 
 [[accounts]]
 address = '0x97c8B516D19edBf575D72a172Af7F418BE498C37'
-balance = '10000000axc'
+balance = '10000000sch'
 
 [[accounts]]
 address = '0xc0Ff2e0b3189132D815b8eb325bE17285AC898f8'
-balance = '10000000axc'
+balance = '10000000sch'
 
 [[accounts]]
 address = '0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266'
-balance = '10000000axc'
+balance = '10000000sch'
 
 [[accounts]]
 address = '0x70997970C51812dc3A010C7d01b50e0d17dc79C8'
-balance = '10000000axc'
+balance = '10000000sch'
 
 [[accounts]]
 address = '0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC'
-balance = '10000000axc'
+balance = '10000000sch'
 
 [[accounts]]
 address = '0x90F79bf6EB2c4f870365E785982E1f101E93b906'
-balance = '10000000axc'
+balance = '10000000sch'
 
 [[accounts]]
 address = '0x15d34AAf54267DB7D7c367839AAf71A00a2C6A65'
-balance = '10000000axc'
+balance = '10000000sch'
 
 [[accounts]]
 address = '0x9965507D1a55bcC2695C58ba16FB37d819B0A4dc'
-balance = '10000000axc'
+balance = '10000000sch'
 
 [[accounts]]
 address = '0x976EA74026E726554dB657fA54763abd0C3a0aa9'
-balance = '10000000axc'
+balance = '10000000sch'
 
 [[accounts]]
 address = '0x14dC79964da2C08b23698B3D3cc7Ca32193d9955'
-balance = '10000000axc'
+balance = '10000000sch'
 
 [[accounts]]
 address = '0x23618e81E3f5cdF7f54C3d65f7FBc0aBf5B21E8f'
-balance = '10000000axc'
+balance = '10000000sch'
 
 [[accounts]]
 address = '0xa0Ee7A142d267C1f36714E4a8F75612F20a79720'
-balance = '10000000axc'
+balance = '10000000sch'
 
 [[accounts]]
 address = '0xBcd4042DE499D14e55001CcbB24a551F3b954096'
-balance = '10000000axc'
+balance = '10000000sch'
 
 [[accounts]]
 address = '0x71bE63f3384f5fb98995898A86B02Fb2426c5788'
-balance = '10000000axc'
+balance = '10000000sch'
 
 [[accounts]]
 address = '0xFABB0ac9d68B0B445fB7357272Ff202C5651694a'
-balance = '10000000axc'
+balance = '10000000sch'
 
 [[accounts]]
 address = '0x1CBd3b2770909D4e10f157cABC84C7264073C9Ec'
-balance = '10000000axc'
+balance = '10000000sch'
 
 [[accounts]]
 address = '0xdF3e18d64BC6A983f673Ab319CCaE4f1a57C7097'
-balance = '10000000axc'
+balance = '10000000sch'
 
 [[accounts]]
 address = '0xcd3B766CCDd6AE721141F452C550Ca635964ce71'
-balance = '10000000axc'
+balance = '10000000sch'
 
 [[accounts]]
 address = '0x2546BcD3c84621e976D8185a91A922aE77ECEc30'
-balance = '10000000axc'
+balance = '10000000sch'
 
 [[accounts]]
 address = '0xbDA5747bFD65F08deb54cb465eB87D40e51B197E'
-balance = '10000000axc'
+balance = '10000000sch'
 
 [[accounts]]
 address = '0xdD2FD4581271e230360230F9337D5c0430Bf44C0'
-balance = '10000000axc'
+balance = '10000000sch'
 
 [[accounts]]
 address = '0x8626f6940E2eb28930eFb4CeF49B2d1F2C9C1199'
-balance = '10000000axc'
+balance = '10000000sch'

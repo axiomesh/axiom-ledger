@@ -75,7 +75,7 @@ type Account struct {
 func GenesisEpochInfo() *types.EpochInfo {
 	return &types.EpochInfo{
 		Epoch:       1,
-		EpochPeriod: 100,
+		EpochPeriod: 10,
 		StartBlock:  0,
 		ConsensusParams: types.ConsensusParams{
 			ProposerElectionType:          types.ProposerElectionTypeWRF,

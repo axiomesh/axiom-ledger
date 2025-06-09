@@ -207,16 +207,16 @@ func (g *Governance) Init() {
 		panic(err)
 	}
 
-	nodeManager := NewNodeManager(g)
-	if err := g.registerHandler(NodeRegister, nodeManager); err != nil {
-		panic(err)
-	}
-	if err := g.registerHandler(NodeRemove, nodeManager); err != nil {
-		panic(err)
-	}
-	if err := g.registerHandler(NodeUpgrade, nodeManager); err != nil {
-		panic(err)
-	}
+	//nodeManager := NewNodeManager(g)
+	//if err := g.registerHandler(NodeRegister, nodeManager); err != nil {
+	//	panic(err)
+	//}
+	//if err := g.registerHandler(NodeRemove, nodeManager); err != nil {
+	//	panic(err)
+	//}
+	//if err := g.registerHandler(NodeUpgrade, nodeManager); err != nil {
+	//	panic(err)
+	//}
 
 	gasManager := NewGasManager(g)
 	if err := g.registerHandler(GasUpdate, gasManager); err != nil {

@@ -11,7 +11,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/urfave/cli/v2"
 
-	"github.com/axiomesh/axiom-ledger/cmd/axiom-ledger/common"
+	"github.com/axiomesh/axiom-ledger/cmd/dragon-coins/common"
 	syscommon "github.com/axiomesh/axiom-ledger/internal/executor/system/common"
 	"github.com/axiomesh/axiom-ledger/internal/executor/system/governance"
 	"github.com/axiomesh/axiom-ledger/internal/executor/system/governance/solidity/governance_client"

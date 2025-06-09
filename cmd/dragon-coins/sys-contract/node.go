@@ -1,23 +1,31 @@
 package sys_contract
 
 import (
-	"encoding/json"
 	"fmt"
 
+	kittype "github.com/axiomesh/axiom-kit/types"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	ethcommon "github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/pkg/errors"
+	"github.com/samber/lo"
 	"github.com/urfave/cli/v2"
 
-	"github.com/axiomesh/axiom-kit/hexutil"
-	"github.com/axiomesh/axiom-ledger/cmd/axiom-ledger/common"
+	"github.com/axiomesh/axiom-ledger/cmd/dragon-coins/common"
 	syscommon "github.com/axiomesh/axiom-ledger/internal/executor/system/common"
-	"github.com/axiomesh/axiom-ledger/internal/executor/system/framework/solidity/node_manager"
 	"github.com/axiomesh/axiom-ledger/internal/executor/system/framework/solidity/node_manager_client"
-	"github.com/axiomesh/axiom-ledger/internal/executor/system/governance"
 )
+
+type prettyNodeInfo struct {
+	ID              uint64
+	ConsensusPubKey string
+	P2PPubKey       string
+	P2PID           string
+	Operator        string
+	MetaData        node_manager_client.NodeMetaData
+	Status          string
+}
 
 var NodeCMDProposeNodeRegisterArgs node_manager_client.NodeMetaData
 
@@ -221,16 +229,16 @@ var NodeCMD = &cli.Command{
 			Usage:  "Get data syncer set",
 			Action: NodeActions{}.dataSyncerSet,
 		},
-		{
-			Name:   "candidate-set",
-			Usage:  "Get candidate set",
-			Action: NodeActions{}.candidateSet,
-		},
-		{
-			Name:   "pending-inactive-set",
-			Usage:  "Get pending inactive set",
-			Action: NodeActions{}.pendingInactiveSet,
-		},
+		//{
+		//	Name:   "candidate-set",
+		//	Usage:  "Get candidate set",
+		//	Action: NodeActions{}.candidateSet,
+		//},
+		//{
+		//	Name:   "pending-inactive-set",
+		//	Usage:  "Get pending inactive set",
+		//	Action: NodeActions{}.pendingInactiveSet,
+		//},
 		{
 			Name:   "exited-set",
 			Usage:  "Get exited set",
@@ -241,70 +249,70 @@ var NodeCMD = &cli.Command{
 
 type NodeActions struct{}
 
-func (a GovernanceActions) proposeNodeRegister(ctx *cli.Context) error {
-	r, err := common.PrepareRepoWithKeystore(ctx)
-	if err != nil {
-		return err
-	}
-
-	return a.doPropose(ctx, uint8(governance.NodeRegister), func(client *ethclient.Client) ([]byte, error) {
-		if GovernanceCMDProposeArgs.Title == "" {
-			GovernanceCMDProposeArgs.Title = fmt.Sprintf("register node[%s]", NodeCMDProposeNodeRegisterArgs.Name)
-		}
-		if GovernanceCMDProposeArgs.Desc == "" {
-			GovernanceCMDProposeArgs.Desc = fmt.Sprintf("register node[%s]: %s", NodeCMDProposeNodeRegisterArgs.Name, NodeCMDProposeNodeRegisterArgs.Desc)
-		}
-		if GovernanceCMDProposeArgs.BlockNumber == 0 {
-			currentBlockNumber, err := client.BlockNumber(ctx.Context)
-			if err != nil {
-				return nil, err
-			}
-			epochManager, err := EpochActions{}.bindContract(ctx)
-			if err != nil {
-				return nil, err
-			}
-			epochInfo, err := epochManager.CurrentEpoch(&bind.CallOpts{Context: ctx.Context})
-			if err != nil {
-				return nil, errors.Wrap(err, "get current epoch failed")
-			}
-			GovernanceCMDProposeArgs.BlockNumber = currentBlockNumber + epochInfo.EpochPeriod
-		}
-
-		signStruct := governance.NodeRegisterExtraArgsSignStruct{
-			ConsensusPubKey: r.ConsensusKeystore.PublicKey.String(),
-			P2PPubKey:       r.P2PKeystore.PublicKey.String(),
-			MetaData: node_manager.NodeMetaData{
-				Name:       NodeCMDProposeNodeRegisterArgs.Name,
-				Desc:       NodeCMDProposeNodeRegisterArgs.Desc,
-				ImageURL:   NodeCMDProposeNodeRegisterArgs.ImageURL,
-				WebsiteURL: NodeCMDProposeNodeRegisterArgs.WebsiteURL,
-			},
-		}
-		signStructRaw, err := json.Marshal(signStruct)
-		if err != nil {
-			return nil, err
-		}
-		consensusPrivateKeySignature, err := r.ConsensusKeystore.PrivateKey.Sign(signStructRaw)
-		if err != nil {
-			return nil, err
-		}
-		p2pPrivateKeySignature, err := r.P2PKeystore.PrivateKey.Sign(signStructRaw)
-		if err != nil {
-			return nil, err
-		}
-		extra, err := json.Marshal(governance.NodeRegisterExtraArgs{
-			ConsensusPubKey:              signStruct.ConsensusPubKey,
-			P2PPubKey:                    signStruct.P2PPubKey,
-			MetaData:                     signStruct.MetaData,
-			ConsensusPrivateKeySignature: hexutil.Encode(consensusPrivateKeySignature),
-			P2PPrivateKeySignature:       hexutil.Encode(p2pPrivateKeySignature),
-		})
-		if err != nil {
-			return nil, err
-		}
-		return extra, nil
-	})
-}
+//func (a GovernanceActions) proposeNodeRegister(ctx *cli.Context) error {
+//	r, err := common.PrepareRepoWithKeystore(ctx)
+//	if err != nil {
+//		return err
+//	}
+//
+//	return a.doPropose(ctx, uint8(governance.NodeRegister), func(client *ethclient.Client) ([]byte, error) {
+//		if GovernanceCMDProposeArgs.Title == "" {
+//			GovernanceCMDProposeArgs.Title = fmt.Sprintf("register node[%s]", NodeCMDProposeNodeRegisterArgs.Name)
+//		}
+//		if GovernanceCMDProposeArgs.Desc == "" {
+//			GovernanceCMDProposeArgs.Desc = fmt.Sprintf("register node[%s]: %s", NodeCMDProposeNodeRegisterArgs.Name, NodeCMDProposeNodeRegisterArgs.Desc)
+//		}
+//		if GovernanceCMDProposeArgs.BlockNumber == 0 {
+//			currentBlockNumber, err := client.BlockNumber(ctx.Context)
+//			if err != nil {
+//				return nil, err
+//			}
+//			epochManager, err := EpochActions{}.bindContract(ctx)
+//			if err != nil {
+//				return nil, err
+//			}
+//			epochInfo, err := epochManager.CurrentEpoch(&bind.CallOpts{Context: ctx.Context})
+//			if err != nil {
+//				return nil, errors.Wrap(err, "get current epoch failed")
+//			}
+//			GovernanceCMDProposeArgs.BlockNumber = currentBlockNumber + epochInfo.EpochPeriod
+//		}
+//
+//		signStruct := governance.NodeRegisterExtraArgsSignStruct{
+//			ConsensusPubKey: r.ConsensusKeystore.PublicKey.String(),
+//			P2PPubKey:       r.P2PKeystore.PublicKey.String(),
+//			MetaData: node_manager.NodeMetaData{
+//				Name:       NodeCMDProposeNodeRegisterArgs.Name,
+//				Desc:       NodeCMDProposeNodeRegisterArgs.Desc,
+//				ImageURL:   NodeCMDProposeNodeRegisterArgs.ImageURL,
+//				WebsiteURL: NodeCMDProposeNodeRegisterArgs.WebsiteURL,
+//			},
+//		}
+//		signStructRaw, err := json.Marshal(signStruct)
+//		if err != nil {
+//			return nil, err
+//		}
+//		consensusPrivateKeySignature, err := r.ConsensusKeystore.PrivateKey.Sign(signStructRaw)
+//		if err != nil {
+//			return nil, err
+//		}
+//		p2pPrivateKeySignature, err := r.P2PKeystore.PrivateKey.Sign(signStructRaw)
+//		if err != nil {
+//			return nil, err
+//		}
+//		extra, err := json.Marshal(governance.NodeRegisterExtraArgs{
+//			ConsensusPubKey:              signStruct.ConsensusPubKey,
+//			P2PPubKey:                    signStruct.P2PPubKey,
+//			MetaData:                     signStruct.MetaData,
+//			ConsensusPrivateKeySignature: hexutil.Encode(consensusPrivateKeySignature),
+//			P2PPrivateKeySignature:       hexutil.Encode(p2pPrivateKeySignature),
+//		})
+//		if err != nil {
+//			return nil, err
+//		}
+//		return extra, nil
+//	})
+//}
 
 func (_ NodeActions) bindContract(ctx *cli.Context) (*node_manager_client.BindingContract, *ethclient.Client, error) {
 	if rpc == "" {
@@ -340,15 +348,19 @@ func (a NodeActions) register(ctx *cli.Context) error {
 	}
 
 	infoArgs := node_manager_client.NodeInfo{
+		ID:              0,
 		ConsensusPubKey: r.ConsensusKeystore.PublicKey.String(),
 		P2PPubKey:       r.P2PKeystore.PublicKey.String(),
 		P2PID:           r.P2PKeystore.P2PID(),
 		Operator:        opa,
 		MetaData:        NodeCMDProposeNodeRegisterArgs,
+		Status:          0,
 	}
 
+	fmt.Println("Registering node with info:", infoArgs)
+
 	return SendAndWaitTx(ctx, client, func(client *ethclient.Client, opts *bind.TransactOpts) (*types.Transaction, error) {
-		return nodeManager.Register(opts, infoArgs)
+		return nodeManager.Register(opts, infoArgs.ConsensusPubKey, infoArgs.P2PPubKey, infoArgs.P2PID, infoArgs.Operator, infoArgs.MetaData.Name, infoArgs.MetaData.Desc, infoArgs.MetaData.ImageURL, infoArgs.MetaData.WebsiteURL)
 	}, nil)
 }
 
@@ -438,7 +450,16 @@ func (a NodeActions) nodeInfo(ctx *cli.Context) error {
 	if err != nil {
 		return err
 	}
-	return common.Pretty(res)
+	prettyInfo := prettyNodeInfo{
+		ID:              res.ID,
+		ConsensusPubKey: res.ConsensusPubKey,
+		P2PPubKey:       res.P2PPubKey,
+		P2PID:           res.P2PID,
+		Operator:        res.Operator.Hex(),
+		MetaData:        res.MetaData,
+		Status:          convNodeStatus(kittype.NodeStatus(res.Status)),
+	}
+	return common.Pretty(prettyInfo)
 }
 
 // function getTotalNodeCount() external view returns (uint64);
@@ -464,7 +485,8 @@ func (a NodeActions) nodeInfos(ctx *cli.Context) error {
 	if err != nil {
 		return err
 	}
-	return common.Pretty(res)
+
+	return common.Pretty(convNodeInfos(res))
 }
 
 type NodeInfoWithVotingPower struct {
@@ -482,13 +504,20 @@ func (a NodeActions) activeValidatorSet(ctx *cli.Context) error {
 	if err != nil {
 		return err
 	}
-	infos := make([]NodeInfoWithVotingPower, len(res.Info))
+	p := make([]NodeInfoWithVotingPower, len(res.Info))
 	for i := range res.Info {
-		infos[i].NodeInfo = res.Info[i]
-		infos[i].VotingPower = res.VotingPowers[i].ConsensusVotingPower
+		p[i].NodeInfo = res.Info[i]
+		p[i].VotingPower = res.VotingPowers[i].ConsensusVotingPower
 	}
 
-	return common.Pretty(infos)
+	prettyRes := struct {
+		Infos        []prettyNodeInfo
+		VotingPowers []NodeInfoWithVotingPower
+	}{
+		Infos:        convNodeInfos(res.Info),
+		VotingPowers: p,
+	}
+	return common.Pretty(prettyRes)
 }
 
 // function getDataSyncerSet() external view returns (NodeInfo[] memory infos);
@@ -501,7 +530,7 @@ func (a NodeActions) dataSyncerSet(ctx *cli.Context) error {
 	if err != nil {
 		return err
 	}
-	return common.Pretty(res)
+	return common.Pretty(convNodeInfos(res))
 }
 
 // function getCandidateSet() external view returns (NodeInfo[] memory infos);
@@ -514,7 +543,7 @@ func (a NodeActions) candidateSet(ctx *cli.Context) error {
 	if err != nil {
 		return err
 	}
-	return common.Pretty(res)
+	return common.Pretty(convNodeInfos(res))
 }
 
 // function getPendingInactiveSet() external view returns (NodeInfo[] memory infos);
@@ -527,7 +556,7 @@ func (a NodeActions) pendingInactiveSet(ctx *cli.Context) error {
 	if err != nil {
 		return err
 	}
-	return common.Pretty(res)
+	return common.Pretty(convNodeInfos(res))
 }
 
 // function getExitedSet() external view returns (NodeInfo[] memory infos);
@@ -540,5 +569,36 @@ func (a NodeActions) exitedSet(ctx *cli.Context) error {
 	if err != nil {
 		return err
 	}
-	return common.Pretty(res)
+	return common.Pretty(convNodeInfos(res))
+}
+
+func convNodeStatus(status kittype.NodeStatus) string {
+	switch status {
+	case kittype.NodeStatusDataSyncer:
+		return "data syncer"
+	case kittype.NodeStatusCandidate:
+		return "candidate"
+	case kittype.NodeStatusActive:
+		return "active validator"
+	case kittype.NodeStatusPendingInactive:
+		return "pending inactive validator"
+	case kittype.NodeStatusExited:
+		return "exited node"
+	default:
+		return fmt.Sprintf("unknown(%d)", status)
+	}
+}
+
+func convNodeInfos(res []node_manager_client.NodeInfo) []prettyNodeInfo {
+	return lo.Map(res, func(info node_manager_client.NodeInfo, _ int) prettyNodeInfo {
+		return prettyNodeInfo{
+			ID:              info.ID,
+			ConsensusPubKey: info.ConsensusPubKey,
+			P2PPubKey:       info.P2PPubKey,
+			P2PID:           info.P2PID,
+			Operator:        info.Operator.Hex(),
+			MetaData:        info.MetaData,
+			Status:          convNodeStatus(kittype.NodeStatus(info.Status)),
+		}
+	})
 }

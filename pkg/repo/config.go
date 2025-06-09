@@ -362,7 +362,7 @@ func defaultConfig() *Config {
 		},
 		Log: Log{
 			Level:            "info",
-			Filename:         "axiom-ledger",
+			Filename:         "dragon-coins",
 			ReportCaller:     false,
 			EnableCompress:   false,
 			EnableColor:      true,

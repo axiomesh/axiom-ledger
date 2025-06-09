@@ -16,7 +16,7 @@ import (
 
 	"github.com/axiomesh/axiom-kit/fileutil"
 	"github.com/axiomesh/axiom-ledger/api/jsonrpc"
-	"github.com/axiomesh/axiom-ledger/cmd/axiom-ledger/common"
+	"github.com/axiomesh/axiom-ledger/cmd/dragon-coins/common"
 	"github.com/axiomesh/axiom-ledger/internal/app"
 	"github.com/axiomesh/axiom-ledger/internal/coreapi"
 	"github.com/axiomesh/axiom-ledger/pkg/loggers"
@@ -39,7 +39,7 @@ func start(ctx *cli.Context) error {
 	}
 
 	if !fileutil.Exist(filepath.Join(p, repo.CfgFileName)) {
-		fmt.Println("axiom-ledger is not initialized, please execute 'init.sh' first")
+		fmt.Println("dragon-coins is not initialized, please execute 'init.sh' first")
 		return nil
 	}
 

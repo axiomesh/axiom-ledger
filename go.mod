@@ -1,6 +1,6 @@
 module github.com/axiomesh/axiom-ledger
 
-go 1.21
+go 1.20
 
 replace github.com/ethereum/go-ethereum v1.13.14 => github.com/axiomesh/go-ethereum v1.13.14-3
 
@@ -8,7 +8,7 @@ require (
 	github.com/Rican7/retry v0.3.1
 	github.com/VictoriaMetrics/fastcache v1.12.1
 	github.com/axiomesh/axiom-bft v0.0.3-0.20240809063534-fc8005e0b664
-	github.com/axiomesh/axiom-kit v0.0.3-0.20240717092659-aa4f25e5f45e
+	github.com/axiomesh/axiom-kit v0.0.3-0.20250609093056-37360934801d
 	github.com/axiomesh/axiom-p2p v0.0.3-0.20241031142213-b1fab895ee91
 	github.com/cbergoon/merkletree v0.2.0
 	github.com/cockroachdb/pebble v0.0.0-20230928194634-aa077af62593

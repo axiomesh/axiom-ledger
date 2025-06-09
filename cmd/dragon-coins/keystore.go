@@ -8,7 +8,7 @@ import (
 	"github.com/urfave/cli/v2"
 
 	"github.com/axiomesh/axiom-kit/fileutil"
-	"github.com/axiomesh/axiom-ledger/cmd/axiom-ledger/common"
+	"github.com/axiomesh/axiom-ledger/cmd/dragon-coins/common"
 	"github.com/axiomesh/axiom-ledger/pkg/crypto"
 	"github.com/axiomesh/axiom-ledger/pkg/repo"
 )
@@ -20,7 +20,7 @@ func p2pKeystorePrivateKeyFlag() *cli.StringFlag {
 		Name:        "p2p-private-key",
 		Usage:       "P2P keystore private key(hex string), if not specified, generate a new one",
 		Destination: &p2pKeystorePrivateKeyFlagVar,
-		EnvVars:     []string{"AXIOM_LEDGER_P2P_KEYSTORE_PRIVATE_KEY"},
+		EnvVars:     []string{"DRAGON_COINS_P2P_KEYSTORE_PRIVATE_KEY"},
 		Required:    false,
 	}
 }
@@ -32,7 +32,7 @@ func consensusKeystorePrivateKeyFlag() *cli.StringFlag {
 		Name:        "consensus-private-key",
 		Usage:       "Consensus keystore private key(hex string), if not specified, generate a new one",
 		Destination: &consensusKeystorePrivateKeyFlagVar,
-		EnvVars:     []string{"AXIOM_LEDGER_CONSENSUS_KEYSTORE_PRIVATE_KEY"},
+		EnvVars:     []string{"DRAGON_COINS_CONSENSUS_KEYSTORE_PRIVATE_KEY"},
 		Required:    false,
 	}
 }
@@ -62,14 +62,14 @@ var keystoreCMD = &cli.Command{
 				&cli.StringFlag{
 					Name:        "old-password",
 					Usage:       "Old keystore password",
-					EnvVars:     []string{"AXIOM_LEDGER_KEYSTORE_OLD_PASSWORD"},
+					EnvVars:     []string{"DRAGON_COINS_KEYSTORE_OLD_PASSWORD"},
 					Destination: &keystoreOldPasswordFlagVar,
 					Required:    false,
 				},
 				&cli.StringFlag{
 					Name:        "new-password",
 					Usage:       "New keystore password",
-					EnvVars:     []string{"AXIOM_LEDGER_KEYSTORE_NEW_PASSWORD"},
+					EnvVars:     []string{"DRAGON_COINS_KEYSTORE_NEW_PASSWORD"},
 					Destination: &keystoreNewPasswordFlagVar,
 					Required:    false,
 				},

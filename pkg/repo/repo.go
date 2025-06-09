@@ -214,7 +214,7 @@ func ReadConfigFromFile(cfgFilePath string, config any) error {
 func readConfig(vp *viper.Viper, config any, fromFile bool) error {
 	// not use viper 1.18.2(it not support only read env without file default)
 	vp.AutomaticEnv()
-	envPrefix := "AXIOM_LEDGER"
+	envPrefix := "DRAGON_COINS"
 	switch config.(type) {
 	case *GenesisConfig:
 		envPrefix += "_GENESIS"

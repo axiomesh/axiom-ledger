@@ -12,7 +12,7 @@ import (
 	"github.com/samber/lo"
 	"github.com/urfave/cli/v2"
 
-	"github.com/axiomesh/axiom-ledger/cmd/axiom-ledger/common"
+	"github.com/axiomesh/axiom-ledger/cmd/dragon-coins/common"
 	"github.com/axiomesh/axiom-ledger/pkg/repo"
 )
 

@@ -1,6 +1,6 @@
 SHELL := /bin/bash
 CURRENT_PATH = $(shell pwd)
-APP_NAME = axiom-ledger
+APP_NAME = dragon-coins
 AXM_GEN = axmgen
 export GODEBUG=x509ignoreCN=0
 
@@ -59,10 +59,10 @@ help: Makefile
 
 ## make prepare: Preparation before development
 prepare:
-	${GO_BIN} install go.uber.org/mock/mockgen@main
+	${GO_BIN} install go.uber.org/mock/mockgen@v0.4.0
 	${GO_BIN} install github.com/golangci/golangci-lint/cmd/golangci-lint@v1.53.3
 	${GO_BIN} install github.com/fsgo/go_fmt/cmd/gorgeous@latest
-	${GO_BIN} install github.com/ethereum/go-ethereum/cmd/abigen@v1.12.0
+	${GO_BIN} install github.com/ethereum/go-ethereum/cmd/abigen@v1.15.0
 	@type "solc" 2> /dev/null || echo 'Please install solc'
 
 ## make generate-mock: Run go generate

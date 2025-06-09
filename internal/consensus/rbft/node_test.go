@@ -3,6 +3,7 @@ package rbft
 import (
 	"context"
 	"errors"
+	"fmt"
 	"math/big"
 	"strings"
 	"testing"
@@ -465,4 +466,12 @@ func TestStatus2String(t *testing.T) {
 		statusStr := status2String(status)
 		ast.Equal(assertStatusStr, statusStr)
 	}
+}
+
+func TestName(t *testing.T) {
+	number, err := types.ParseCoinNumber("1mol")
+	if err != nil {
+		return
+	}
+	fmt.Println(number.ToBigInt().Int64())
 }

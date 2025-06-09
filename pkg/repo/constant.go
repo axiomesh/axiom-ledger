@@ -9,7 +9,7 @@ package repo
 import "github.com/axiomesh/axiom-kit/types"
 
 const (
-	AppName = "AxiomLedger"
+	AppName = "DragonCoins"
 
 	// CfgFileName is the default config name
 	CfgFileName = "config.toml"
@@ -19,10 +19,11 @@ const (
 	genesisCfgFileName = "genesis.toml"
 
 	// defaultRepoRoot is the path to the default config dir location.
-	defaultRepoRoot = "~/.axiom-ledger"
+	//defaultRepoRoot = "~/.axiom-ledger"
+	defaultRepoRoot = "~/.dragon-coins"
 
 	// rootPathEnvVar is the environment variable used to change the path root.
-	rootPathEnvVar = "AXIOM_LEDGER_PATH"
+	rootPathEnvVar = "DRAGON_COINS_PATH"
 
 	P2PKeystoreFileName = "p2p-keystore.json"
 
@@ -30,7 +31,7 @@ const (
 
 	ConsensusKeystoreFileName = "consensus-keystore.json"
 
-	DefaultKeystorePassword = "2023@axiomesh"
+	DefaultKeystorePassword = "2025@dragoncoins"
 
 	pidFileName = "running.pid"
 

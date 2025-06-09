@@ -43,7 +43,7 @@ interface NodeManager {
     event UpdateMetaData(uint64 indexed nodeID, NodeMetaData metaData);
     event UpdateOperator(uint64 indexed nodeID, address newOperator);
 
-    function register(NodeInfo memory info) external returns (uint64 nodeID);
+    function register(string memory consensusPubKey, string memory p2pPubKey, string memory p2pID, address newOperator, string memory name, string memory desc,string memory imageURL, string memory website) external returns (uint64 nodeID);
 
     function joinCandidateSet(uint64 nodeID, uint64 commissionRate) external;
 

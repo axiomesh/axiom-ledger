@@ -10,8 +10,8 @@ import (
 	"github.com/urfave/cli/v2"
 
 	"github.com/axiomesh/axiom-kit/fileutil"
-	"github.com/axiomesh/axiom-ledger/cmd/axiom-ledger/common"
-	sys_contract "github.com/axiomesh/axiom-ledger/cmd/axiom-ledger/sys-contract"
+	"github.com/axiomesh/axiom-ledger/cmd/dragon-coins/common"
+	sys_contract "github.com/axiomesh/axiom-ledger/cmd/dragon-coins/sys-contract"
 	"github.com/axiomesh/axiom-ledger/pkg/repo"
 )
 
@@ -45,7 +45,7 @@ func main() {
 		clusterCMD,
 		sys_contract.EpochCMD,
 		sys_contract.GovernanceCMD,
-		sys_contract.GovernanceNodeCMD,
+		//sys_contract.GovernanceNodeCMD,
 		sys_contract.NodeCMD,
 		sys_contract.StakingCMD,
 		sys_contract.StakingLSTCMD,
@@ -100,7 +100,7 @@ func main() {
 }
 
 func loadEnvFile() {
-	envFile := os.Getenv("AXIOM_LEDGER_ENV_FILE")
+	envFile := os.Getenv("DRAGON_COINS_ENV_FILE")
 	if envFile == "" {
 		envFile = ".env"
 	}

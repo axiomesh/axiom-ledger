@@ -277,11 +277,25 @@ func (n *NodeManager) SetContext(ctx *common.VMContext) {
 	n.activeValidatorVotingPowers = common.NewVMSlot[[]node_manager.ConsensusVotingPower](n.StateAccount, activeValidatorVotingPowers)
 }
 
-func (n *NodeManager) Register(info node_manager.NodeInfo) (id uint64, err error) {
-	info.Status = uint8(types.NodeStatusDataSyncer)
-	id, err = n.register(info, false)
+func (n *NodeManager) Register(consensusPubKey string, p2pPubKey string, p2pID string, newOperator ethcommon.Address,
+	name string, desc string, imageURL string, website string) (uint64, error) {
+	status := uint8(types.NodeStatusDataSyncer)
+	info := node_manager.NodeInfo{
+		ConsensusPubKey: consensusPubKey,
+		P2PPubKey:       p2pPubKey,
+		P2PID:           p2pID,
+		Operator:        newOperator,
+		MetaData: node_manager.NodeMetaData{
+			Name:       name,
+			Desc:       desc,
+			ImageURL:   imageURL,
+			WebsiteURL: website,
+		},
+		Status: status,
+	}
+	id, err := n.register(info, false)
 	if err != nil {
-		return
+		return id, errors.Wrapf(err, "failed to register node with p2p id %s", info.P2PID)
 	}
 	info.ID = id
 	n.EmitEvent(&node_manager.EventRegister{NodeID: info.ID, Info: info})
