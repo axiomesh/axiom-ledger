@@ -318,7 +318,7 @@ func defaultConfig() *Config {
 		},
 		Consensus: Consensus{
 			Type:        ConsensusTypeRbft,
-			StorageType: ConsensusStorageTypeMinifile,
+			StorageType: ConsensusStorageTypeRosedb,
 			UseBlsKey:   false,
 		},
 		Storage: Storage{
@@ -382,7 +382,7 @@ func defaultConfig() *Config {
 				Finance:        "error",
 				BlockSync:      "info",
 				TxPool:         "info",
-				SystemContract: "info",
+				SystemContract: "error",
 			},
 		},
 		Access: Access{
