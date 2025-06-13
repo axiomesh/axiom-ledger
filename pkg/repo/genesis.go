@@ -39,7 +39,6 @@ type GenesisNodeInfo struct {
 type GenesisConfig struct {
 	ChainID            uint64            `mapstructure:"chainid" toml:"chainid"`
 	Timestamp          int64             `mapstructure:"timestamp" toml:"timestamp"`
-	Axc                *Token            `mapstructure:"axc" toml:"axc"`
 	Incentive          *Incentive        `mapstructure:"incentive" toml:"incentive"`
 	CouncilMembers     []*CouncilMember  `mapstructure:"council_members" toml:"council_members"`
 	SmartAccountAdmin  string            `mapstructure:"smart_account_admin" toml:"smart_account_admin"`
@@ -47,9 +46,6 @@ type GenesisConfig struct {
 	EpochInfo          *types.EpochInfo  `mapstructure:"epoch_info" toml:"epoch_info"`
 	Nodes              []GenesisNodeInfo `mapstructure:"nodes" toml:"nodes"`
 	Accounts           []*Account        `mapstructure:"accounts" toml:"accounts"`
-}
-
-type Token struct {
 }
 
 type Incentive struct {
@@ -125,7 +121,6 @@ func defaultGenesisConfig() *GenesisConfig {
 	return &GenesisConfig{
 		ChainID:   1356,
 		Timestamp: 1704038400,
-		Axc:       &Token{},
 		Incentive: &Incentive{
 			Referral: &Referral{
 				AvgBlockReward: "0",
