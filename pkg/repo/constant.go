@@ -9,7 +9,7 @@ package repo
 import "github.com/axiomesh/axiom-kit/types"
 
 const (
-	AppName = "DragonCoins"
+	AppName = "Draconis"
 
 	// CfgFileName is the default config name
 	CfgFileName = "config.toml"
