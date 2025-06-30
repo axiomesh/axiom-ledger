@@ -25,7 +25,7 @@ func KeystorePasswordFlag() *cli.StringFlag {
 	return &cli.StringFlag{
 		Name:        "password",
 		Usage:       "Keystore password",
-		EnvVars:     []string{"DRAGON_COINS_KEYSTORE_PASSWORD"},
+		EnvVars:     []string{"DRACONIS_KEYSTORE_PASSWORD"},
 		Destination: &KeystorePasswordFlagVar,
 		Aliases:     []string{"pwd"},
 		Required:    false,

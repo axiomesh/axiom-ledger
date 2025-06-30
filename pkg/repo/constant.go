@@ -20,10 +20,10 @@ const (
 
 	// defaultRepoRoot is the path to the default config dir location.
 	//defaultRepoRoot = "~/.axiom-ledger"
-	defaultRepoRoot = "~/.dragon-coins"
+	defaultRepoRoot = "~/.draconis"
 
 	// rootPathEnvVar is the environment variable used to change the path root.
-	rootPathEnvVar = "DRAGON_COINS_PATH"
+	rootPathEnvVar = "DRACONIS_PATH"
 
 	P2PKeystoreFileName = "p2p-keystore.json"
 
@@ -31,7 +31,7 @@ const (
 
 	ConsensusKeystoreFileName = "consensus-keystore.json"
 
-	DefaultKeystorePassword = "2025@dragoncoins"
+	DefaultKeystorePassword = "2025@draconis"
 
 	pidFileName = "running.pid"
 

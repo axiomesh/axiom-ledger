@@ -5,7 +5,7 @@ set -e
 CURRENT_PATH=$(cd $(dirname ${BASH_SOURCE[0]}); pwd)
 source ${CURRENT_PATH}/x.sh
 PROJECT_PATH=$(dirname "${CURRENT_PATH}")
-APP_NAME=dragon-coins
+APP_NAME=draconis
 BUILD_PATH=${CURRENT_PATH}/build
 N=4
 

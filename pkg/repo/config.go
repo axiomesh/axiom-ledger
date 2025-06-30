@@ -362,7 +362,7 @@ func defaultConfig() *Config {
 		},
 		Log: Log{
 			Level:            "info",
-			Filename:         "dragon-coins",
+			Filename:         "draconis",
 			ReportCaller:     false,
 			EnableCompress:   false,
 			EnableColor:      true,

@@ -187,7 +187,7 @@ func (h *ClusterGeneratorHelper) Generate() error {
 			}
 		}
 
-		envFile := fmt.Sprintf("DRAGON_COINS_KEYSTORE_PASSWORD=%s\n", h.keystorePassword)
+		envFile := fmt.Sprintf("DRACONIS_KEYSTORE_PASSWORD=%s\n", h.keystorePassword)
 		if err := os.WriteFile(filepath.Join(nodeRepo.RepoRoot, ".env"), []byte(envFile), 0755); err != nil {
 			return errors.Wrapf(err, "failed to write node%d .env", nodeID)
 		}

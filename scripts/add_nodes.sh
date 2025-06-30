@@ -3,7 +3,7 @@ set -x
 
 N=$1
 
-APP_NAME=dragon-coins
+APP_NAME=draconis
 
 RPC=http://localhost:8881
 

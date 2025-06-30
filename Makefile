@@ -1,6 +1,6 @@
 SHELL := /bin/bash
 CURRENT_PATH = $(shell pwd)
-APP_NAME = dragon-coins
+APP_NAME = draconis
 AXM_GEN = axmgen
 export GODEBUG=x509ignoreCN=0
 

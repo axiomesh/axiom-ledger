@@ -25,7 +25,6 @@ import (
 	rpctypes "github.com/axiomesh/axiom-ledger/api/jsonrpc/types"
 	"github.com/axiomesh/axiom-ledger/internal/coreapi/api"
 	"github.com/axiomesh/axiom-ledger/internal/executor"
-	syscommon "github.com/axiomesh/axiom-ledger/internal/executor/system/common"
 	"github.com/axiomesh/axiom-ledger/internal/ledger"
 	"github.com/axiomesh/axiom-ledger/internal/ledger/utils"
 	"github.com/axiomesh/axiom-ledger/pkg/repo"
@@ -537,6 +536,13 @@ func formatBlock(api api.CoreAPI, epochInfo *types.EpochInfo, blockHeader *types
 		}
 	}
 
+	nodeInfo, err := api.ChainState().GetNodeInfo(blockHeader.ProposerNodeID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get node info for proposer node %d: %w", blockHeader.ProposerNodeID, err)
+	}
+
+	miner := nodeInfo.Operator.String()
+
 	blockExtra, err := api.Broker().GetBlockExtra(blockHeader.Number)
 	if err != nil {
 		return nil, err
@@ -550,7 +556,7 @@ func formatBlock(api api.CoreAPI, epochInfo *types.EpochInfo, blockHeader *types
 		"logsBloom":        blockHeader.Bloom.ETHBloom(),
 		"transactionsRoot": blockHeader.TxRoot.ETHHash(),
 		"stateRoot":        blockHeader.StateRoot.ETHHash(),
-		"miner":            syscommon.StakingManagerContractAddr,
+		"miner":            miner,
 		"extraData":        ethhexutil.Bytes([]byte{}),
 		"size":             ethhexutil.Uint64(blockExtra.Size),
 		"gasLimit":         ethhexutil.Uint64(epochInfo.FinanceParams.GasLimit), // Static gas limit

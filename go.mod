@@ -8,7 +8,7 @@ require (
 	github.com/Rican7/retry v0.3.1
 	github.com/VictoriaMetrics/fastcache v1.12.1
 	github.com/axiomesh/axiom-bft v0.0.3-0.20240809063534-fc8005e0b664
-	github.com/axiomesh/axiom-kit v0.0.3-0.20250612090145-621dd06ef852
+	github.com/axiomesh/axiom-kit v0.0.3-0.20250630062634-3454d45cda55
 	github.com/axiomesh/axiom-p2p v0.0.3-0.20241031142213-b1fab895ee91
 	github.com/cbergoon/merkletree v0.2.0
 	github.com/cockroachdb/pebble v0.0.0-20230928194634-aa077af62593

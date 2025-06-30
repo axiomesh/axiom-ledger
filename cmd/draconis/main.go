@@ -10,8 +10,8 @@ import (
 	"github.com/urfave/cli/v2"
 
 	"github.com/axiomesh/axiom-kit/fileutil"
-	"github.com/axiomesh/axiom-ledger/cmd/dragon-coins/common"
-	sys_contract "github.com/axiomesh/axiom-ledger/cmd/dragon-coins/sys-contract"
+	"github.com/axiomesh/axiom-ledger/cmd/draconis/common"
+	sys_contract "github.com/axiomesh/axiom-ledger/cmd/draconis/sys-contract"
 	"github.com/axiomesh/axiom-ledger/pkg/repo"
 )
 
@@ -100,7 +100,7 @@ func main() {
 }
 
 func loadEnvFile() {
-	envFile := os.Getenv("DRAGON_COINS_ENV_FILE")
+	envFile := os.Getenv("DRACONIS_ENV_FILE")
 	if envFile == "" {
 		envFile = ".env"
 	}

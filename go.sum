@@ -27,8 +27,8 @@ github.com/asaskevich/EventBus v0.0.0-20200907212545-49d423059eef h1:2JGTg6JapxP
 github.com/asaskevich/EventBus v0.0.0-20200907212545-49d423059eef/go.mod h1:JS7hed4L1fj0hXcyEejnW57/7LCetXggd+vwrRnYeII=
 github.com/axiomesh/axiom-bft v0.0.3-0.20240809063534-fc8005e0b664 h1:UzBaG4136IX5N1FnoXKZg1gNavRTyY0+gRfeaaYzyEU=
 github.com/axiomesh/axiom-bft v0.0.3-0.20240809063534-fc8005e0b664/go.mod h1:bX4BWhzX94DlscckBnDKwVdOUVxCjSEzaK8jhufjsU8=
-github.com/axiomesh/axiom-kit v0.0.3-0.20250612090145-621dd06ef852 h1:1aB3VdHY6rjmapXLVZL2IH18yDfqLE/v7pGGblGNWoI=
-github.com/axiomesh/axiom-kit v0.0.3-0.20250612090145-621dd06ef852/go.mod h1:ujmn/qH4rbZRyUORO/seayrpYMjIIWA82hwHQlZMw/A=
+github.com/axiomesh/axiom-kit v0.0.3-0.20250630062634-3454d45cda55 h1:vj7btDfMWQgaB9yZ5E0p5GAObyE0fBcwZahUZi+Au6w=
+github.com/axiomesh/axiom-kit v0.0.3-0.20250630062634-3454d45cda55/go.mod h1:ujmn/qH4rbZRyUORO/seayrpYMjIIWA82hwHQlZMw/A=
 github.com/axiomesh/axiom-p2p v0.0.3-0.20241031142213-b1fab895ee91 h1:1Hu43RE+nfQv/wEE/x3EH1Z8+lcj7YE9qAolKRqUmSo=
 github.com/axiomesh/axiom-p2p v0.0.3-0.20241031142213-b1fab895ee91/go.mod h1:l/V68KxdZygExunJ1ZWu8RY0OaifrP8nwaA3tMjnJZk=
 github.com/axiomesh/go-ethereum v1.13.14-3 h1:tUiB1DUpkwd4hNFrR+8AlwDjfesis08b7bCRNIIgT3k=

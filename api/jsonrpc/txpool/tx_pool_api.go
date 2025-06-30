@@ -18,7 +18,7 @@ import (
 )
 
 const (
-	unit = "wei"
+	unit = "cam"
 )
 
 type TxPoolAPI struct {

@@ -26,7 +26,7 @@ import (
 	"github.com/axiomesh/axiom-bft/common/consensus"
 	"github.com/axiomesh/axiom-kit/fileutil"
 	"github.com/axiomesh/axiom-kit/types"
-	"github.com/axiomesh/axiom-ledger/cmd/dragon-coins/common"
+	"github.com/axiomesh/axiom-ledger/cmd/draconis/common"
 	"github.com/axiomesh/axiom-ledger/internal/app"
 	syscommon "github.com/axiomesh/axiom-ledger/internal/executor/system/common"
 	"github.com/axiomesh/axiom-ledger/internal/executor/system/framework"

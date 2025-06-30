@@ -12,7 +12,7 @@ import (
 	"github.com/samber/lo"
 	"github.com/urfave/cli/v2"
 
-	"github.com/axiomesh/axiom-ledger/cmd/dragon-coins/common"
+	"github.com/axiomesh/axiom-ledger/cmd/draconis/common"
 	syscommon "github.com/axiomesh/axiom-ledger/internal/executor/system/common"
 	"github.com/axiomesh/axiom-ledger/internal/executor/system/framework/solidity/node_manager_client"
 )
