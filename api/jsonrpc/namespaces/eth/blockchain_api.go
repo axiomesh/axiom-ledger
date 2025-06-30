@@ -536,12 +536,16 @@ func formatBlock(api api.CoreAPI, epochInfo *types.EpochInfo, blockHeader *types
 		}
 	}
 
-	nodeInfo, err := api.ChainState().GetNodeInfo(blockHeader.ProposerNodeID)
-	if err != nil {
-		return nil, fmt.Errorf("failed to get node info for proposer node %d: %w", blockHeader.ProposerNodeID, err)
+	var miner string
+	if blockHeader.Number == 0 {
+		miner = common.BytesToAddress([]byte{}).String()
+	} else {
+		nodeInfo, err := api.ChainState().GetNodeInfo(blockHeader.ProposerNodeID)
+		if err != nil {
+			return nil, fmt.Errorf("failed to get node info for proposer node %d: %w", blockHeader.ProposerNodeID, err)
+		}
+		miner = nodeInfo.Operator.String()
 	}
-
-	miner := nodeInfo.Operator.String()
 
 	blockExtra, err := api.Broker().GetBlockExtra(blockHeader.Number)
 	if err != nil {
