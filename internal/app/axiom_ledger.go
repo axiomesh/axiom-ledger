@@ -59,7 +59,7 @@ type AxiomLedger struct {
 func NewAxiomLedger(rep *repo.Repo, ctx context.Context, cancel context.CancelFunc) (*AxiomLedger, error) {
 	axm, err := NewAxiomLedgerWithoutConsensus(rep, ctx, cancel)
 	if err != nil {
-		return nil, fmt.Errorf("generate axiom-ledger without consensus failed: %w", err)
+		return nil, fmt.Errorf("generate draconis without consensus failed: %w", err)
 	}
 
 	chainMeta := axm.ViewLedger.ChainLedger.GetChainMeta()

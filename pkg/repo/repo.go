@@ -266,11 +266,11 @@ func readConfigFromFile(cfgFilePath string, config any) error {
 func readConfig(vp *viper.Viper, config any) error {
 	vp.AutomaticEnv()
 	if _, ok := config.(*GenesisConfig); ok {
-		vp.SetEnvPrefix("AXIOM_LEDGER_GENESIS")
+		vp.SetEnvPrefix("DRACONIS_GENESIS")
 	} else if _, ok := config.(*ConsensusConfig); ok {
-		vp.SetEnvPrefix("AXIOM_LEDGER_CONSENSUS")
+		vp.SetEnvPrefix("DRACONIS_CONSENSUS")
 	} else {
-		vp.SetEnvPrefix("AXIOM_LEDGER")
+		vp.SetEnvPrefix("DRACONIS")
 	}
 	replacer := strings.NewReplacer(".", "_")
 	vp.SetEnvKeyReplacer(replacer)

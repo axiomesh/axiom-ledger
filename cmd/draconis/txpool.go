@@ -46,7 +46,7 @@ func getAllTxRecords(ctx *cli.Context) error {
 	}
 	p := path.Join(repo.GetStoragePath(r.RepoRoot), storagemgr.TxPool, txpool.TxRecordsFile)
 	if !fileutil.Exist(p) {
-		err = fmt.Errorf("axiom-ledger is not starting, please run axiom-ledger first, " + p)
+		err = fmt.Errorf("draconis is not starting, please run draconis first, " + p)
 		return err
 	}
 

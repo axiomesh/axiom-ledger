@@ -10,7 +10,6 @@ import (
 	"time"
 
 	"github.com/libp2p/go-libp2p/core/connmgr"
-	"github.com/samber/lo"
 	"github.com/sirupsen/logrus"
 
 	"github.com/axiomesh/axiom-kit/types/pb"
@@ -20,7 +19,7 @@ import (
 )
 
 const (
-	protocolID string = "/axiom-ledger/1.0.0" // magic protocol
+	protocolID string = "/draconis/1.0.0" // magic protocol
 )
 
 // ony used for mock
@@ -89,7 +88,7 @@ func newNetworkImpl(repoConfig *repo.Repo, logger logrus.FieldLogger, ledger *le
 func (swarm *networkImpl) init() error {
 	// init peers with ips and hosts
 	bootstrap := make([]string, 0)
-	for _, a := range lo.Uniq(append(swarm.repo.GenesisConfig.EpochInfo.P2PBootstrapNodeAddresses, swarm.repo.Config.P2P.BootstrapNodeAddresses...)) {
+	for _, a := range swarm.repo.Config.P2P.BootstrapNodeAddresses {
 		if !strings.Contains(a, swarm.repo.P2PID) {
 			bootstrap = append(bootstrap, a)
 		}

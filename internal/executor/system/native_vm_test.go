@@ -136,7 +136,7 @@ func TestContractInitGenesisData(t *testing.T) {
 
 		genesis = repo.DefaultGenesisConfig(false)
 		// decrease total supply
-		genesis.Axm.TotalSupply = "10"
+		genesis.NativeToken.TotalSupply = "10"
 		err = InitGenesisData(genesis, mockLedger.StateLedger)
 		assert.NotNil(t, err)
 		assert.Contains(t, err.Error(), axm.ErrTotalSupply.Error())

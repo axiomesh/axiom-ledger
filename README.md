@@ -12,7 +12,7 @@ install the software before starting.
 Use commands below to clone the project:
 
 ```shell
-git clone git@github.com:axiomesh/axiom-ledger.git
+git clone git@github.com:axiomesh/draconis.git
 ```
 
 `AxiomLedger` also relies on some additional tools, use commands below to install:

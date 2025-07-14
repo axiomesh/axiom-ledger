@@ -5,8 +5,8 @@
 Navigate to the axiom-ledger repository and execute the packaging script
 
 ```bash
-git clone git@github.com:axiomesh/axiom-ledger.git
-cd axiom-ledger && make package version=dev
+git clone git@github.com:axiomesh/draconis.git
+cd draconis && make package version=dev
 ```
 
 The deployment package will be generated in the project directory as: axiom-ledger-dev.tar.gz
@@ -19,8 +19,8 @@ Upload the deployment package to the server and execute the following commands t
 
 ```bash
 mkdir node && cd node
-cp axiom-ledger-dev.tar.gz ./
-tar -zxvf axiom-ledger-dev.tar.gz
+cp draconis-dev.tar.gz ./
+tar -zxvf draconis-dev.tar.gz
 ```
 
 2. Initialize the node

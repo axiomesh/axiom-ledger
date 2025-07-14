@@ -79,7 +79,7 @@ func GenerateConfig(genesis *repo.GenesisConfig) (Config, error) {
 	var err error
 	initialAccounts := make([]*InitialAccount, len(genesis.Accounts))
 	// calculate the total consume balance for accounts
-	accBalance := lo.Map(genesis.Accounts, func(ac *repo.Account, index int) *big.Int {
+	accBalanceSlice := lo.Map(genesis.Accounts, func(ac *repo.Account, index int) *big.Int {
 		balance, ok := new(big.Int).SetString(ac.Balance, 10)
 		if !ok || balance.Sign() < 0 {
 			err = fmt.Errorf("invalid balance: %s", ac.Balance)
@@ -94,20 +94,20 @@ func GenerateConfig(genesis *repo.GenesisConfig) (Config, error) {
 		return Config{}, err
 	}
 	consumeBalance := big.NewInt(0)
-	lo.ForEach(accBalance, func(balance *big.Int, _ int) {
+	lo.ForEach(accBalanceSlice, func(balance *big.Int, _ int) {
 		consumeBalance.Add(consumeBalance, balance)
 	})
 
-	totalSupply, _ := new(big.Int).SetString(genesis.Axm.TotalSupply, 10)
+	totalSupply, _ := new(big.Int).SetString(genesis.NativeToken.TotalSupply, 10)
 	// calculate totalSupply - (sum<each account balance>)
 	contractBalance := new(big.Int).Set(totalSupply)
 	if contractBalance.Cmp(consumeBalance) < 0 {
 		return Config{}, ErrTotalSupply
 	}
 	tokenConfig := Config{
-		Name:            genesis.Axm.Name,
-		Symbol:          genesis.Axm.Symbol,
-		Decimals:        genesis.Axm.Decimals,
+		Name:            genesis.NativeToken.Name,
+		Symbol:          genesis.NativeToken.Symbol,
+		Decimals:        genesis.NativeToken.Decimals,
 		InitialAccounts: initialAccounts,
 		TotalSupply:     contractBalance,
 	}

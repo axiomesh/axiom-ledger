@@ -288,13 +288,13 @@ func AddNode(lg ledger.StateLedger, newNode rbft.NodeInfo) (uint64, error) {
 	}
 
 	// Check for duplicate node info in the validator set, candidate set, and data syncer set
-	if err := checkNodeInfoDuplicate(nextEpochInfo.ValidatorSet); err != nil {
+	if err = checkNodeInfoDuplicate(nextEpochInfo.ValidatorSet); err != nil {
 		return 0, err
 	}
-	if err := checkNodeInfoDuplicate(nextEpochInfo.CandidateSet); err != nil {
+	if err = checkNodeInfoDuplicate(nextEpochInfo.CandidateSet); err != nil {
 		return 0, err
 	}
-	if err := checkNodeInfoDuplicate(nextEpochInfo.DataSyncerSet); err != nil {
+	if err = checkNodeInfoDuplicate(nextEpochInfo.DataSyncerSet); err != nil {
 		return 0, err
 	}
 

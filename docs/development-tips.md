@@ -12,9 +12,9 @@ Therefore, the priority and sequence of loading node configurations are opposite
 
 **Note: Before executing config generate for node initialization, if environment variables for configuration items are set, the values from the environment variables will be used as the configuration values in the generated config.toml.**
 
-Correspondence of configuration items and environment variables: The names of the configuration items in the configuration file are converted to all uppercase and connected with underscores, with the prefix AXIOM_LEDGER_ (for genesis.toml it is AXIOM_LEDGER_GENESIS_; for consensus.toml it is AXIOM_LEDGER_CONSENSUS_).
+Correspondence of configuration items and environment variables: The names of the configuration items in the configuration file are converted to all uppercase and connected with underscores, with the prefix DRACONIS_ (for genesis.toml it is DRACONIS_GENESIS_; for consensus.toml it is DRACONIS_CONSENSUS_).
 
-For example, if the configuration item for the JSON-RPC port is port.jsonrpc, the corresponding environment variable is AXIOM_LEDGER_PORT_JSONRPC.
+For example, if the configuration item for the JSON-RPC port is port.jsonrpc, the corresponding environment variable is DRACONIS_PORT_JSONRPC.
 
 # Node Process Management
 
@@ -59,16 +59,16 @@ for ((i = 1; i < N + 1; i = i + 1)); do
   rm -rf ${root}/*
   rm -f ${root}/.env.sh
   cp -rf ${CURRENT_PATH}/scripts/package/* ${root}/
-  cp -f ${CURRENT_PATH}/bin/axiom-ledger ${root}/tools/bin/
-  echo "export AXIOM_LEDGER_PORT_JSONRPC=888${i}" >>${root}/.env.sh
-  echo "export AXIOM_LEDGER_PORT_WEBSOCKET=999${i}" >>${root}/.env.sh
-  echo "export AXIOM_LEDGER_PORT_P2P=400${i}" >>${root}/.env.sh
-  echo "export AXIOM_LEDGER_PORT_PPROF=5312${i}" >>${root}/.env.sh
-  echo "export AXIOM_LEDGER_PORT_MONITOR=4001${i}" >>${root}/.env.sh
+  cp -f ${CURRENT_PATH}/bin/draconis ${root}/tools/bin/
+  echo "export DRACONIS_PORT_JSONRPC=888${i}" >>${root}/.env.sh
+  echo "export DRACONIS_PORT_WEBSOCKET=999${i}" >>${root}/.env.sh
+  echo "export DRACONIS_PORT_P2P=400${i}" >>${root}/.env.sh
+  echo "export DRACONIS_PORT_PPROF=5312${i}" >>${root}/.env.sh
+  echo "export DRACONIS_PORT_MONITOR=4001${i}" >>${root}/.env.sh
   # For 8 nodes, epoch needs to be enabled
-  # ${root}/axiom-ledger config generate --default-node-index ${i} --epoch-enable
+  # ${root}/draconis config generate --default-node-index ${i} --epoch-enable
   # For 4 nodes
-  ${root}/axiom-ledger config generate --default-node-index ${i}
+  ${root}/draconis config generate --default-node-index ${i}
 done
 ```
 
@@ -81,7 +81,7 @@ Refer to the rapid deployment of multiple nodes on a single machine, but add a l
 For 4-node configuration:
 
 ```bash
-export AXIOM_LEDGER_GENESIS_EPOCH_INFO_P2P_BOOTSTRAP_NODE_ADDRESSES="\
+export DRACONIS_GENESIS_EPOCH_INFO_P2P_BOOTSTRAP_NODE_ADDRESSES="\
 /ip4/127.0.0.1/tcp/4001/p2p/16Uiu2HAmJ38LwfY6pfgDWNvk3ypjcpEMSePNTE6Ma2NCLqjbZJSF;\
 /ip4/127.0.0.1/tcp/4002/p2p/16Uiu2HAmRypzJbdbUNYsCV2VVgv9UryYS5d7wejTJXT73mNLJ8AK;\
 /ip4/127.0.0.1/tcp/4003/p2p/16Uiu2HAmTwEET536QC9MZmYFp1NUshjRuaq5YSH1sLjW65WasvRk;\
@@ -92,7 +92,7 @@ export AXIOM_LEDGER_GENESIS_EPOCH_INFO_P2P_BOOTSTRAP_NODE_ADDRESSES="\
 For 8-node configuration:
 
 ```bash
-export AXIOM_LEDGER_GENESIS_EPOCH_INFO_P2P_BOOTSTRAP_NODE_ADDRESSES="\
+export DRACONIS_GENESIS_EPOCH_INFO_P2P_BOOTSTRAP_NODE_ADDRESSES="\
 /ip4/127.0.0.1/tcp/4001/p2p/16Uiu2HAmJ38LwfY6pfgDWNvk3ypjcpEMSePNTE6Ma2NCLqjbZJSF;\
 /ip4/127.0.0.1/tcp/4002/p2p/16Uiu2HAmRypzJbdbUNYsCV2VVgv9UryYS5d7wejTJXT73mNLJ8AK;\
 /ip4/127.0.0.1/tcp/4003/p2p/16Uiu2HAmTwEET536QC9MZmYFp1NUshjRuaq5YSH1sLjW65WasvRk;\
@@ -119,7 +119,7 @@ On each node's deployment path, perform the following actions:
 1. Roll back to the previous block height (this will not directly modify the original storage folder but will replay to the specified block height in a new folder named storage-rollback-${block_number})
 
 ```bash
-./axiom-ledger ledger simple-rollback --target-block-number 999
+./draconis ledger simple-rollback --target-block-number 999
 ```
 
 The storage at block height 999 is located in the storage-rollback-999 folder within the deployment package.
@@ -127,7 +127,7 @@ The storage at block height 999 is located in the storage-rollback-999 folder wi
 2. Replay the transactions of block 1000 on the storage at block height 999 (this command will output debug logs of the ledger for the repeated transactions to a file without timestamps)
 
 ```bash
-export AXIOM_LEDGER_LOG_MODULE_STORAGE=debug && export AXIOM_LEDGER_LOG_DISABLE_TIMESTAMP=true && ./axiom-ledger ledger simple-sync --source-storage ./storage --target-storage ./storage-rollback-999 --target-block-number 1000 -f > ./block-1000.log
+export DRACONIS_LOG_MODULE_STORAGE=debug && export DRACONIS_LOG_DISABLE_TIMESTAMP=true && ./draconis ledger simple-sync --source-storage ./storage --target-storage ./storage-rollback-999 --target-block-number 1000 -f > ./block-1000.log
 ```
 
 Finally, compare the ledger logs of the problematic block replayed on both nodes to identify any inconsistencies.
@@ -146,5 +146,5 @@ Enter the node's deployment directory and execute the following command to start
 
 ```bash
 cd ${deploy_path}
-./axiom-ledger start --readonly
+./draconis start --readonly
 ```

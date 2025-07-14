@@ -122,7 +122,7 @@ func generate(ctx *cli.Context) error {
 		return err
 	}
 	if fileutil.Exist(filepath.Join(p, repo.CfgFileName)) {
-		fmt.Println("axiom-ledger repo already exists")
+		fmt.Println("draconis repo already exists")
 		return nil
 	}
 
@@ -156,7 +156,7 @@ func generateAccountKey(ctx *cli.Context) error {
 		return err
 	}
 	if !fileutil.Exist(filepath.Join(p, repo.CfgFileName)) {
-		fmt.Println("axiom-ledger repo not exist")
+		fmt.Println("draconis repo not exist")
 		return nil
 	}
 
@@ -209,7 +209,7 @@ func writeAccountKeyFile(ctx *cli.Context) error {
 		return err
 	}
 	if !fileutil.Exist(filepath.Join(p, repo.CfgFileName)) {
-		fmt.Println("axiom-ledger repo not exist")
+		fmt.Println("draconis repo not exist")
 		return nil
 	}
 
@@ -307,7 +307,7 @@ func nodeInfo(ctx *cli.Context) error {
 		return err
 	}
 	if !fileutil.Exist(filepath.Join(p, repo.CfgFileName)) {
-		fmt.Println("axiom-ledger repo not exist")
+		fmt.Println("draconis repo not exist")
 		return nil
 	}
 
@@ -328,7 +328,7 @@ func show(ctx *cli.Context) error {
 		return err
 	}
 	if !fileutil.Exist(filepath.Join(p, repo.CfgFileName)) {
-		fmt.Println("axiom-ledger repo not exist")
+		fmt.Println("draconis repo not exist")
 		return nil
 	}
 
@@ -350,7 +350,7 @@ func showConsensus(ctx *cli.Context) error {
 		return err
 	}
 	if !fileutil.Exist(filepath.Join(p, repo.CfgFileName)) {
-		fmt.Println("axiom-ledger repo not exist")
+		fmt.Println("draconis repo not exist")
 		return nil
 	}
 
@@ -372,7 +372,7 @@ func check(ctx *cli.Context) error {
 		return err
 	}
 	if !fileutil.Exist(filepath.Join(p, repo.CfgFileName)) {
-		fmt.Println("axiom-ledger repo not exist")
+		fmt.Println("draconis repo not exist")
 		return nil
 	}
 

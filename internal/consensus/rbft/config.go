@@ -36,7 +36,7 @@ func defaultRbftConfig() rbft.Config {
 		FlowControl:               false,
 		FlowControlMaxMem:         0,
 		MetricsProv:               &disabled.Provider{},
-		Tracer:                    trace.NewNoopTracerProvider().Tracer("axiom-ledger"),
+		Tracer:                    trace.NewNoopTracerProvider().Tracer("draconis"),
 		DelFlag:                   make(chan bool, 10),
 		Logger:                    nil,
 		NoTxBatchTimeout:          0,

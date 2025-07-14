@@ -2,8 +2,10 @@ package governance
 
 import (
 	"encoding/json"
+	"fmt"
 	"testing"
 
+	ethcommon "github.com/ethereum/go-ethereum/common"
 	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/mock/gomock"
@@ -17,6 +19,22 @@ import (
 	"github.com/axiomesh/axiom-ledger/pkg/repo"
 )
 
+func TestName(t *testing.T) {
+	args := &NodeExtraArgs{
+		Nodes: []*NodeMember{
+			{
+				NodeId:  "16Uiu2HAm2HeK145KTfLaURhcoxBUMZ1PfhVnLRfnmE8qncvXWoZj",
+				Address: "0xd0091F6D0b39B9E9D2E9051fA46d13B63b8C7B18",
+				Name:    "node5",
+				ID:      5,
+			},
+		},
+	}
+
+	data, _ := json.Marshal(args)
+	fmt.Println(ethcommon.Bytes2Hex(data))
+
+}
 func PrepareNodeManager(t *testing.T) (*Governance, *mock_ledger.MockStateLedger, *rbft.EpochInfo) {
 	logger := logrus.New()
 	gov := NewGov(&common.SystemContractConfig{

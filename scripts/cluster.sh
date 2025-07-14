@@ -64,27 +64,26 @@ function prepare() {
     root=${BUILD_PATH}/node${i}
     mkdir ${root}
     cp -rf ${CURRENT_PATH}/package/* ${root}/
-    cp -f ${PROJECT_PATH}/bin/axiom-ledger ${root}/tools/bin/
-    echo "export AXIOM_LEDGER_PORT_JSONRPC=888${i}" >> ${root}/.env.sh
-    echo "export AXIOM_LEDGER_PORT_WEBSOCKET=999${i}" >> ${root}/.env.sh
-    echo "export AXIOM_LEDGER_PORT_P2P=400${i}" >> ${root}/.env.sh
-    echo "export AXIOM_LEDGER_PORT_PPROF=5312${i}" >> ${root}/.env.sh
-    echo "export AXIOM_LEDGER_PORT_MONITOR=4001${i}" >> ${root}/.env.sh
-    ${root}/axiom-ledger config generate --default-node-index ${i}
+    cp -f ${PROJECT_PATH}/bin/draconis ${root}/tools/bin/
+    echo "export DRACONIS_PORT_JSONRPC=888${i}" >> ${root}/.env.sh
+    echo "export DRACONIS_PORT_WEBSOCKET=999${i}" >> ${root}/.env.sh
+    echo "export DRACONIS_PORT_P2P=400${i}" >> ${root}/.env.sh
+    echo "export DRACONIS_PORT_PPROF=5312${i}" >> ${root}/.env.sh
+    echo "export DRACONIS_PORT_MONITOR=4001${i}" >> ${root}/.env.sh
+    ${root}/draconis config generate --default-node-index ${i}
   done
 }
 
 function splitWindow() {
-  tmux splitw -v -p 50
-  tmux splitw -h -p 50
+  tmux splitw -v -l 50%
+  tmux splitw -h -l 50%
   tmux selectp -t 0
-  tmux splitw -h -p 50
+  tmux splitw -h -l 50%
 }
 
 function start_by_tmux() {
   print_blue "===> Staring cluster"
-  tmux new -d -s axiom-ledger || (tmux kill-session -t axiom-ledger && tmux new -d -s axiom-ledger)
-
+  tmux new -d -s draconis || (tmux kill-session -t draconis && tmux new -d -s draconis)
   for ((i = 0; i < N / 4; i = i + 1)); do
     splitWindow
     tmux new-window
@@ -96,7 +95,7 @@ function start_by_tmux() {
     tmux send-keys "${BUILD_PATH}/node$(($i + 1))/axiom-ledger start" C-m
   done
   tmux selectw -t 0
-  tmux attach-session -t axiom-ledger
+  tmux attach-session -t draconis
 }
 
 function start_by_nohup() {

@@ -783,7 +783,7 @@ func prepareRepo(ctx *cli.Context) (*repo.Repo, error) {
 		return nil, err
 	}
 	if !fileutil.Exist(filepath.Join(p, repo.CfgFileName)) {
-		return nil, errors.New("axiom-ledger repo not exist")
+		return nil, errors.New("draconis repo not exist")
 	}
 
 	r, err := repo.Load(configGenerateArgs.Auth, p, false)
@@ -801,7 +801,7 @@ func prepareRepo(ctx *cli.Context) (*repo.Repo, error) {
 	}
 
 	if err := app.PrepareAxiomLedger(r); err != nil {
-		return nil, fmt.Errorf("prepare axiom-ledger failed: %w", err)
+		return nil, fmt.Errorf("prepare draconis failed: %w", err)
 	}
 	return r, nil
 }

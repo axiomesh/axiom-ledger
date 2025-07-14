@@ -1,7 +1,6 @@
 package repo
 
 import (
-	"fmt"
 	"math/big"
 	"os"
 	"path"
@@ -16,7 +15,7 @@ import (
 type GenesisConfig struct {
 	ChainID                uint64          `mapstructure:"chainid" toml:"chainid"`
 	Timestamp              int64           `mapstructure:"timestamp" toml:"timestamp"`
-	Axm                    *Token          `mapstructure:"axm" toml:"axm"`
+	NativeToken            *Token          `mapstructure:"nativeToken" toml:"nativeToken"`
 	Axc                    *Token          `mapstructure:"axc" toml:"axc"`
 	Incentive              *Incentive      `mapstructure:"incentive" toml:"incentive"`
 	Balance                string          `mapstructure:"balance" toml:"balance"`
@@ -110,11 +109,8 @@ func GenesisEpochInfo(epochEnable bool) *rbft.EpochInfo {
 	return &rbft.EpochInfo{
 		Version:     1,
 		Epoch:       1,
-		EpochPeriod: 100,
+		EpochPeriod: 10,
 		StartBlock:  1,
-		P2PBootstrapNodeAddresses: lo.Map(defaultNodeIDs[0:4], func(item string, idx int) string {
-			return fmt.Sprintf("/ip4/127.0.0.1/tcp/%d/p2p/%s", 4001+idx, item)
-		}),
 		ConsensusParams: rbft.ConsensusParams{
 			ProposerElectionType:          rbft.ProposerElectionTypeWRF,
 			ValidatorElectionType:         rbft.ValidatorElectionTypeWRF,
@@ -198,7 +194,7 @@ func DefaultGenesisConfig(epochEnable bool) *GenesisConfig {
 			}
 		}),
 		SmartAccountAdmin: DefaultNodeAddrs[0],
-		Axm: &Token{
+		NativeToken: &Token{
 			Name:        "Axiom",
 			Symbol:      "AXM",
 			Decimals:    DefaultDecimals,

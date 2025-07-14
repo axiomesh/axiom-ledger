@@ -1,6 +1,6 @@
 SHELL := /bin/bash
 CURRENT_PATH = $(shell pwd)
-APP_NAME = axiom-ledger
+APP_NAME = draconis
 export GODEBUG=x509ignoreCN=0
 
 GO_BIN = go
@@ -9,7 +9,7 @@ ifneq (${GO},)
 endif
 
 # build with verison infos
-BUILD_CONST_DIR = github.com/axiomesh/${APP_NAME}/pkg/repo
+BUILD_CONST_DIR = github.com/axiomesh/axiom-ledger/pkg/repo
 BUILD_DATE = $(shell date +%FT%T)
 GIT_COMMIT = $(shell git log --pretty=format:'%h' -n 1)
 GIT_BRANCH = $(shell git rev-parse --abbrev-ref HEAD)

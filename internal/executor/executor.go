@@ -84,7 +84,7 @@ func New(rep *repo.Repo, ledger *ledger.Ledger) (*BlockExecutor, error) {
 
 	blockExecutor.afterBlockHooks = []func(block *types.Block){
 		blockExecutor.updateEpochInfo,
-		blockExecutor.updateMiningInfo,
+		//blockExecutor.updateMiningInfo,
 	}
 
 	return blockExecutor, err

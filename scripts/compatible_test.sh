@@ -26,7 +26,7 @@ function start_rbft() {
     git checkout "$OLD_TAG" && make build 
     cd "$CURRENT_PATH"
     bash cluster.sh background
-    print_green "$("$CURRENT_PATH"/build/node1/tools/bin/axiom-ledger version)"
+    print_green "$("$CURRENT_PATH"/build/node1/tools/bin/draconis version)"
 }
 
 function start_smoke-tester() {
@@ -42,11 +42,11 @@ function replace_rbft_binary() {
     cd "$CURRENT_PATH" && bash stop.sh
     cd ../ && git checkout "$NEW_TAG" && make build 
     for ((i = 1; i < 5; i = i + 1)); do
-      mv scripts/build/node$i/tools/bin/axiom-ledger scripts/build/node$i/tools/bin/axiom-ledger.bak
-      cp bin/axiom-ledger scripts/build/node$i/tools/bin/
+      mv scripts/build/node$i/tools/bin/draconis scripts/build/node$i/tools/bin/draconis.bak
+      cp bin/draconis scripts/build/node$i/tools/bin/
       bash scripts/build/node$i/start.sh
     done
-    print_green "$("$CURRENT_PATH"/build/node1/tools/bin/axiom-ledger version)"
+    print_green "$("$CURRENT_PATH"/build/node1/tools/bin/draconis version)"
 }
 
 function start_compatible-tester() {

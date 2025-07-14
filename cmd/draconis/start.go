@@ -34,7 +34,7 @@ func start(ctx *cli.Context) error {
 	}
 
 	if !fileutil.Exist(filepath.Join(p, repo.CfgFileName)) {
-		fmt.Println("axiom-ledger is not initialized, please execute 'init.sh' first")
+		fmt.Println("draconis is not initialized, please execute 'init.sh' first")
 		return nil
 	}
 
@@ -70,7 +70,7 @@ func start(ctx *cli.Context) error {
 
 		axm, err := app.NewAxiomLedger(r, appCtx, cancel)
 		if err != nil {
-			return fmt.Errorf("init axiom-ledger failed: %w", err)
+			return fmt.Errorf("init draconis failed: %w", err)
 		}
 
 		monitor, err := profile.NewMonitor(r.Config)
@@ -113,7 +113,7 @@ func start(ctx *cli.Context) error {
 		handleShutdown(axm, &wg)
 
 		if err := axm.Start(); err != nil {
-			return fmt.Errorf("start axiom-ledger failed: %w", err)
+			return fmt.Errorf("start draconis failed: %w", err)
 		}
 
 		return nil

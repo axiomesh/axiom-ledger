@@ -354,7 +354,7 @@ func DefaultConfig() *Config {
 		},
 		Log: Log{
 			Level:            "info",
-			Filename:         "axiom-ledger",
+			Filename:         "draconis",
 			ReportCaller:     false,
 			EnableCompress:   false,
 			EnableColor:      true,
