@@ -143,7 +143,7 @@ type Monitor struct {
 }
 
 type PProf struct {
-	Enable   bool     `mapstructure:"enable" toml:"enbale"`
+	Enable   bool     `mapstructure:"enable" toml:"enable"`
 	PType    string   `mapstructure:"ptype" toml:"ptype"`
 	Mode     string   `mapstructure:"mode" toml:"mode"`
 	Duration Duration `mapstructure:"duration" toml:"duration"`
