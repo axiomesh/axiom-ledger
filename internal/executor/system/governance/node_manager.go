@@ -303,7 +303,7 @@ func (nm *NodeManager) voteNodeAddRemove(user *ethcommon.Address, proposal *Prop
 				newNodeID, err := base.AddNode(nm.gov.stateLedger, rbft.NodeInfo{
 					AccountAddress:       node.Address,
 					P2PNodeID:            node.NodeId,
-					ConsensusVotingPower: 100,
+					ConsensusVotingPower: 1000,
 				})
 
 				if err != nil {

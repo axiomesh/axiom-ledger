@@ -6,6 +6,7 @@ source x.sh
 CURRENT_PATH=$(cd $(dirname ${BASH_SOURCE[0]}); pwd)
 PROJECT_PATH=$(dirname "${CURRENT_PATH}")
 BUILD_PATH=${CURRENT_PATH}/build
+APP_NAME=draconis
 N=4
 
 function GetPMName() {
@@ -92,7 +93,7 @@ function start_by_tmux() {
   for ((i = 0; i < N; i = i + 1)); do
     tmux selectw -t $(($i / 4))
     tmux selectp -t $(($i % 4))
-    tmux send-keys "${BUILD_PATH}/node$(($i + 1))/axiom-ledger start" C-m
+    tmux send-keys "${BUILD_PATH}/node$(($i + 1))/${APP_NAME} start" C-m
   done
   tmux selectw -t 0
   tmux attach-session -t draconis

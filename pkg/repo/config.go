@@ -290,6 +290,12 @@ func DefaultConfig() *Config {
 			ReadTimeout:     Duration(5 * time.Second),
 			CompressionAlgo: network.SnappyCompression,
 			EnableMetrics:   true,
+			BootstrapNodeAddresses: []string{
+				"/ip4/127.0.0.1/tcp/4001/p2p/16Uiu2HAmJ38LwfY6pfgDWNvk3ypjcpEMSePNTE6Ma2NCLqjbZJSF",
+				"/ip4/127.0.0.1/tcp/4001/p2p/16Uiu2HAmRypzJbdbUNYsCV2VVgv9UryYS5d7wejTJXT73mNLJ8AK",
+				"/ip4/127.0.0.1/tcp/4001/p2p/16Uiu2HAmTwEET536QC9MZmYFp1NUshjRuaq5YSH1sLjW65WasvRk",
+				"/ip4/127.0.0.1/tcp/4001/p2p/16Uiu2HAmQBFTnRr84M3xNhi3EcWmgZnnBsDgewk4sNtpA3smBsHJ",
+			},
 			Pipe: P2PPipe{
 				ReceiveMsgCacheSize: 10240,
 				BroadcastType:       P2PPipeBroadcastGossip,
