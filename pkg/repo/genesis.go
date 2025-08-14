@@ -13,18 +13,13 @@ import (
 )
 
 type GenesisConfig struct {
-	ChainID                uint64          `mapstructure:"chainid" toml:"chainid"`
-	Timestamp              int64           `mapstructure:"timestamp" toml:"timestamp"`
-	NativeToken            *Token          `mapstructure:"nativeToken" toml:"nativeToken"`
-	Axc                    *Token          `mapstructure:"axc" toml:"axc"`
-	Incentive              *Incentive      `mapstructure:"incentive" toml:"incentive"`
-	Balance                string          `mapstructure:"balance" toml:"balance"`
-	Admins                 []*Admin        `mapstructure:"admins" toml:"admins"`
-	SmartAccountAdmin      string          `mapstructure:"smart_account_admin" toml:"smart_account_admin"`
-	InitWhiteListProviders []string        `mapstructure:"init_white_list_providers" toml:"init_white_list_providers"`
-	Accounts               []*Account      `mapstructure:"accounts" toml:"accounts"`
-	EpochInfo              *rbft.EpochInfo `mapstructure:"epoch_info" toml:"epoch_info"`
-	NodeNames              []*NodeName     `mapstructure:"node_names" toml:"node_names"`
+	ChainID     uint64          `mapstructure:"chainid" toml:"chainid"`
+	Timestamp   int64           `mapstructure:"timestamp" toml:"timestamp"`
+	NativeToken *Token          `mapstructure:"nativeToken" toml:"nativeToken"`
+	Admins      []*Admin        `mapstructure:"admins" toml:"admins"`
+	Accounts    []*Account      `mapstructure:"accounts" toml:"accounts"`
+	EpochInfo   *rbft.EpochInfo `mapstructure:"epoch_info" toml:"epoch_info"`
+	NodeNames   []*NodeName     `mapstructure:"node_names" toml:"node_names"`
 }
 
 type Account struct {
@@ -193,43 +188,15 @@ func DefaultGenesisConfig(epochEnable bool) *GenesisConfig {
 				Name:    DefaultAdminNames[idx],
 			}
 		}),
-		SmartAccountAdmin: DefaultNodeAddrs[0],
 		NativeToken: &Token{
 			Name:        "Axiom",
 			Symbol:      "AXM",
 			Decimals:    DefaultDecimals,
 			TotalSupply: totalSupply.String(),
 		},
-		Axc: &Token{
-			Name:        "Axiomesh Credit",
-			Symbol:      "axc",
-			Decimals:    DefaultDecimals,
-			TotalSupply: DefaultAXCTotalSupply,
-		},
-		Incentive: &Incentive{
-			Mining: &Mining{
-				BlockNumToHalf: 126144000,
-				BlockNumToNone: 630720001,
-				TotalAmount:    "40000000000000000000000000",
-			},
-			UserAcquisition: &UserAcquisition{
-				AvgBlockReward: "126000000000000000",
-				BlockToNone:    315360000,
-			},
-			Distributions: lo.Map(DefaultAXCDistribution, func(item Distribution, _ int) *Distribution {
-				return &Distribution{
-					Name:         item.Name,
-					Addr:         item.Addr,
-					Percentage:   item.Percentage,
-					InitEmission: item.InitEmission,
-					Locked:       item.Locked,
-				}
-			}),
-		},
-		NodeNames:              GenesisNodeNameInfo(epochEnable),
-		InitWhiteListProviders: DefaultNodeAddrs,
-		Accounts:               accounts,
-		EpochInfo:              GenesisEpochInfo(epochEnable),
+		NodeNames: GenesisNodeNameInfo(epochEnable),
+		Accounts:  accounts,
+		EpochInfo: GenesisEpochInfo(epochEnable),
 	}
 }
 

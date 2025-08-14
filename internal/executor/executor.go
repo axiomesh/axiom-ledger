@@ -29,11 +29,11 @@ var _ Executor = (*BlockExecutor)(nil)
 
 // BlockExecutor executes block from consensus
 type BlockExecutor struct {
-	ledger             *ledger.Ledger
-	logger             logrus.FieldLogger
-	blockC             chan *common.CommitEvent
-	gas                *finance.Gas
-	incentive          *finance.Incentive
+	ledger *ledger.Ledger
+	logger logrus.FieldLogger
+	blockC chan *common.CommitEvent
+	gas    *finance.Gas
+	//incentive          *finance.Incentive
 	cumulativeGasUsed  uint64
 	currentHeight      uint64
 	currentBlockHash   *types.Hash
@@ -80,7 +80,7 @@ func New(rep *repo.Repo, ledger *ledger.Ledger) (*BlockExecutor, error) {
 	// initialize native vm
 	blockExecutor.nvm = system.New()
 	var err error
-	blockExecutor.incentive, err = finance.NewIncentive(rep.GenesisConfig, blockExecutor.nvm)
+	//blockExecutor.incentive, err = finance.NewIncentive(rep.GenesisConfig, blockExecutor.nvm)
 
 	blockExecutor.afterBlockHooks = []func(block *types.Block){
 		blockExecutor.updateEpochInfo,

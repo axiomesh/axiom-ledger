@@ -425,7 +425,7 @@ func InitGenesisData(genesis *repo.GenesisConfig, lg ledger.StateLedger) error {
 	}
 	InitSystemContractCode(lg)
 
-	if err := saccount.Initialize(lg, genesis.SmartAccountAdmin); err != nil {
+	if err := saccount.Initialize(lg, repo.DefaultNodeAddrs[0]); err != nil {
 		return err
 	}
 
@@ -437,26 +437,27 @@ func InitGenesisData(genesis *repo.GenesisConfig, lg ledger.StateLedger) error {
 		return err
 	}
 
-	axcConfig, err := axc.GenerateConfig(genesis)
-	if err != nil {
-		return err
-	}
-	if err = axc.Init(lg, axcConfig); err != nil {
-		return err
-	}
+	//axcConfig, err := axc.GenerateConfig(genesis)
+	//if err != nil {
+	//	return err
+	//}
+	//if err = axc.Init(lg, axcConfig); err != nil {
+	//	return err
+	//}
 
 	admins := lo.Map[*repo.Admin, string](genesis.Admins, func(x *repo.Admin, _ int) string {
 		return x.Address
 	})
-	totalLength := len(admins) + len(genesis.InitWhiteListProviders) + len(genesis.Accounts)
+	//totalLength := len(admins) + len(genesis.InitWhiteListProviders) + len(genesis.Accounts)
+	totalLength := len(admins) + len(genesis.Accounts)
 	combined := make([]string, 0, totalLength)
 	combined = append(combined, admins...)
-	combined = append(combined, genesis.InitWhiteListProviders...)
+	//combined = append(combined, genesis.InitWhiteListProviders...)
 	accountAddrs := lo.Map(genesis.Accounts, func(ac *repo.Account, _ int) string {
 		return ac.Address
 	})
 	combined = append(combined, accountAddrs...)
-	if err = access.InitProvidersAndWhiteList(lg, combined, genesis.InitWhiteListProviders); err != nil {
+	if err = access.InitProvidersAndWhiteList(lg, combined, []string{}); err != nil {
 		return err
 	}
 	return nil

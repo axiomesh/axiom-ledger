@@ -6,9 +6,6 @@ import (
 
 	ethcommon "github.com/ethereum/go-ethereum/common"
 	"github.com/pkg/errors"
-	"github.com/samber/lo"
-
-	"github.com/axiomesh/axiom-ledger/pkg/repo"
 )
 
 type Config struct {
@@ -87,31 +84,31 @@ func getLockedBalanceKey(owner ethcommon.Address) string {
 	return fmt.Sprintf("%s-%s", LockedBalanceKey, owner.String())
 }
 
-func GenerateConfig(genesis *repo.GenesisConfig) (Config, error) {
-	totalSupply, _ := new(big.Int).SetString(genesis.Axc.TotalSupply, 10)
-	if totalSupply.Cmp(big.NewInt(0)) < 0 {
-		return Config{}, ErrTotalSupply
-	}
-	receivers := make([]*Distribution, 0)
-	lo.ForEach(genesis.Incentive.Distributions, func(entity *repo.Distribution, index int) {
-		percentage := big.NewInt(int64(entity.Percentage * Decimals))
-		totalValue := new(big.Int).Div(new(big.Int).Mul(percentage, totalSupply), big.NewInt(Decimals))
-		emission := big.NewInt(int64(entity.InitEmission * Decimals))
-		emissionValue := new(big.Int).Div(new(big.Int).Mul(emission, totalValue), big.NewInt(Decimals))
-		receivers = append(receivers, &Distribution{
-			Name:         entity.Name,
-			Addr:         entity.Addr,
-			TotalValue:   totalValue,
-			InitEmission: emissionValue,
-			Locked:       entity.Locked,
-		})
-	})
-	tokenConfig := Config{
-		Name:        genesis.Axc.Name,
-		Symbol:      genesis.Axc.Symbol,
-		Decimals:    genesis.Axc.Decimals,
-		Receivers:   receivers,
-		TotalSupply: totalSupply,
-	}
-	return tokenConfig, nil
-}
+//func GenerateConfig(genesis *repo.GenesisConfig) (Config, error) {
+//	totalSupply, _ := new(big.Int).SetString(genesis.Axc.TotalSupply, 10)
+//	if totalSupply.Cmp(big.NewInt(0)) < 0 {
+//		return Config{}, ErrTotalSupply
+//	}
+//	receivers := make([]*Distribution, 0)
+//	lo.ForEach(genesis.Incentive.Distributions, func(entity *repo.Distribution, index int) {
+//		percentage := big.NewInt(int64(entity.Percentage * Decimals))
+//		totalValue := new(big.Int).Div(new(big.Int).Mul(percentage, totalSupply), big.NewInt(Decimals))
+//		emission := big.NewInt(int64(entity.InitEmission * Decimals))
+//		emissionValue := new(big.Int).Div(new(big.Int).Mul(emission, totalValue), big.NewInt(Decimals))
+//		receivers = append(receivers, &Distribution{
+//			Name:         entity.Name,
+//			Addr:         entity.Addr,
+//			TotalValue:   totalValue,
+//			InitEmission: emissionValue,
+//			Locked:       entity.Locked,
+//		})
+//	})
+//	tokenConfig := Config{
+//		Name:        genesis.Axc.Name,
+//		Symbol:      genesis.Axc.Symbol,
+//		Decimals:    genesis.Axc.Decimals,
+//		Receivers:   receivers,
+//		TotalSupply: totalSupply,
+//	}
+//	return tokenConfig, nil
+//}

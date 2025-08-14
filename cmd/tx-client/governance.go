@@ -82,8 +82,8 @@ var proposeCMD = &cli.Command{
 该命令用于发起节点管理提案，包括添加节点和删除节点。
 
 使用示例：
-  tx-client propose --private-key 0x123... --type 1 --title "添加节点" --nodes nodes.json
-  tx-client propose --private-key 0x123... --type 2 --title "删除节点" --nodes nodes.json
+  tx-client propose --private-key 0x123... --type 2 --title "添加节点" --nodes nodes.json
+  tx-client propose --private-key 0x123... --type 3 --title "删除节点" --nodes nodes.json
 	`,
 	Flags: []cli.Flag{
 		&cli.StringFlag{
@@ -110,7 +110,7 @@ var proposeCMD = &cli.Command{
 			Name:        "type",
 			Usage:       "提案类型 (2: 添加节点, 3: 删除节点)",
 			Destination: &governanceArgs.ProposalType,
-			Value:       1,
+			Value:       2,
 		},
 		&cli.StringFlag{
 			Name:        "title",

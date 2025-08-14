@@ -6,7 +6,6 @@ import (
 
 	rbft "github.com/axiomesh/axiom-bft"
 	network "github.com/axiomesh/axiom-p2p"
-	"github.com/samber/lo"
 )
 
 const (
@@ -239,7 +238,7 @@ func AriesGenesisConfig() *GenesisConfig {
 				Name:    "Q2F0",
 			},
 		},
-		SmartAccountAdmin: "0xecFE18Dc453CCdF96f1b9b58ccb4db3c6115A1D0",
+		//SmartAccountAdmin: "0xecFE18Dc453CCdF96f1b9b58ccb4db3c6115A1D0",
 		NativeToken: &Token{
 			Name:        "Axiom",
 			Symbol:      "Token",
@@ -519,9 +518,9 @@ func TaurusGenesisConfig() *GenesisConfig {
 				Name:    "Q2F0",
 			},
 		},
-		SmartAccountAdmin:      "0x83Db4fA2CbB682753C94ca8A809a4a321aA36e1b",
-		InitWhiteListProviders: []string{},
-		Accounts:               []*Account{},
+		//SmartAccountAdmin:      "0x83Db4fA2CbB682753C94ca8A809a4a321aA36e1b",
+		//InitWhiteListProviders: []string{},
+		Accounts: []*Account{},
 		EpochInfo: &rbft.EpochInfo{
 			Version:                   1,
 			Epoch:                     1,
@@ -813,9 +812,9 @@ func GeminiGenesisConfig() *GenesisConfig {
 				Name:    "Q2F0",
 			},
 		},
-		SmartAccountAdmin:      "0x83Db4fA2CbB682753C94ca8A809a4a321aA36e1b",
-		InitWhiteListProviders: []string{},
-		Accounts:               []*Account{},
+		//SmartAccountAdmin:      "0x83Db4fA2CbB682753C94ca8A809a4a321aA36e1b",
+		//InitWhiteListProviders: []string{},
+		Accounts: []*Account{},
 		EpochInfo: &rbft.EpochInfo{
 			Version:                   1,
 			Epoch:                     1,
@@ -1130,19 +1129,11 @@ func DraconisTestNetGenesisConfig() *GenesisConfig {
 				Name:    "bm9kZTQ=",
 			},
 		},
-		SmartAccountAdmin:      "0x83Db4fA2CbB682753C94ca8A809a4a321aA36e1b",
-		InitWhiteListProviders: []string{},
 		NativeToken: &Token{
 			Name:        "DraconisCoins",
 			Symbol:      "DRS",
 			Decimals:    18,
 			TotalSupply: totalSupply.String(),
-		},
-		Axc: &Token{
-			Name:        "not support",
-			Symbol:      "AXC",
-			Decimals:    18,
-			TotalSupply: "0",
 		},
 		Accounts: []*Account{
 			{
@@ -1257,27 +1248,6 @@ func DraconisTestNetGenesisConfig() *GenesisConfig {
 				ID:   5,
 				Name: "bm9kZTU=",
 			},
-		},
-
-		Incentive: &Incentive{
-			Mining: &Mining{
-				BlockNumToHalf: 126144000,
-				BlockNumToNone: 0,
-				TotalAmount:    "40000000000000000000000000",
-			},
-			UserAcquisition: &UserAcquisition{
-				AvgBlockReward: "126000000000000000",
-				BlockToNone:    0,
-			},
-			Distributions: lo.Map(DefaultAXCDistribution, func(item Distribution, _ int) *Distribution {
-				return &Distribution{
-					Name:         item.Name,
-					Addr:         item.Addr,
-					Percentage:   item.Percentage,
-					InitEmission: item.InitEmission,
-					Locked:       item.Locked,
-				}
-			}),
 		},
 	}
 }
