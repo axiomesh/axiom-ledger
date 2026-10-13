@@ -8,7 +8,6 @@ import (
 	"time"
 
 	"github.com/cbergoon/merkletree"
-	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core"
 	"github.com/ethereum/go-ethereum/core/vm"
@@ -306,15 +305,34 @@ func (exec *BlockExecutor) applyTransaction(i int, tx *types.Transaction, height
 		return receipt
 	}
 	if result.Failed() {
-		if len(result.Revert()) > 0 {
-			reason, errUnpack := abi.UnpackRevert(result.Revert())
-			if errUnpack == nil {
-				exec.logger.Warnf("execute tx failed: %s: %s", result.Err.Error(), reason)
-			} else {
-				exec.logger.Warnf("execute tx failed: %s", result.Err.Error())
-			}
+		// Enhanced revert logging: print the call target, function
+		// selector, raw revert bytes, and the decoded revert reason.
+		// The default abi.UnpackRevert only handles Error(string) and
+		// Panic(uint256) — anything else falls back to the raw bytes
+		// below, which lets us see custom errors / unknown selectors.
+		var (
+			callTarget    string
+			funcSelector  string
+		)
+		if msg.To != nil {
+			callTarget = msg.To.Hex()
 		} else {
-			exec.logger.Warnf("execute tx failed: %s", result.Err.Error())
+			callTarget = "<contract creation>"
+		}
+		if len(msg.Data) >= 4 {
+			funcSelector = "0x" + common.Bytes2Hex(msg.Data[:4])
+		} else {
+			funcSelector = "<no selector>"
+		}
+		rawRevert := "0x" + common.Bytes2Hex(result.Revert())
+		decodedRevert := sys_common.DecodeRevert(result.Revert())
+
+		exec.logger.Warnf("execute tx failed: %s", result.Err.Error())
+		exec.logger.Warnf("  to:       %s", callTarget)
+		exec.logger.Warnf("  func:     %s", funcSelector)
+		exec.logger.Warnf("  raw:      %s", rawRevert)
+		if decodedRevert != "" {
+			exec.logger.Warnf("  decoded:  %s", decodedRevert)
 		}
 
 		receipt.Status = types.ReceiptFAILED
@@ -439,3 +457,4 @@ func (exec *BlockExecutor) updateLogsBlockHash(receipts []*types.Receipt, hash *
 		}
 	}
 }
+

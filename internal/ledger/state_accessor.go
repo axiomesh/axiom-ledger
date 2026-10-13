@@ -491,7 +491,14 @@ func (l *StateLedgerImpl) RevertToSnapshot(revid int) {
 
 func (l *StateLedgerImpl) ClearChangerAndRefund() {
 	if len(l.changer.changes) > 0 {
-		l.changer = NewChanger()
+		// clear() retains the same *stateChanger pointer that
+		// every SimpleAccount in l.accounts is still holding. The
+		// previous `l.changer = NewChanger()` swapped in a new
+		// instance, orphaning the old journal on the accounts and
+		// causing RevertToSnapshot to be a no-op for any state
+		// changes tracked against the old pointer. See
+		// stateChanger.clear for the full context.
+		l.changer.clear()
 		l.refund = 0
 	}
 	l.validRevisions = l.validRevisions[:0]

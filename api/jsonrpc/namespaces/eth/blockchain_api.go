@@ -24,6 +24,7 @@ import (
 	rpctypes "github.com/axiomesh/axiom-ledger/api/jsonrpc/types"
 	"github.com/axiomesh/axiom-ledger/internal/coreapi/api"
 	"github.com/axiomesh/axiom-ledger/internal/executor"
+	sys_common "github.com/axiomesh/axiom-ledger/internal/executor/system/common"
 	"github.com/axiomesh/axiom-ledger/internal/ledger"
 	"github.com/axiomesh/axiom-ledger/internal/ledger/utils"
 	"github.com/axiomesh/axiom-ledger/pkg/repo"
@@ -299,13 +300,43 @@ func (api *BlockChainAPI) Call(args types.CallArgs, blockNrOrHash *rpctypes.Bloc
 	api.logger.Debugf("eth_call, args: %v", args)
 
 	receipt, err := DoCall(api.ctx, blockNrOrHash, api.api, args, api.rep.Config.JsonRPC.EVMTimeout.ToDuration(), api.rep.Config.JsonRPC.GasCap, api.logger)
+	// Enhanced revert logging: print the call target, function
+	// selector, raw revert bytes, and the decoded revert reason —
+	// regardless of whether DoCall returned (result, err) or
+	// (result, nil). The default abi.UnpackRevert only handles
+	// Error(string) and Panic(uint256); anything else (custom error,
+	// Panic without a known reason) collapses to "execution reverted"
+	// with no diagnostic info, which is what was happening before.
+	if receipt != nil && len(receipt.Revert()) > 0 {
+		var (
+			callTarget   string
+			funcSelector string
+		)
+		if args.To != nil {
+			callTarget = args.To.Hex()
+		} else {
+			callTarget = "<contract creation>"
+		}
+		callData := args.GetData()
+		if len(callData) >= 4 {
+			funcSelector = "0x" + common.Bytes2Hex(callData[:4])
+		} else {
+			funcSelector = "<no selector>"
+		}
+		rawRevert := receipt.Revert()
+		api.logger.Warnf("eth_call reverted: err=%v, result.Err=%v", err, receipt.Err)
+		api.logger.Warnf("  to:       %s", callTarget)
+		api.logger.Warnf("  func:     %s", funcSelector)
+		api.logger.Warnf("  raw:      0x%s", common.Bytes2Hex(rawRevert))
+		if decoded := sys_common.DecodeRevert(rawRevert); decoded != "" {
+			api.logger.Warnf("  decoded:  %s", decoded)
+		}
+		return nil, newRevertError(rawRevert)
+	}
 	if err != nil {
 		return nil, err
 	}
 	api.logger.Debugf("receipt: %v", receipt)
-	if len(receipt.Revert()) > 0 {
-		return nil, newRevertError(receipt.Revert())
-	}
 
 	return receipt.Return(), receipt.Err
 }

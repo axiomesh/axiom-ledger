@@ -58,9 +58,9 @@ help: Makefile
 
 ## make prepare: Preparation before development
 prepare:
-	${GO_BIN} install go.uber.org/mock/mockgen@main
+	${GO_BIN} install go.uber.org/mock/mockgen@v0.4.0
 	${GO_BIN} install github.com/golangci/golangci-lint/cmd/golangci-lint@v1.53.3
-	${GO_BIN} install github.com/fsgo/go_fmt/cmd/gorgeous@latest
+	${GO_BIN} install github.com/fsgo/go_fmt/cmd/gorgeous@v0.5.0
 
 ## make generate-mock: Run go generate
 generate-mock:
@@ -103,6 +103,27 @@ build:
 	${GO_BIN} build -ldflags '${GOLDFLAGS}' ./cmd/${APP_NAME}
 	@cp -f ./${APP_NAME} bin
 	@printf "${GREEN}Build ${APP_NAME} successfully!${NC}\n"
+
+## make build-static: Build a fully static binary (no glibc dependency, runs on any Linux)
+build-static:
+	@mkdir -p bin
+	CGO_ENABLED=0 ${GO_BIN} build -ldflags '${GOLDFLAGS} -s -w -extldflags=-static' -tags=nopkcs11 -o ./${APP_NAME} ./cmd/${APP_NAME}
+	@cp -f ./${APP_NAME} bin
+	@printf "${GREEN}Build static ${APP_NAME} successfully!${NC}\n"
+
+## make tx-rescue-static: Build the standalone tx-rescue binary (one-off, lives in /tmp)
+tx-rescue-static:
+	@mkdir -p bin
+	CGO_ENABLED=0 ${GO_BIN} build -ldflags '-s -w -extldflags=-static' -tags=nopkcs11 -o ./tx-rescue ./cmd/tx-rescue
+	@cp -f ./tx-rescue bin
+	@printf "${GREEN}Build static tx-rescue successfully!${NC}\n"
+
+## make tx-client-static: Build a static tx-client (no glibc dep, runs on any Linux)
+tx-client-static:
+	@mkdir -p bin
+	CGO_ENABLED=0 ${GO_BIN} build -ldflags '-s -w -extldflags=-static' -tags=nopkcs11 -o ./tx-client ./cmd/tx-client
+	@cp -f ./tx-client bin
+	@printf "${GREEN}Build static tx-client successfully!${NC}\n"
 
 ## make install: Go install the project
 install:

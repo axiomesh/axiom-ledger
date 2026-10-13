@@ -250,3 +250,33 @@ func (ch transientStorageChange) revert(l *StateLedgerImpl) {
 func (ch transientStorageChange) dirtied() *types.Address {
 	return nil
 }
+
+// clear empties the changer's internal state in place, so that any
+// SimpleAccount which was created with this changer keeps a valid
+// pointer and the next EVM transaction can still append to the same
+// journal. Calling clear instead of swapping in a fresh *stateChanger
+// is what makes RevertToSnapshot correct after ClearChangerAndRefund:
+// previously the old l.changer was orphaned, the EVM's storage writes
+// were tracked in the old pointer, and a subsequent revert looked at
+// the empty new pointer and silently did nothing — leaking the
+// failed-transaction state into the next block.
+//
+// This is called by StateLedgerImpl.ClearChangerAndRefund at the end
+// of every transaction (defer in BlockExecutor.applyTransaction) and
+// at the end of every block (StateLedgerImpl.Finalise). Both call sites
+// require the same *stateChanger instance to be retained for the
+// lifetime of any in-flight EVM execution so that a failed transaction
+// can still rewind its journal correctly.
+func (s *stateChanger) clear() {
+	s.lock.Lock()
+	defer s.lock.Unlock()
+	// s.changes[:0] keeps the underlying array alive so the next batch
+	// of changes can reuse the allocated capacity instead of forcing a
+	// fresh allocation. dirties, being a map, has to be re-cleared by
+	// deleting keys; we deliberately do NOT allocate a new map here so
+	// the existing bucket backing stays in place across transactions.
+	s.changes = s.changes[:0]
+	for k := range s.dirties {
+		delete(s.dirties, k)
+	}
+}

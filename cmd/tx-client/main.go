@@ -21,6 +21,7 @@ func main() {
 		proposeCMD,
 		voteCMD,
 		queryProposalCMD,
+		rescueCMD,
 		{
 			Name:    "version",
 			Aliases: []string{"v"},
@@ -38,4 +39,3 @@ func main() {
 		os.Exit(1)
 	}
 }
- 

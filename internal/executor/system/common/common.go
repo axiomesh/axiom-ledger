@@ -1,7 +1,9 @@
 package common
 
 import (
+	"encoding/binary"
 	"fmt"
+	"math/big"
 
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	ethcommon "github.com/ethereum/go-ethereum/common"
@@ -182,4 +184,78 @@ func (e *RevertError) GetError() error {
 
 func (e *RevertError) Data() []byte {
 	return e.data
+}
+
+// DecodeRevert tries to turn a raw EVM revert payload into a human
+// readable string. It understands the two Solidity builtins:
+//
+//   - 0x08c379a0 = Error(string) (require/assert with reason)
+//   - 0x4e487b71 = Panic(uint256)  (assert, division by zero, etc.)
+//
+// Anything else is reported as a custom error with its 4-byte selector.
+// Returns an empty string when the payload is too short to decode.
+//
+// This complements go-ethereum's abi.UnpackRevert, which silently falls
+// back to an error for any selector that is not Error(string) or
+// Panic(uint256) — making it hard to see custom errors or unknown
+// selectors in logs. The eth_call API path uses this helper for that
+// reason.
+func DecodeRevert(data []byte) string {
+	if len(data) < 4 {
+		return ""
+	}
+	selector := binary.BigEndian.Uint32(data[:4])
+	switch selector {
+	case 0x08c379a0:
+		// Error(string): offset(32) + length(32) + bytes
+		if len(data) < 4+64 {
+			return "Error(string) <malformed payload>"
+		}
+		strOffset := binary.BigEndian.Uint64(data[4:36])
+		if strOffset != 32 {
+			return "Error(string) <unexpected offset>"
+		}
+		strLen := binary.BigEndian.Uint64(data[4+strOffset : 4+strOffset+32])
+		if uint64(len(data)) < 4+strOffset+32+strLen {
+			return "Error(string) <truncated>"
+		}
+		return fmt.Sprintf("Error(string) %q", string(data[4+strOffset+32:4+strOffset+32+strLen]))
+	case 0x4e487b71:
+		// Panic(uint256)
+		if len(data) < 4+32 {
+			return "Panic(uint256) <malformed payload>"
+		}
+		code := new(big.Int).SetBytes(data[4:36])
+		return fmt.Sprintf("Panic(uint256) 0x%x (%s)", code.Uint64(), PanicCodeToString(code.Uint64()))
+	default:
+		return fmt.Sprintf("custom error, selector=0x%08x", selector)
+	}
+}
+
+// PanicCodeToString maps the well-known Solidity Panic(uint256) codes
+// to short descriptions, so a log line reads as "Panic(0x11) arithmetic
+// overflow or underflow" instead of just "Panic(0x11)".
+func PanicCodeToString(code uint64) string {
+	switch code {
+	case 0x01:
+		return "assertion failed"
+	case 0x11:
+		return "arithmetic overflow or underflow"
+	case 0x12:
+		return "division or modulo by zero"
+	case 0x21:
+		return "conversion to enum out of bounds"
+	case 0x22:
+		return "storage encoding error"
+	case 0x31:
+		return "empty array pop"
+	case 0x32:
+		return "array index out of bounds"
+	case 0x41:
+		return "memory allocation too large"
+	case 0x51:
+		return "called an uninitialized internal function"
+	default:
+		return "unknown panic code"
+	}
 }

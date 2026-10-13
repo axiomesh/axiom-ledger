@@ -65,7 +65,32 @@ const (
 	WhiteListProviderRemove
 
 	GasUpdate
+
+	// RescueState is an emergency proposal that forces a write to a
+	// contract's EVM storage slot. It follows the standard
+	// propose → vote → execute flow like every other proposal type,
+	// with one relaxation: in solo deployments (council size 0 or
+	// 1) any address may propose because the operator may not have
+	// the admin key available at the moment of the incident. Used
+	// to recover from irreversible on-chain state corruption such as
+	// a stuck Uniswap pair whose unlocked flag is stuck at 0.
+	// MUST stay at the end of the iota block — never insert above.
+	RescueState
 )
+
+// RescueExtraArgs is the JSON payload for a RescueState proposal.
+// Value MUST be a 32-byte hex string (with or without the 0x prefix)
+// because EVM storage slots are always exactly 32 bytes wide.
+type RescueExtraArgs struct {
+	Target string `json:"target"`
+	Slot   uint64 `json:"slot"`
+	Value  string `json:"value"`
+}
+
+// RescueValidWindow is the number of blocks after a rescue proposal
+// becomes effective during which the forced write is allowed to run.
+// Outside this window the proposal is treated as expired and ignored.
+const RescueValidWindow uint64 = 256
 
 type VoteResult uint8
 
@@ -143,6 +168,15 @@ func NewGov(cfg *common.SystemContractConfig) *Governance {
 		panic(err)
 	}
 	if err := gov.Register(WhiteListProviderRemove, whiteListProviderManager); err != nil {
+		panic(err)
+	}
+
+	// Rescue: single-tx forced EVM storage write. Used to recover
+	// from irreversible on-chain state corruption, e.g. a stuck
+	// Uniswap pair whose unlocked flag is permanently 0. Propose is
+	// overridden to skip the vote cycle and execute immediately.
+	rescueManager := NewRescueManager(gov)
+	if err := gov.Register(RescueState, rescueManager); err != nil {
 		panic(err)
 	}
 
@@ -359,22 +393,38 @@ func (g *Governance) CheckBeforeVote(user *ethcommon.Address, proposal *Proposal
 
 // Vote a proposal, return vote status
 func (g *Governance) Vote(proposalID uint64, voteRes uint8) error {
-	voteResult := VoteResult(voteRes)
 	proposal, err := g.LoadProposal(proposalID)
 	if err != nil {
 		return err
 	}
 
 	proposalType := proposal.Type
-	_, ok := g.type2Executor[proposalType]
-	if !ok {
+	if _, ok := g.type2Executor[proposalType]; !ok {
 		return ErrProposalType
 	}
 
-	gov, ok := g.governance[proposalType]
-	if ok {
-		// call overide function
+	// Dispatch to per-type override if registered. The override is
+	// expected to call g.voteCore to perform the actual bookkeeping
+	// (it must not loop back through g.Vote).
+	if gov, ok := g.governance[proposalType]; ok {
 		return gov.Vote(proposalID, voteRes)
+	}
+
+	return g.voteCore(proposalID, voteRes)
+}
+
+// voteCore performs the standard vote bookkeeping after a proposal
+// has been type-checked and dispatched. It is the single source of
+// truth for the Pass/Reject tally, status calculation, terminal-state
+// cleanup, and Approved → executor.Execute handoff. Both the default
+// Governance.Vote path and per-type IGovenance overrides (e.g.
+// RescueManager.Vote) call into this so the bookkeeping stays
+// consistent across proposal types.
+func (g *Governance) voteCore(proposalID uint64, voteRes uint8) error {
+	voteResult := VoteResult(voteRes)
+	proposal, err := g.LoadProposal(proposalID)
+	if err != nil {
+		return err
 	}
 
 	// check and update state

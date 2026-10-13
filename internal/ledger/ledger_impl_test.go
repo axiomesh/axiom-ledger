@@ -3482,3 +3482,49 @@ func newSnapshot(rep *repo.Repo, path string) *snapshot.Snapshot {
 	s, _ := pebble.New(dir, nil, nil, logrus.New())
 	return snapshot.NewSnapshot(rep, s, log.NewWithModule("snapshot_test"))
 }
+
+// TestStateLedger_RevertStorageAfterFinalise exercises two transactions in the
+// same block. Finalise must keep cached accounts attached to the active journal,
+// so a failed second transaction restores the first transaction's storage.
+func TestStateLedger_RevertStorageAfterFinalise(t *testing.T) {
+	for _, kvType := range []string{"leveldb", "pebble"} {
+		t.Run(kvType, func(t *testing.T) {
+			lg, _ := initLedger(t, "", kvType)
+			t.Cleanup(lg.Close)
+			sl := lg.StateLedger.(*StateLedgerImpl)
+			sl.blockHeight = 1
+
+			pair := types.NewAddressByStr("0x3a1092655b3a9436253c813bcf02e445e3340333")
+			lockSlot := common.HexToHash("0x0c").Bytes()
+			unlocked := common.HexToHash("0x01").Bytes()
+			locked := common.Hash{}.Bytes()
+
+			// Transaction 1 succeeds. Keep the account cached in this block;
+			// committing a block here would clear it and hide the bug.
+			sl.SetNonce(pair, 1) // A deployed contract is not an empty account.
+			sl.SetState(pair, lockSlot, unlocked)
+			sl.Finalise()
+			ok, value := sl.GetState(pair, lockSlot)
+			require.True(t, ok)
+			require.Equal(t, unlocked, value)
+
+			// Transaction 2 takes the lock, then fails. This is the same
+			// Snapshot/RevertToSnapshot boundary used by the EVM on failure.
+			snapshot := sl.Snapshot()
+			sl.SetState(pair, lockSlot, locked)
+			ok, value = sl.GetState(pair, lockSlot)
+			require.True(t, ok)
+			require.Equal(t, locked, value)
+			sl.RevertToSnapshot(snapshot)
+
+			ok, value = sl.GetState(pair, lockSlot)
+			assert.True(t, ok)
+			assert.Equal(t, unlocked, value, "failed transaction must restore the lock after a previous Finalise")
+
+			// A failed transaction is still finalised by the executor. Its
+			// intermediate lock must not enter the block's pending state.
+			sl.Finalise()
+			assert.Equal(t, unlocked, sl.GetCommittedState(pair, lockSlot), "Finalise must not retain the failed transaction's lock")
+		})
+	}
+}
