@@ -85,8 +85,15 @@ func (l *StateLedgerImpl) NewView(blockHeader *types.BlockHeader, enableSnapshot
 	l.logger.Debugf("[NewView] height: %v, stateRoot: %v", blockHeader.Number, blockHeader.StateRoot)
 	if l.repo.Config.Ledger.EnablePrune {
 		min, max := l.GetHistoryRange()
-		if blockHeader.Number < min || blockHeader.Number > max {
-			return nil, fmt.Errorf("history at target block %v is invalid, the valid range is from %v to %v", blockHeader.Number, min, max)
+		// Skip the range check when the prune journal is empty (e.g. after
+		// a manual wipe, or on first startup with EnablePrune=true). An
+		// empty journal means "nothing has been pruned yet" and must not
+		// block access to any historical block height. Only the lower
+		// bound matters once pruning has actually removed state.
+		if min != 0 || max != 0 {
+			if blockHeader.Number < min {
+				return nil, fmt.Errorf("history at target block %v is invalid, the valid range is from %v to %v", blockHeader.Number, min, max)
+			}
 		}
 	}
 
@@ -117,8 +124,12 @@ func (l *StateLedgerImpl) NewViewWithoutCache(blockHeader *types.BlockHeader, en
 	l.logger.Debugf("[NewViewWithoutCache] height: %v, stateRoot: %v", blockHeader.Number, blockHeader.StateRoot)
 	if l.repo.Config.Ledger.EnablePrune {
 		min, max := l.GetHistoryRange()
-		if blockHeader.Number < min || blockHeader.Number > max {
-			return nil, fmt.Errorf("history at target block %v is invalid, the valid range is from %v to %v", blockHeader.Number, min, max)
+		// Skip the range check when the prune journal is empty; see
+		// NewView for the full rationale.
+		if min != 0 || max != 0 {
+			if blockHeader.Number < min {
+				return nil, fmt.Errorf("history at target block %v is invalid, the valid range is from %v to %v", blockHeader.Number, min, max)
+			}
 		}
 	}
 

@@ -31,8 +31,16 @@ func (gas *Gas) CalNextGasPrice(parentGasPrice uint64, txs int) (uint64, error) 
 	max := currentEpoch.FinanceParams.MaxGasPrice
 	min := currentEpoch.FinanceParams.MinGasPrice
 	if parentGasPrice < min || parentGasPrice > max {
-		gas.logger.Errorf("gas price is out of range, parent gas price is %d, min is %d, max is %d", parentGasPrice, min, max)
-		return 0, ErrGasOutOfRange
+		// Out-of-range parent gas price is treated as a recoverable condition
+		// (e.g. legacy chain-meta with 0, or a corrupt meta where a hash was
+		// written into the gas-price field). Clamp to the configured bounds
+		// instead of aborting block processing.
+		gas.logger.Warningf("parent gas price %d out of range [%d, %d], clamping", parentGasPrice, min, max)
+		if parentGasPrice < min {
+			parentGasPrice = min
+		} else {
+			parentGasPrice = max
+		}
 	}
 	total := int(gas.repo.EpochInfo.ConsensusParams.BlockMaxTxNum)
 	if txs > total {

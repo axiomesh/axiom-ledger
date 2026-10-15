@@ -161,6 +161,13 @@ func (tc *PruneCache) Get(version uint64, key []byte) (types.Node, bool) {
 
 // Rollback rebuilds pruneCache from pruneJournal at target height.
 func (tc *PruneCache) Rollback(height uint64) error {
+	// When pruning is disabled the cache is unused, so any stale journal
+	// entries left on disk must not block startup. Treat Rollback as a
+	// no-op so the node can come up regardless of the cached range.
+	if !tc.rep.Config.Ledger.EnablePrune {
+		return nil
+	}
+
 	tc.states.lock.Lock()
 	defer tc.states.lock.Unlock()
 
@@ -174,7 +181,22 @@ func (tc *PruneCache) Rollback(height uint64) error {
 	}
 
 	if maxHeight < height {
-		return ErrorRollbackToHigherNumber
+		// The rollback target is ahead of the cached range, which happens when
+		// the node has been advancing faster than the prune journal has been
+		// persisted (e.g. a long uptime that was stopped and restarted).
+		// Instead of refusing to start, drop the stale journal entries and
+		// let subsequent blocks refill the cache from the live state trie.
+		tc.logger.Warnf("[PruneCache-Rollback] target %d ahead of cached max %d, clearing prune cache", height, maxHeight)
+		batch := tc.ledgerStorage.NewBatch()
+		for i := minHeight; i <= maxHeight; i++ {
+			batch.Delete(utils.CompositeKey(utils.PruneJournalKey, i))
+		}
+		batch.Delete(utils.CompositeKey(utils.PruneJournalKey, utils.MinHeightStr))
+		batch.Delete(utils.CompositeKey(utils.PruneJournalKey, utils.MaxHeightStr))
+		batch.Commit()
+		tc.states.diffs = make([]*diff, 0)
+		tc.states.allKeyMap = make(map[string]struct{}, 0)
+		return nil
 	}
 
 	if minHeight > height && !(minHeight == 1 && height == 0) {

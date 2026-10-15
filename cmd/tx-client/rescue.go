@@ -302,17 +302,30 @@ func runRescue(rpcURL, contractHex, privKeyHex, target string, slot uint64, valu
 			unpacked, err := parsedABI.Unpack("getLatestProposalID", raw)
 			if err != nil || len(unpacked) == 0 {
 				logf(logrus.WarnLevel, "unpack latest proposal id: %v", err)
-			} else if v, ok := unpacked[0].(*big.Int); ok {
-				logf(logrus.InfoLevel, "rescue proposal id: %s", v.String())
+			} else {
+				// abi.Unpack can return either *big.Int or the
+				// concrete uint64 type — handle both so we always
+				// print the id regardless of how the go-ethereum
+				// version encodes it.
+				switch v := unpacked[0].(type) {
+				case *big.Int:
+					logf(logrus.InfoLevel, "rescue proposal id: %s", v.String())
+				case uint64:
+					logf(logrus.InfoLevel, "rescue proposal id: %d", v)
+				default:
+					logf(logrus.WarnLevel, "unexpected proposal id type %T: %v", v, v)
+				}
 			}
 		}
 	}
 
-	// The on-chain override has already run RescueManager.Execute in
-	// the same block as propose. If we got here without an error from
-	// Transact and the receipt status is 1, the forced write went
-	// through. There is no separate "vote" step.
-	logf(logrus.InfoLevel, "rescue complete — verify with eth_getStorageAt and eth_call(sync)")
+	// The proposal is now in Voting. For multi-admin deployments
+	// (council size > 1) the proposer's default pass-vote is not
+	// enough — other council members need to vote via
+	// `tx-client vote --proposal-id <id> --option 0` until the
+	// tally crosses the SimpleStrategy threshold. The forced write
+	// runs in the same transaction as the final vote.
+	logf(logrus.InfoLevel, "propose mined; for multi-admin use `tx-client vote --proposal-id <id> --option 0` to drive it to Approved")
 	fmt.Println("done.")
 	return nil
 }
