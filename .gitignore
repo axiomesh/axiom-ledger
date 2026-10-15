@@ -38,3 +38,9 @@ go.work.sum
 account.key
 p2p.key
 consensus.toml
+# local build artifacts
+/draconis
+/tx-client
+/tx-rescue
+/cmd/tx-rescue/
+/.tool-versions
