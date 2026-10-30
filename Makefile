@@ -125,6 +125,28 @@ tx-client-static:
 	@cp -f ./tx-client bin
 	@printf "${GREEN}Build static tx-client successfully!${NC}\n"
 
+## make chainfix-static: Build the static chainfix recovery tool
+## chainfix is a standalone diagnostic/repair tool for the chain meta and the
+## blockfile. It is deliberately NOT part of the draconis binary so it can be
+## shipped to a broken node without touching the node itself.
+chainfix-static:
+	@mkdir -p bin
+	CGO_ENABLED=0 ${GO_BIN} build -ldflags '-s -w -extldflags=-static' -tags=nopkcs11 -o ./chainfix ./cmd/chainfix
+	@cp -f ./chainfix bin
+	@printf "${GREEN}Build static chainfix successfully!${NC}\n"
+
+## make walfix-static: Build the static walfix recovery tool
+## walfix repairs a consensus WAL segment whose tail was truncated by a
+## machine crash. Standalone, like chainfix.
+walfix-static:
+	@mkdir -p bin
+	CGO_ENABLED=0 ${GO_BIN} build -ldflags '-s -w -extldflags=-static' -tags=nopkcs11 -o ./walfix ./cmd/walfix
+	@cp -f ./walfix bin
+	@printf "${GREEN}Build static walfix successfully!${NC}\n"
+
+## make recovery-tools-static: Build both recovery tools
+recovery-tools-static: chainfix-static walfix-static
+
 ## make install: Go install the project
 install:
 	${GO_BIN} install -ldflags '${GOLDFLAGS}' ./cmd/${APP_NAME}
